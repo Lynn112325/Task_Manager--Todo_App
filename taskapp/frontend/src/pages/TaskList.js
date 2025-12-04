@@ -1,0 +1,367 @@
+import AddIcon from "@mui/icons-material/Add";
+import RefreshIcon from "@mui/icons-material/Refresh";
+import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
+import {
+  Alert,
+  Box,
+  Button,
+  CircularProgress,
+  Grid,
+  IconButton,
+  List,
+  ListSubheader,
+  Stack,
+  Tooltip,
+  Typography,
+} from "@mui/material";
+import dayjs from "dayjs";
+import * as React from "react";
+import { useCallback } from "react";
+import { useLocation, useNavigate, useSearchParams } from "react-router";
+import MuiDatePicker from "../components/MuiDatePicker";
+import PageContainer from "../components/PageContainer";
+import TaskListItems from "../components/TaskListItems";
+import TaskTypeSelector from "../components/TaskTypeSelector";
+import { useTasks } from "../hooks/task/useTasks.js";
+import { useTaskType } from "../hooks/task/useTaskType.js";
+
+export default function TaskList() {
+  const [selectedDate, setSelectedDate] = React.useState(dayjs());
+  // set checked state to an array of task ids that are completed
+  const [listToggle, setListToggle] = React.useState("upcoming"); // "upcoming" | "overdue"
+  const { type, handleTypeChange } = useTaskType();
+  const {
+    tasks,
+    isLoading,
+    error,
+    checked,
+    refresh,
+    updateTaskStatus,
+    getTasksByDate,
+    getUpcomingTasks,
+    getOverdueTasks,
+  } = useTasks(type);
+
+  // useEffect(() => {
+  //   console.log('Checked tasks (after update):', checked);
+  // }, [checked]);
+
+  const handleDateChange = (date) => {
+    // update the selected date state
+    // console.log('Selected date:', date);
+    setSelectedDate(date);
+  };
+
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+
+  // select Tasks by Date
+  const [tasksData, setTasksData] = React.useState({
+    rows: [],
+    rowCount: 0,
+  });
+
+  const [tasks2Data, setTasks2Data] = React.useState({ rows: [], rowCount: 0 });
+
+  // Upcoming Tasks
+  const [tasksUpcomingData, setTasksUpcomingData] = React.useState({
+    rows: [],
+    rowCount: 0,
+  });
+
+  // Overdue Tasks
+  const [tasksOverdueData, setTasksOverdueData] = React.useState({
+    rows: [],
+    rowCount: 0,
+  });
+
+  const loadTasksByDate = React.useCallback(async () => {
+
+    try {
+      const taskData = getTasksByDate(
+        selectedDate // Pass selected date to the getTasks function
+      );
+      // console.log("taskData", taskData);
+      setTasksData({
+        rows: taskData,
+        rowCount: taskData.length,
+      });
+    } catch (taskDataError) {
+      console.log(taskDataError);
+    }
+  }, [selectedDate, tasks]);
+
+  const loadUpcoming = React.useCallback(async () => {
+    try {
+      const taskData = getUpcomingTasks();
+      setTasksUpcomingData({
+        rows: taskData,
+        rowCount: taskData.length,
+      });
+
+    } catch (error) {
+      console.log(error);
+    }
+  }, [tasks]);
+
+  const loadOverdue = React.useCallback(async () => {
+    try {
+      const taskData = getOverdueTasks();
+      setTasksOverdueData({
+        rows: taskData,
+        rowCount: taskData.length,
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  }, [tasks]);
+
+  React.useEffect(() => {
+    loadTasksByDate();
+  }, [tasks, selectedDate]);
+
+  React.useEffect(() => {
+    loadUpcoming();
+    loadOverdue();
+  }, [tasks]);
+
+  const loadData = React.useCallback(async () => {
+    refresh();
+    loadTasksByDate();
+    loadUpcoming();
+    loadOverdue();
+  }, [loadTasksByDate, loadUpcoming, loadOverdue]);
+
+  React.useEffect(() => {
+    setTasks2Data(
+      listToggle === "upcoming" ? tasksUpcomingData : tasksOverdueData
+    );
+  }, [listToggle, tasksUpcomingData, tasksOverdueData]);
+
+  const handleRefresh = React.useCallback(() => {
+    if (!isLoading) {
+      loadData();
+    }
+  }, [isLoading, loadData]);
+
+  // handle TaskStatus (checkbox) toggle
+  const handleTaskStatusToggle = useCallback(
+    (task) => async () => {
+      await updateTaskStatus(task);
+    },
+    [updateTaskStatus]
+  );
+
+
+  const handleRowView = React.useCallback(
+    (task) => {
+      navigate(`/tasks/${task.id}`);
+    },
+    [navigate]
+  );
+
+  const handleCreateClick = React.useCallback(() => {
+    navigate("/tasks/new");
+  }, [navigate]);
+
+  const pageTitle = "Tasks";
+
+  return (
+    <PageContainer
+      title={pageTitle}
+      breadcrumbs={[{ title: pageTitle }]}
+      actions={
+        <Stack direction="row" alignItems="center" spacing={1}>
+          <Tooltip title="Reload data" placement="top">
+            <div>
+              <IconButton
+                size="small"
+                aria-label="refresh"
+                onClick={handleRefresh}
+              >
+                <RefreshIcon />
+              </IconButton>
+            </div>
+          </Tooltip>
+          <TaskTypeSelector type={type} handleTypeChange={handleTypeChange} />
+          <Button
+            variant="contained"
+            onClick={handleCreateClick}
+            startIcon={<AddIcon />}
+          >
+            Create
+          </Button>
+        </Stack>
+      }
+    >
+      <Grid
+        container
+        columns={12}
+        rowSpacing={1}
+        columnSpacing={{ xs: 1, sm: 2, md: 3 }}
+        sx={{ flex: 1 }}
+      >
+        <Grid
+          size={{ xs: 12, md: 7 }}
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            height: "100%",
+            order: { xs: 1, md: 1 },
+          }}
+        >
+          {isLoading ? (
+            <CircularProgress sx={{ flexGrow: 1 }} />
+          ) : error ? (
+            <Box sx={{ flexGrow: 1, width: "100%" }}>
+              <Alert severity="error">{error.message}</Alert>
+            </Box>
+          ) : (
+            <Box
+              sx={{
+                flexGrow: 1,
+                borderRadius: "15px",
+                bgcolor: "background.paper",
+                width: "100%",
+                boxShadow: 2,
+              }}
+            >
+              <List
+                sx={{
+                  width: "100%",
+                  flexGrow: 1,
+                  bgcolor: "background.paper",
+                  height: "100%",
+                }}
+                component="nav"
+                aria-labelledby="DateTasks"
+                subheader={
+                  <ListSubheader component="div" id="DateTasks">
+                    <Typography variant="subtitle2">
+                      {dayjs(selectedDate).isSame(dayjs(), "day")
+                        ? "Today "
+                        : ""}
+                      {dayjs(selectedDate).format("YYYY-MM-DD (dddd)")}
+                    </Typography>
+                  </ListSubheader>
+                }
+              >
+                <TaskListItems
+                  rows={tasksData.rows}
+                  checked={checked}
+                  onToggle={handleTaskStatusToggle}
+                  onRowView={handleRowView}
+                />
+              </List>
+            </Box>
+          )}
+        </Grid>
+        <Grid
+          size={{ xs: 12, md: 5 }}
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            gap: 2,
+            order: { xs: 2, md: 2 },
+          }}
+        >
+          <Box
+            sx={{
+              // flexGrow: 1,
+              width: "100%",
+              border: "1px solid divider",
+              borderRadius: "15px",
+            }}
+          >
+            <MuiDatePicker onDateChange={handleDateChange} />
+          </Box>
+          {/* Upcoming tasks / Overdue tasks */}
+          <Box
+            sx={{
+              flexGrow: 1,
+              width: "100%",
+              border: "1px solid divider",
+              borderRadius: "15px",
+            }}
+          >
+            {isLoading ? (
+              <CircularProgress sx={{ flexGrow: 1 }} />
+            ) : error ? (
+              <Box sx={{ flexGrow: 1, width: "100%" }}>
+                <Alert severity="error">{error.message}</Alert>
+              </Box>
+            ) : (
+              <Box
+                sx={{
+                  flexGrow: 1,
+                  borderRadius: "15px",
+                  bgcolor: "background.paper",
+                  width: "100%",
+                  boxShadow: 2,
+                  height: "100%",
+                }}
+              >
+                <List
+                  sx={{
+                    width: "100%",
+                    flexGrow: 1,
+                    bgcolor: "background.paper",
+                    height: "100%",
+                  }}
+                  component="nav"
+                  aria-labelledby="Upcoming_Tasks"
+                  subheader={
+                    <ListSubheader
+                      component="div"
+                      id="Upcoming_Tasks"
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                      }}
+                    >
+                      <Typography variant="subtitle2">
+                        {listToggle === "upcoming"
+                          ? "Upcoming Task(s)"
+                          : "Overdue Task(s)"}
+                      </Typography>
+                      {/* List Toggle button */}
+                      <Tooltip
+                        title={
+                          listToggle === "overdue"
+                            ? "View Upcoming Task(s)"
+                            : "View Overdue Task(s)"
+                        }
+                        placement="top"
+                      >
+                        <IconButton
+                          size="small"
+                          onClick={(e) => {
+                            e.currentTarget.blur();
+                            requestAnimationFrame(() => {
+                              setListToggle(prev => prev === "upcoming" ? "overdue" : "upcoming");
+                            });
+                          }}
+                        >
+                          <SwapHorizIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    </ListSubheader>
+                  }
+                >
+                  <TaskListItems
+                    rows={tasks2Data.rows}
+                    checked={checked}
+                    onToggle={handleTaskStatusToggle}
+                    onRowView={handleRowView}
+                  />
+                </List>
+              </Box>
+            )}
+          </Box>
+        </Grid>
+      </Grid >
+    </PageContainer >
+  );
+}

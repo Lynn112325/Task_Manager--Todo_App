@@ -1,0 +1,55 @@
+🔧 1. 任務管理系統（Task Manager  Todo App Pro）
+簡介：使用者可以註冊帳號、建立任務、設定截止日、完成狀態、分類、優先級等。
+
+功能模組：
+
+    使用者登入註冊（JWT 認證）
+
+    CRUD 任務（標題、描述、截止日、分類、狀態）
+
+    優先排序 + 過期提示
+
+    前端使用 React 表單、表格呈現
+
+    使用 MySQL 儲存任務與用戶資料
+
+🧱 技術架構建議
+    層級	技術選型
+    前端	React + Tailwind（或 MUI）+ Axios
+    後端	Spring Boot + Spring Data JPA + Spring Security
+    資料庫	MySQL
+    認證	JWT Token
+    工具	Postman（測 API）、Lombok（減少 boilerplate）、Docker（MySQL 可選）
+
+🗓️ 兩週進度規劃（建議）
+    天數	任務
+    Day 1	設計資料表（ERD）、初始化 Spring Boot 專案
+    Day 2	完成 User 註冊/登入 API + JWT 驗證
+    Day 3	實作 Task CRUD API
+    Day 4	加入驗證（User 只能看到自己的任務）
+    Day 5	測試所有後端 API（Postman）
+    Day 6	初始化 React 專案 + 登入頁面
+    Day 7	註冊頁面 + JWT Token 儲存（localStorage）
+    Day 8	建立任務新增/顯示 UI（呼叫後端）
+    Day 9	編輯、刪除、完成任務功能
+    Day 10	加上過濾 / 排序按鈕（React 條件渲染）
+    Day 11	美化 UI（Tailwind）
+    Day 12	加入 loading、錯誤處理
+    Day 13	總體測試 + 偵錯
+    Day 14	部署（可選：Render / Railway / Vercel + Fly.io）
+
+🔐 使用者登入與註冊
+    POST /api/auth/register
+
+    POST /api/auth/login → 回傳 JWT
+
+📋 任務管理
+    GET /api/tasks → 取得目前使用者的所有任務
+
+    POST /api/tasks → 建立任務
+
+    PUT /api/tasks/{id} → 編輯任務
+
+    DELETE /api/tasks/{id} → 刪除任務
+
+    PATCH /api/tasks/{id}/complete → 標記為完成

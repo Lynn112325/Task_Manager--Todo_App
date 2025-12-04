@@ -1,0 +1,65 @@
+
+cd taskapp/frontend
+npm start
+
+cd taskapp/backend
+.\mvnw.cmd spring-boot:run
+
+.\mvnw.cmd clean compile
+.\mvnw.cmd clean install -U
+.\mvnw.cmd test -X
+
+前後端分離 (React SPA)
+npm install axios
+npm install react-beautiful-dnd --save
+
+UPDATE `tasks` SET due_date = CURDATE();
+
+
+localStorage.clear();
+
+
+netstat -ano | findstr 3000
+taskkill /PID (num) /F
+
+                    <Grid
+                      container
+                      rowSpacing={2}
+                      columnSpacing={1}
+                      sx={{ paddingTop: 3, width: "100%" }}
+                    >
+                      <Grid size={{ xs: 12, sm: 6, md: 6 }}>
+                        {/* Start Date */}
+                        <LocalizationProvider dateAdapter={AdapterDayjs}>
+                          <DateTimePicker
+                            label="From"
+                            format="YYYY/MM/DD (ddd) hh:mm A"
+                            value={dayjs(task.startDate)}
+                            readOnly
+                            slotProps={{
+                              textField: {
+                                size: "small",
+                                sx: { width: "100%" },
+                              },
+                            }}
+                          />
+                        </LocalizationProvider>
+                      </Grid>
+                      <Grid size={{ xs: 12, sm: 6, md: 6 }}>
+                        <LocalizationProvider dateAdapter={AdapterDayjs}>
+                          {/* Due Date */}
+                          <DateTimePicker
+                            label="To"
+                            format="YYYY/MM/DD (ddd) hh:mm A"
+                            value={dayjs(task.dueDate)}
+                            readOnly
+                            slotProps={{
+                              textField: {
+                                size: "small",
+                                sx: { width: "100%" },
+                              },
+                            }}
+                          />
+                        </LocalizationProvider>
+                      </Grid>
+                    </Grid>
