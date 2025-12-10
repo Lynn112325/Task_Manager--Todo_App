@@ -24,7 +24,6 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
             """)
     Optional<TaskDto> findTaskDtoByIdAndUserId(@Param("taskId") Long taskId, @Param("userId") Long userId);
 
-    // hl.logDate, hl.status, hl.note
     // save() – to persist entities into the database
     // findById() – to find database record by its id
     // findAll() – to get all entities

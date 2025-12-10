@@ -15,7 +15,7 @@ const WEEKDAY_MAP = {
 
 function formatDate(dateStr) {
     if (!dateStr) return "—";
-    return dayjs(dateStr).format("YYYY MMM DD (ddd)");
+    return dayjs(dateStr).format("YYYY/MM/DD (ddd)");
 }
 
 // Frequency formatter

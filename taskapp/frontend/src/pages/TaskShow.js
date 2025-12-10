@@ -1,3 +1,4 @@
+import AddIcon from '@mui/icons-material/Add';
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
@@ -271,8 +272,21 @@ export default function TaskShow() {
     <PageContainer
       title={pageTitle}
       breadcrumbs={[{ title: "Tasks", path: "/tasks/todo" }, { title: pageTitle }]}
+      actions={
+        <Stack direction="row" alignItems="center" spacing={1}>
+
+          <Button
+            variant="contained"
+            // onClick={handleCreateClick}
+            startIcon={<AddIcon />}
+          >
+            Add task Template
+          </Button>
+        </Stack>
+      }
     >
       <Box sx={{ display: "flex", flex: 1, width: "100%" }}>{renderShow}</Box>
     </PageContainer>
   );
+
 }

@@ -21,9 +21,6 @@ import com.taskmanager.taskapp.task.dto.TaskDto;
 public class TaskController {
 
     private final TaskService taskService;
-    // private final TargetRepository targetRepository;
-    // private static final Logger log =
-    // LoggerFactory.getLogger(TaskController.class);
 
     public TaskController(TaskService taskService) {
         this.taskService = taskService;

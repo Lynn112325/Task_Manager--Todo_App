@@ -11,6 +11,8 @@ import com.taskmanager.taskapp.habitlog.HabitLogStatsDto;
 import com.taskmanager.taskapp.recurringplan.RecurringPlanDto;
 import com.taskmanager.taskapp.recurringplan.RecurringPlanRepository;
 import com.taskmanager.taskapp.security.MyUserDetailsService;
+import com.taskmanager.taskapp.target.TargetDto;
+import com.taskmanager.taskapp.target.TargetRepository;
 import com.taskmanager.taskapp.task.dto.TaskDetailDto;
 import com.taskmanager.taskapp.task.dto.TaskDto;
 import com.taskmanager.taskapp.user.User;
@@ -27,6 +29,7 @@ public class TaskService {
     private final MyUserDetailsService myUserDetailsService;
     private final HabitLogRepository habitLogRepository;
     private final RecurringPlanRepository recurringPlanRepository;
+    private final TargetRepository targetRepository;
 
     // transform Task to TaskDto
     private TaskDto toDto(Task task) {
@@ -79,14 +82,19 @@ public class TaskService {
                 ? recurringPlanRepository.findDtoByTemplateId(taskDto.templateId()).orElse(null)
                 : null;
 
-        // 3. HabitLog
+        // 3. Target
+        TargetDto target = taskDto.templateId() != null
+                ? targetRepository.findDtoByTemplateId(taskDto.templateId()).orElse(null)
+                : null;
+
+        // 4. HabitLog
         HabitLogStatsDto habitStats = (taskDto.templateId() != null)
                 ? habitLogRepository.findHabitLogStatsByTemplateAndUser(taskDto.templateId(), currentUserId)
                         .orElse(new HabitLogStatsDto(0L, 0L, 0L))
                 : new HabitLogStatsDto(0L, 0L, 0L);
 
-        // 4. group DTO
-        return new TaskDetailDto(taskDto, recurringPlan, habitStats);
+        // 5. group DTO
+        return new TaskDetailDto(taskDto, recurringPlan, target, habitStats);
     }
 
     // create Task
