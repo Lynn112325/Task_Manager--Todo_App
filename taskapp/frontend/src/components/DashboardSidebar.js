@@ -79,7 +79,7 @@ function DashboardSidebar({
 
     setIsFullyExpanded(false);
 
-    return () => {};
+    return () => { };
   }, [expanded, theme.transitions.duration.enteringScreen]);
 
   React.useEffect(() => {
@@ -93,7 +93,7 @@ function DashboardSidebar({
 
     setIsFullyCollapsed(false);
 
-    return () => {};
+    return () => { };
   }, [expanded, theme.transitions.duration.leavingScreen]);
 
   const mini = !disableCollapsibleSidebar && !expanded;
@@ -111,8 +111,8 @@ function DashboardSidebar({
         setExpandedItemIds((previousValue) =>
           previousValue.includes(itemId)
             ? previousValue.filter(
-                (previousValueItemId) => previousValueItemId !== itemId
-              )
+              (previousValueItemId) => previousValueItemId !== itemId
+            )
             : [...previousValue, itemId]
         );
       } else if (!isOverSmViewport && !hasNestedNavigation) {
@@ -255,12 +255,12 @@ function DashboardSidebar({
             }}
           >
             {expanded && (
-            <Avatar
-              sizes="small"
-              alt=""
-              src="/"
-              sx={{ width: 36, height: 36 }}
-            />
+              <Avatar
+                sizes="small"
+                alt=""
+                src="/"
+                sx={{ width: 36, height: 36 }}
+              />
             )}
             {expanded && (
               <Box sx={{ mr: "auto" }}>

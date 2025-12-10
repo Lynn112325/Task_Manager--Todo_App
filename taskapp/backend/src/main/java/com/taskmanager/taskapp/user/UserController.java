@@ -10,29 +10,30 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.taskmanager.taskapp.api.BaseController;
+import com.taskmanager.taskapp.api.CommonResponse;
 import com.taskmanager.taskapp.security.MyUserDetails;
 
 @RestController
 @RequestMapping("/api/user")
-public class UserController {
+public class UserController extends BaseController {
 
     @GetMapping("/me")
-    public ResponseEntity<?> getCurrentUser(Authentication authentication) {
-        // Check if the user is authenticated
+    public ResponseEntity<CommonResponse<?>> getCurrentUser(Authentication authentication) {
+
         if (authentication == null || !authentication.isAuthenticated()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
+            return fail(HttpStatus.UNAUTHORIZED.value(), "User is not authenticated");
         }
 
         Object principal = authentication.getPrincipal();
 
         if (principal instanceof MyUserDetails userDetails) {
             Map<String, Object> userInfo = new HashMap<>();
-            // userInfo.put("id", userDetails.getId());
             userInfo.put("username", userDetails.getUsername());
             userInfo.put("email", userDetails.getEmail());
-            return ResponseEntity.ok(userInfo);
+            return ok(userInfo);
         }
 
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Unexpected principal type");
+        return fail(HttpStatus.UNAUTHORIZED.value(), "User details not found");
     }
 }

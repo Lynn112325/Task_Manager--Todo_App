@@ -3,7 +3,6 @@ com\taskmanager\taskapp\task\TaskController.class
 com\taskmanager\taskapp\task\TaskService.class
 com\taskmanager\taskapp\tasktemplate\TaskTemplate$TaskTemplateBuilder.class
 com\taskmanager\taskapp\tasktemplate\TaskTemplateDto.class
-com\taskmanager\taskapp\user\UserController.class
 com\taskmanager\taskapp\target\Target$TargetBuilder.class
 com\taskmanager\taskapp\security\MyUserDetailsService.class
 com\taskmanager\taskapp\user\User.class

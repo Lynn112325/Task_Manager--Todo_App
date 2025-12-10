@@ -26,12 +26,14 @@ export function useTasks(type = "all") {
         try {
             setIsLoading(true);
             const res = await axios.get(API_URL);
-            setTasks(res.data);
-            // console.log(res.data);
+            const list = res.data?.data ?? [];
+            setTasks(list);
+            // console.log(list);
             // set the checked state to the ids of the completed tasks
             setChecked(
-                res.data?.filter?.((t) => t.isCompleted)?.map?.((t) => t.id) ?? []
+                list.filter(t => t.isCompleted).map(t => t.id)
             );
+
         } catch (err) {
             console.error(err);
             setError(getUserFriendlyError(err));
@@ -39,6 +41,7 @@ export function useTasks(type = "all") {
             setIsLoading(false);
         }
     }, []);
+
 
     // ---------------- Get Single Task ----------------
     const getTaskDetail = useCallback(async (id) => {
@@ -46,7 +49,8 @@ export function useTasks(type = "all") {
             setIsLoading(true);
             const res = await axios.get(`${API_URL}/${id}`);
             console.log('Fetched task detail: ', res.data);
-            return res.data; // 直接return ,還是const [taskDetail, setTaskDetail] = useState();
+            const list = res.data?.data ?? [];
+            return list;
         } catch (err) {
             console.error(err);
             setError(getUserFriendlyError(err));
@@ -55,12 +59,12 @@ export function useTasks(type = "all") {
         }
     }, []);
 
-    const getSubTasks = useCallback(
-        (parentId) => {
-            return tasks.filter((task) => task.parentTaskId === parentId);
-        },
-        [tasks]
-    );
+    // const getSubTasks = useCallback(
+    //     (parentId) => {
+    //         return tasks.filter((task) => task.parentTaskId === parentId);
+    //     },
+    //     [tasks]
+    // );
 
     const refresh = useCallback(() => {
         fetchTasks();
@@ -71,8 +75,9 @@ export function useTasks(type = "all") {
     const addTask = async (data) => {
         try {
             const res = await axios.post(API_URL, data);
-            setTasks((prev) => [...prev, res.data]);
-            return res.data;
+            const task = res.data.data;
+            setTasks((prev) => [...prev, task]);
+            return task;
         } catch (err) {
             console.error(err);
             setError(getUserFriendlyError(err));
@@ -83,10 +88,11 @@ export function useTasks(type = "all") {
     const updateTask = async (id, data) => {
         try {
             const res = await axios.patch(`${API_URL}/${id}`, data);
+            const updatedTask = res.data.data;
             setTasks((prev) =>
-                prev.map((task) => (task.id === id ? res.data : task))
+                prev.map((task) => (task.id === id ? updatedTask : task))
             );
-            return res.data;
+            return updatedTask;
         } catch (err) {
             console.error(err);
             setError(getUserFriendlyError(err));
@@ -241,7 +247,7 @@ export function useTasks(type = "all") {
         checked,
         isLoading,
         error,
-        validateTask,
+        // validateTask,
         refresh,
         fetchTasks,
         addTask,
