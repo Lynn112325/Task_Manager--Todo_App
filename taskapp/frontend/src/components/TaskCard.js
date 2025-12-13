@@ -22,7 +22,7 @@ export default function TaskCard({ task }) {
   if (!task) return null;
 
   return (
-    <Card>
+    <Card sx={{ backgroundColor: "#fafafa", flex: 1 }}>
       <CardHeader
         sx={{ height: "60px" }}
         avatar={

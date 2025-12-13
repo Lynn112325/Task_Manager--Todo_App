@@ -35,7 +35,7 @@ export default function RecurringPlanCard({ recurringPlan }) {
     const plan = recurringPlan;
 
     return (
-        <Card variant="outlined" sx={{ mb: 2, backgroundColor: "#fafafa", borderRadius: 2 }}>
+        <Card variant="outlined" sx={{ backgroundColor: "#fafafa" }}>
             <CardContent>
                 {/* Header: Title + Active chip */}
                 <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1.5 }}>

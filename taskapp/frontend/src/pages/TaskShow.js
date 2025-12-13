@@ -90,6 +90,8 @@ export default function TaskShow() {
     }
   }, [task, dialogs, taskId, navigate, notifications]);
 
+
+
   const handleBack = React.useCallback(() => {
     navigate("/tasks/todo");
   }, [navigate]);
@@ -125,22 +127,21 @@ export default function TaskShow() {
         <Card variant="outlined" sx={{ width: "100%", boxShadow: 2, minHeight: "80%" }}>
           <Box sx={{ p: 2 }}>
 
-            <Grid container spacing={2} sx={{ flex: 1 }}>
-              <Grid size={{ xs: 12, sm: 12, md: 7 }} sx={{ width: "100%", height: "100%" }}>
-
-                {/* Task Card */}
+            <Grid container spacing={2}>
+              <Grid
+                size={{ xs: 12, sm: 12, md: 7 }}
+                sx={{ display: "flex" }}
+              >
                 <TaskCard task={task} />
-
               </Grid>
 
-              <Grid size={{ xs: 12, sm: 12, md: 5 }} sx={{ width: "100%", height: "100%" }}>
-
-                {/* Recurring Plan */}
+              <Grid
+                size={{ xs: 12, sm: 12, md: 5 }}
+                sx={{ display: "flex", flexDirection: "column" }}
+              >
                 <RecurringPlanCard recurringPlan={recurringPlan} />
-
-                {/* Habit Log */}
+                <Grid sx={{ height: 14 }} />
                 <HabitStatsCard habitStats={habitStats} />
-
               </Grid>
             </Grid>
 
@@ -189,7 +190,7 @@ export default function TaskShow() {
 
           <Button
             variant="contained"
-            // onClick={handleCreateClick}
+            // onClick={handleTemplateAdd}
             startIcon={<AddIcon />}
           >
             Add task Template

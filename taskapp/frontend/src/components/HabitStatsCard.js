@@ -32,7 +32,7 @@ const HabitStatsCard = ({ habitStats }) => {
     }
 
     return (
-        <Card variant="outlined" sx={{ mb: 2, backgroundColor: "#fafafa" }}>
+        <Card variant="outlined" sx={{ backgroundColor: "#fafafa" }}>
             <CardContent>
                 <Typography variant="h6" sx={{ mb: 1 }}>
                     Habit Log Summary
