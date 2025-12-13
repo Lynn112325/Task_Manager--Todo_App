@@ -7,13 +7,10 @@ import java.util.Optional;
 import org.springframework.stereotype.Service;
 
 import com.taskmanager.taskapp.habitlog.HabitLogRepository;
-import com.taskmanager.taskapp.habitlog.HabitLogStatsDto;
-import com.taskmanager.taskapp.recurringplan.RecurringPlanDto;
 import com.taskmanager.taskapp.recurringplan.RecurringPlanRepository;
+import com.taskmanager.taskapp.recurringplan.RecurringPlanService;
 import com.taskmanager.taskapp.security.MyUserDetailsService;
-import com.taskmanager.taskapp.target.TargetDto;
 import com.taskmanager.taskapp.target.TargetRepository;
-import com.taskmanager.taskapp.task.dto.TaskDetailDto;
 import com.taskmanager.taskapp.task.dto.TaskDto;
 import com.taskmanager.taskapp.user.User;
 import com.taskmanager.taskapp.user.UserRepository;
@@ -30,6 +27,7 @@ public class TaskService {
     private final HabitLogRepository habitLogRepository;
     private final RecurringPlanRepository recurringPlanRepository;
     private final TargetRepository targetRepository;
+    private final RecurringPlanService recurringPlanService;
 
     // transform Task to TaskDto
     private TaskDto toDto(Task task) {
@@ -69,32 +67,14 @@ public class TaskService {
                 .toList();
     }
 
-    // get taskDetail by taskId and check owner
-    public TaskDetailDto getTaskDetailById(Long taskId) {
+    // get task by taskId and check owner
+    public TaskDto getTaskById(Long taskId) {
         Long currentUserId = myUserDetailsService.getCurrentUserId();
 
-        // 1. Task
         TaskDto taskDto = taskRepository.findTaskDtoByIdAndUserId(taskId, currentUserId)
                 .orElseThrow(() -> new RuntimeException("Task not found or you don't have access"));
 
-        // 2. RecurringPlan
-        RecurringPlanDto recurringPlan = taskDto.templateId() != null
-                ? recurringPlanRepository.findDtoByTemplateId(taskDto.templateId()).orElse(null)
-                : null;
-
-        // 3. Target
-        TargetDto target = taskDto.templateId() != null
-                ? targetRepository.findDtoByTemplateId(taskDto.templateId()).orElse(null)
-                : null;
-
-        // 4. HabitLog
-        HabitLogStatsDto habitStats = (taskDto.templateId() != null)
-                ? habitLogRepository.findHabitLogStatsByTemplateAndUser(taskDto.templateId(), currentUserId)
-                        .orElse(new HabitLogStatsDto(0L, 0L, 0L))
-                : new HabitLogStatsDto(0L, 0L, 0L);
-
-        // 5. group DTO
-        return new TaskDetailDto(taskDto, recurringPlan, target, habitStats);
+        return taskDto;
     }
 
     // create Task

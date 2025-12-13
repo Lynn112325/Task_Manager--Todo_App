@@ -1,14 +1,17 @@
 package com.taskmanager.taskapp.recurringplan;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import com.taskmanager.taskapp.enums.RecurrenceType;
+import com.taskmanager.taskapp.enums.Weekday;
 import com.taskmanager.taskapp.tasktemplate.TaskTemplate;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -51,8 +54,9 @@ public class RecurringPlan {
     @Column(name = "recurrence_interval", columnDefinition = "INT DEFAULT 1", nullable = false)
     private int recurrenceInterval;
 
-    @Column(name = "recurrence_days")
-    private String recurrenceDays;
+    @ElementCollection
+    @Enumerated(EnumType.STRING)
+    private List<Weekday> recurrenceDays;
 
     private LocalDateTime recurrenceStart;
     private LocalDateTime recurrenceEnd;

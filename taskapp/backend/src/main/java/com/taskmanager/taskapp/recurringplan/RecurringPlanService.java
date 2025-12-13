@@ -53,41 +53,16 @@ public class RecurringPlanService {
                 return toDto(recurringPlan);
         }
 
-        // get recurring plan by taskId
-        public RecurringPlanDto getRecurringPlanByTaskId(Long taskId) {
-
-                // get the recurring plan DTO by taskId
-                RecurringPlanDto dto = recurringPlanRepository.findRecurringPlanDtoByTaskId(taskId)
-                                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                                                "Recurring plan not found for task ID: " + taskId));
-
-                // check ownership
-                Long ownerId = recurringPlanRepository.findUserIdByRecurringPlanId(dto.id())
-                                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN,
-                                                "Owner not found for recurring plan ID: " + dto.id()));
-
-                myUserDetailsService.checkOwnership(ownerId);
-                // return dto to the client
-                return dto;
-        }
-
         // get recurring plan by taskTemplateId
-        public RecurringPlanDto getRecurringPlanByTaskTemplateId(Long taskTemplateId) {
+        public RecurringPlanDto getRecurringPlanByTemplateId(Long taskTemplateId) {
 
                 // get the recurring plan DTO by taskTemplateId
-                RecurringPlanDto dto = recurringPlanRepository.findDtoByTemplateId(taskTemplateId)
+                RecurringPlan r = recurringPlanRepository.findByTemplateId(taskTemplateId)
                                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                                                 "Recurring plan not found for TaskTemplate ID: " + taskTemplateId));
 
-                // check ownership
-                Long ownerId = recurringPlanRepository.findUserIdByRecurringPlanId(dto.id())
-                                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN,
-                                                "Owner not found for recurring plan ID: " + dto.id()));
-
-                myUserDetailsService.checkOwnership(ownerId);
-
                 // return dto to the client
-                return dto;
+                return toDto(r);
         }
 
         // get recurring plans by targetId

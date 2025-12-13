@@ -4,10 +4,13 @@ D:\Task_Manager -Todo_App_Pro\taskapp\backend\src\main\java\com\taskmanager\task
 D:\Task_Manager -Todo_App_Pro\taskapp\backend\src\main\java\com\taskmanager\taskapp\enums\HabitLogStatus.java
 D:\Task_Manager -Todo_App_Pro\taskapp\backend\src\main\java\com\taskmanager\taskapp\enums\RecurrenceType.java
 D:\Task_Manager -Todo_App_Pro\taskapp\backend\src\main\java\com\taskmanager\taskapp\enums\Type.java
+D:\Task_Manager -Todo_App_Pro\taskapp\backend\src\main\java\com\taskmanager\taskapp\enums\Weekday.java
 D:\Task_Manager -Todo_App_Pro\taskapp\backend\src\main\java\com\taskmanager\taskapp\GlobalExceptionHandler.java
 D:\Task_Manager -Todo_App_Pro\taskapp\backend\src\main\java\com\taskmanager\taskapp\habitlog\HabitLog.java
+D:\Task_Manager -Todo_App_Pro\taskapp\backend\src\main\java\com\taskmanager\taskapp\habitlog\HabitLogController.java
 D:\Task_Manager -Todo_App_Pro\taskapp\backend\src\main\java\com\taskmanager\taskapp\habitlog\HabitLogDto.java
 D:\Task_Manager -Todo_App_Pro\taskapp\backend\src\main\java\com\taskmanager\taskapp\habitlog\HabitLogRepository.java
+D:\Task_Manager -Todo_App_Pro\taskapp\backend\src\main\java\com\taskmanager\taskapp\habitlog\HabitLogService.java
 D:\Task_Manager -Todo_App_Pro\taskapp\backend\src\main\java\com\taskmanager\taskapp\habitlog\HabitLogStatsDto.java
 D:\Task_Manager -Todo_App_Pro\taskapp\backend\src\main\java\com\taskmanager\taskapp\recurringplan\RecurringPlan.java
 D:\Task_Manager -Todo_App_Pro\taskapp\backend\src\main\java\com\taskmanager\taskapp\recurringplan\RecurringPlanDto.java

@@ -1,7 +1,5 @@
 package com.taskmanager.taskapp.task;
 
-import java.util.List;
-
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,18 +12,26 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.taskmanager.taskapp.api.BaseController;
 import com.taskmanager.taskapp.api.CommonResponse;
+import com.taskmanager.taskapp.habitlog.HabitLogService;
+import com.taskmanager.taskapp.habitlog.HabitLogStatsDto;
+import com.taskmanager.taskapp.recurringplan.RecurringPlanDto;
+import com.taskmanager.taskapp.recurringplan.RecurringPlanService;
+import com.taskmanager.taskapp.target.TargetDto;
+import com.taskmanager.taskapp.target.TargetService;
 import com.taskmanager.taskapp.task.dto.TaskDetailDto;
 import com.taskmanager.taskapp.task.dto.TaskDto;
 
+import lombok.AllArgsConstructor;
+
 @RestController
+@AllArgsConstructor
 @RequestMapping("/api/tasks")
 public class TaskController extends BaseController {
 
     private final TaskService taskService;
-
-    public TaskController(TaskService taskService) {
-        this.taskService = taskService;
-    }
+    private final TargetService targetService;
+    private final RecurringPlanService recurringPlanService;
+    private final HabitLogService habitLogService;
 
     // get all tasks for the current user
     @GetMapping
@@ -36,8 +42,19 @@ public class TaskController extends BaseController {
     // get a specific task by taskId
     @GetMapping("/{id}")
     public ResponseEntity<CommonResponse<?>> getTask(@PathVariable("id") Long taskId) {
-        TaskDetailDto task = taskService.getTaskDetailById(taskId);
-        return ok(task);
+
+        TaskDto task = taskService.getTaskById(taskId);
+        TargetDto target = targetService.getTargetByTemplateId(task.templateId());
+        RecurringPlanDto recurringPlan = recurringPlanService.getRecurringPlanByTemplateId(task.templateId());
+        HabitLogStatsDto habitLogStats = habitLogService.getHabitStatsByTemplateId(task.templateId());
+
+        TaskDetailDto TaskDetailDto = new TaskDetailDto(
+                task,
+                recurringPlan,
+                target,
+                habitLogStats);
+
+        return ok(TaskDetailDto);
     }
 
     // add a new task

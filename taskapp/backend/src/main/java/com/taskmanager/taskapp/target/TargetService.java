@@ -46,4 +46,13 @@ public class TargetService {
         return dto;
     }
 
+    public TargetDto getTargetByTemplateId(Long templateId) {
+
+        TargetDto targetDto = templateId != null
+                ? targetRepository.findDtoByTemplateId(templateId).orElse(null)
+                : null;
+
+        return targetDto;
+    }
+
 }

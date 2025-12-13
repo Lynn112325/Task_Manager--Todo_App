@@ -2,17 +2,6 @@ import { Box, Card, CardContent, Chip, Stack, Typography } from "@mui/material";
 import { Grid } from "@mui/system";
 import dayjs from "dayjs";
 
-// Weekday mapping
-const WEEKDAY_MAP = {
-    MONDAY: "Mon",
-    TUESDAY: "Tue",
-    WEDNESDAY: "Wed",
-    THURSDAY: "Thu",
-    FRIDAY: "Fri",
-    SATURDAY: "Sat",
-    SUNDAY: "Sun",
-};
-
 function formatDate(dateStr) {
     if (!dateStr) return "—";
     return dayjs(dateStr).format("YYYY/MM/DD (ddd)");
@@ -21,9 +10,10 @@ function formatDate(dateStr) {
 // Frequency formatter
 function formatFrequency(plan) {
     const t = plan.recurrenceType;
-    const interval = plan.recurrenceInterval;
 
     if (t === "DAILY") return "Every day";
+
+    const interval = plan.recurrenceInterval;
 
     const base =
         t === "WEEKLY" ? "week"
@@ -31,9 +21,13 @@ function formatFrequency(plan) {
                 : t === "YEARLY" ? "year"
                     : t.toLowerCase();
 
+    let weekDays = "";
+    if (plan.recurrenceDays.length > 0) {
+        weekDays = " on " + plan.recurrenceDays.map(d => d).join(", ")
+    }
     return interval === 1
-        ? `Every ${base}`
-        : `Every ${interval} ${base}s`;
+        ? `Every ${base}` + weekDays
+        : `Every ${interval} ${base}s` + weekDays;
 }
 
 export default function RecurringPlanCard({ recurringPlan }) {
@@ -80,18 +74,6 @@ export default function RecurringPlanCard({ recurringPlan }) {
                             {formatFrequency(plan)}
                         </Typography>
                     </Box>
-
-                    {/* Weekly Days */}
-                    {plan.recurrenceDays && (
-                        <Box>
-                            <Typography variant="caption" color="text.secondary">
-                                Days
-                            </Typography>
-                            <Typography variant="body1">
-                                {plan.recurrenceDays.map(d => WEEKDAY_MAP[d] || d).join(", ")}
-                            </Typography>
-                        </Box>
-                    )}
 
                     {/* Start Date */}
                     <Grid container>

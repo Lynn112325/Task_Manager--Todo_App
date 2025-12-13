@@ -2,7 +2,6 @@ import AddIcon from '@mui/icons-material/Add';
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
-import { Avatar, CardContent, CardHeader, Chip, TextField } from "@mui/material";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -10,17 +9,13 @@ import Card from "@mui/material/Card";
 import CircularProgress from "@mui/material/CircularProgress";
 import Divider from "@mui/material/Divider";
 import Stack from "@mui/material/Stack";
-import Typography from "@mui/material/Typography";
 import { Grid } from "@mui/system";
-import dayjs from "dayjs";
 import * as React from "react";
 import { useNavigate, useParams } from "react-router";
 import HabitStatsCard from "../components/HabitStatsCard.js";
 import PageContainer from "../components/PageContainer";
-import PriorityChip from "../components/PriorityChip.js";
 import RecurringPlanCard from "../components/RecurringPlanCard.js";
-import StyledTextarea from "../components/StyledTextarea.js";
-import TaskTypeIcon from "../components/TaskTypeIcon.js";
+import TaskCard from '../components/TaskCard.js';
 import { useTasks } from "../hooks/task/useTasks.js";
 import { useDialogs } from "../hooks/useDialogs/useDialogs";
 import useNotifications from "../hooks/useNotifications/useNotifications";
@@ -36,10 +31,6 @@ export default function TaskShow() {
   const [task, setTask] = React.useState(null);
   const [recurringPlan, setRecurringPlan] = React.useState(null);
   const [habitStats, setHabitStats] = React.useState([]);
-
-  function formatDateCustom(dateStr) {
-    return dayjs(dateStr).format("YYYY/MM/DD (ddd)");
-  }
 
   const loadData = React.useCallback(async () => {
     try {
@@ -135,100 +126,21 @@ export default function TaskShow() {
           <Box sx={{ p: 2 }}>
 
             <Grid container spacing={2} sx={{ flex: 1 }}>
-              <Grid size={{ xs: 12, sm: 12, md: 7 }} sx={{ width: "100%" }}>
-                <Card sx={{
-                  height: "100%",
-                  transform: "translateY(0)",
-                  "&:hover": {
-                    backgroundColor: "action.selected",
-                  },
-                }}>
-                  <CardHeader
-                    sx={{ height: "60px" }}
-                    avatar={
-                      <Avatar
-                        aria-label="task"
-                        sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                        }}
-                      >
-                        <TaskTypeIcon type={task.type} sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                        }} />
-                      </Avatar>
+              <Grid size={{ xs: 12, sm: 12, md: 7 }} sx={{ width: "100%", height: "100%" }}>
 
-                    }
-                    title={
-                      <Typography variant="h5" component="div" sx={{ fontWeight: 600 }}>
-                        {task.title}
-                      </Typography>
-                    }
-                    subheader={<PriorityChip priority={task.priority} />}
-                    action={
-                      task.targetTitle && (
-                        <Box
-                          sx={{
-                            m: 2,
-                            ms: 1,
-                            me: 1,
-                          }}
-                        >
-                          <Chip
-                            variant="outlined"
-                            label={task.targetTitle}
-                            size="small"
-                            sx={{ flexShrink: 0 }}
-                          />
-                        </Box>
-                      )
-                    }
-                  />
-                  <CardContent>
-                    <Divider sx={{ my: 2 }} />
-                    <StyledTextarea value={task.description} />
+                {/* Task Card */}
+                <TaskCard task={task} />
 
-                    {/* Dates */}
-
-                    <Grid container gap={2} sx={{ mt: 2 }}>
-                      {task.startDate && (
-                        <Grid item xs={12} sm={6} md={6}>
-                          <TextField
-                            label="Start Date"
-                            defaultValue={formatDateCustom(task.startDate)}
-                            size="small"
-                            disabled
-                            fullWidth
-                          />
-                        </Grid>
-                      )}
-
-                      {task.dueDate && (
-                        <Grid item xs={12} sm={6} md={6}>
-                          <TextField
-                            label="Due Date"
-                            defaultValue={formatDateCustom(task.dueDate)}
-                            size="small"
-                            disabled
-                            fullWidth
-                          />
-                        </Grid>
-                      )}
-                    </Grid>
-
-                  </CardContent>
-                </Card>
               </Grid>
 
               <Grid size={{ xs: 12, sm: 12, md: 5 }} sx={{ width: "100%", height: "100%" }}>
 
                 {/* Recurring Plan */}
                 <RecurringPlanCard recurringPlan={recurringPlan} />
+
                 {/* Habit Log */}
                 <HabitStatsCard habitStats={habitStats} />
+
               </Grid>
             </Grid>
 
