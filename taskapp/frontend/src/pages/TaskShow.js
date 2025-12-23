@@ -1,7 +1,7 @@
-import AddIcon from '@mui/icons-material/Add';
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
+import RepeatIcon from '@mui/icons-material/Repeat';
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -9,6 +9,7 @@ import Card from "@mui/material/Card";
 import CircularProgress from "@mui/material/CircularProgress";
 import Divider from "@mui/material/Divider";
 import Stack from "@mui/material/Stack";
+import Tooltip from "@mui/material/Tooltip";
 import { Grid } from "@mui/system";
 import * as React from "react";
 import { useNavigate, useParams } from "react-router";
@@ -23,7 +24,13 @@ import useNotifications from "../hooks/useNotifications/useNotifications";
 export default function TaskShow() {
   const { taskId } = useParams();
   const navigate = useNavigate();
-  const { getTaskDetail, deleteTask, error, isLoading } = useTasks();
+
+  const {
+    deleteTask,
+    getTaskDetail,
+    isLoading,
+    error
+  } = useTasks();
 
   const dialogs = useDialogs();
   const notifications = useNotifications();
@@ -90,8 +97,6 @@ export default function TaskShow() {
     }
   }, [task, dialogs, taskId, navigate, notifications]);
 
-
-
   const handleBack = React.useCallback(() => {
     navigate("/tasks/todo");
   }, [navigate]);
@@ -145,7 +150,6 @@ export default function TaskShow() {
               </Grid>
             </Grid>
 
-            <Divider sx={{ my: 2 }} />
           </Box>
         </Card >
         <Divider sx={{ my: 3 }} />
@@ -188,14 +192,18 @@ export default function TaskShow() {
       actions={
         <Stack direction="row" alignItems="center" spacing={1}>
 
-          <Button
-            variant="contained"
-            // onClick={handleTemplateAdd}
-            startIcon={<AddIcon />}
+          <Tooltip
+            title="Save this task as a template and configure a recurring schedule"
           >
-            Add task Template
-          </Button>
-        </Stack>
+            <Button startIcon={<RepeatIcon />}
+              variant="contained"
+            // onClick={handleTemplateAdd}
+            >
+              Save as Template
+            </Button>
+          </Tooltip>
+
+        </ Stack>
       }
     >
       <Box sx={{ display: "flex", flex: 1, width: "100%" }}>{renderShow}</Box>

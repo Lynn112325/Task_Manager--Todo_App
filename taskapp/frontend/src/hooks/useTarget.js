@@ -6,7 +6,7 @@ import useNotifications from "./useNotifications/useNotifications";
 
 const API_URL = "/api/targets";
 
-export function useTasks(type = "all") {
+export function useTargets(type = "all") {
     const [targets, setTargets] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -14,28 +14,28 @@ export function useTasks(type = "all") {
     const dialogs = useDialogs();
     const notifications = useNotifications();
 
-    // useEffect(() => {
-    //     console.log("Task type in useTasks:", type);
-    // }, [type]);
+    useEffect(() => {
+        console.log("Target type in useTargets:", type);
+    }, [type]);
 
     // ---------------- Fetch All Target ----------------
-    // const fetchTargets = useCallback(async () => {
-    //     try {
-    //         setIsLoading(true);
-    //         const res = await axios.get(API_URL);
-    //         setTasks(res.data);
+    const fetchTargets = useCallback(async () => {
+        try {
+            setIsLoading(true);
+            const res = await axios.get(API_URL);
+            setTargets(res.data);
 
-    //         // set the checked state to the ids of the completed tasks
-    //         setChecked(
-    //             res.data?.filter?.((t) => t.isCompleted)?.map?.((t) => t.id) ?? []
-    //         );
-    //     } catch (err) {
-    //         console.error(err);
-    //         setError(getUserFriendlyError(err));
-    //     } finally {
-    //         setIsLoading(false);
-    //     }
-    // }, []);
+            // set the checked state to the ids of the completed Targets
+            setChecked(
+                res.data?.filter?.((t) => t.isCompleted)?.map?.((t) => t.id) ?? []
+            );
+        } catch (err) {
+            console.error(err);
+            setError(getUserFriendlyError(err));
+        } finally {
+            setIsLoading(false);
+        }
+    }, []);
 
     // ---------------- Get Single Target ----------------
     const getTarget = useCallback(async (id) => {
@@ -52,15 +52,15 @@ export function useTasks(type = "all") {
     }, []);
 
     const refresh = useCallback(() => {
-        fetchTasks();
-    }, [fetchTasks]);
+        fetchTargets();
+    }, [fetchTargets]);
 
     // --------------------- CRUD ----------------------
-    // ---------------- Create Task ----------------
+    // ---------------- Create Target ----------------
     const addTarget = async (data) => {
         try {
             const res = await axios.post(API_URL, data);
-            setTasks((prev) => [...prev, res.data]);
+            setTargets((prev) => [...prev, res.data]);
             return res.data;
         } catch (err) {
             console.error(err);
@@ -72,8 +72,8 @@ export function useTasks(type = "all") {
     // const updateTarget = async (id, data) => {
     //     try {
     //         const res = await axios.patch(`${API_URL}/${id}`, data);
-    //         setTasks((prev) =>
-    //             prev.map((task) => (task.id === id ? res.data : task))
+    //         setTargets((prev) =>
+    //             prev.map((Target) => (Target.id === id ? res.data : Target))
     //         );
     //         return res.data;
     //     } catch (err) {
@@ -82,15 +82,15 @@ export function useTasks(type = "all") {
     //     }
     // };
 
-    // const updateTaskStatus = async (task) => {
-    //     const isChecked = checked.includes(task.id);
+    // const updateTargetStatus = async (Target) => {
+    //     const isChecked = checked.includes(Target.id);
 
     //     // ask for confirmation before marking as completed or not completed
 
     //     const confirmed = await dialogs.confirm(
-    //         `Mark task "${task.title}" as ${isChecked ? "unCompleted" : "completed"}?`,
+    //         `Mark Target "${Target.title}" as ${isChecked ? "unCompleted" : "completed"}?`,
     //         {
-    //             title: "Update Task",
+    //             title: "Update Target",
     //             severity: "info",
     //             okText: "Yes",
     //             cancelText: "Cancel",
@@ -100,31 +100,31 @@ export function useTasks(type = "all") {
     //     if (!confirmed) return; // user cancelled
     //     const isCompleted = !isChecked;
     //     try {
-    //         await updateTask(task.id, { isCompleted });
+    //         await updateTarget(Target.id, { isCompleted });
     //         setChecked((prev) =>
-    //             prev.includes(task.id)
-    //                 ? prev.filter((taskId) => taskId !== task.id)
-    //                 : [...prev, task.id]
+    //             prev.includes(Target.id)
+    //                 ? prev.filter((TargetId) => TargetId !== Target.id)
+    //                 : [...prev, Target.id]
     //         );
 
 
-    //         notifications.show("Task updated successfully.", {
+    //         notifications.show("Target updated successfully.", {
     //             severity: "success",
     //             autoHideDuration: 3000,
     //         });
     //     } catch (err) {
-    //         notifications.show(`Failed to update task: ${getUserFriendlyError(err)}`, {
+    //         notifications.show(`Failed to update Target: ${getUserFriendlyError(err)}`, {
     //             severity: "error",
     //             autoHideDuration: 3000,
     //         });
     //     }
     // };
 
-    // ---------------- Delete Target ----------------
-    // const deleteTask = async (id) => {
+    // ---------------- Delete Targetapp\frontend\src\hooks\useTarget.js ----------------
+    // const deleteTarget = async (id) => {
     //     try {
     //         await axios.delete(`${API_URL}/${id}`);
-    //         setTasks((prev) => prev.filter((task) => task.id !== id));
+    //         setTargets((prev) => prev.filter((Target) => Target.id !== id));
     //     } catch (err) {
     //         console.error(err);
     //         setError(getUserFriendlyError(err));
@@ -132,42 +132,27 @@ export function useTasks(type = "all") {
     // };
     // ----------------- Finish CRUD -----------------
 
-    // ---------------- Filter & Sort ----------------
-    // const sortAndFilter = useCallback(
-    //     (list) => {
-    //         return [...list]
-    //             .filter((t) => type === "all" || t.type === type)
-    //             .sort((a, b) => {
-    //                 // Incomplete tasks first, then by priority desc, then by due date asc
-    //                 if (a.isCompleted !== b.isCompleted) return a.isCompleted ? 1 : -1;
-    //                 if (b.priority !== a.priority) return b.priority - a.priority;
-    //                 return dayjs(a.dueDate).unix() - dayjs(b.dueDate).unix();
-    //             });
-    //     },
-    //     [type]
-    // );
-
     // // Validation follows the [Standard Schema](https://standardschema.dev/).
-    // const validateTask = (task) => {
+    // const validateTarget = (Target) => {
     //     let issues = [];
 
     //     // Title
-    //     if (!task.title || task.title.trim() === "") {
-    //         issues.push({ message: "Task title is required", path: ["title"] });
+    //     if (!Target.title || Target.title.trim() === "") {
+    //         issues.push({ message: "Target title is required", path: ["title"] });
     //     }
 
     //     // Description
-    //     if (!task.description || task.description.trim() === "") {
+    //     if (!Target.description || Target.description.trim() === "") {
     //         issues.push({
-    //             message: "Task description is required",
+    //             message: "Target description is required",
     //             path: ["description"],
     //         });
     //     }
 
     //     // Due date
-    //     if (!task.due_date) {
+    //     if (!Target.due_date) {
     //         issues.push({ message: "Due date is required", path: ["due_date"] });
-    //     } else if (isNaN(Date.parse(task.due_date))) {
+    //     } else if (isNaN(Date.parse(Target.due_date))) {
     //         issues.push({
     //             message: "Due date must be a valid date",
     //             path: ["due_date"],
@@ -175,9 +160,9 @@ export function useTasks(type = "all") {
     //     }
 
     //     // Priority
-    //     if (task.priority == null) {
+    //     if (Target.priority == null) {
     //         issues.push({ message: "Priority is required", path: ["priority"] });
-    //     } else if (![1, 2, 3, 4, 5].includes(task.priority)) {
+    //     } else if (![1, 2, 3, 4, 5].includes(Target.priority)) {
     //         issues.push({
     //             message: "Priority must be between 1 and 5",
     //             path: ["priority"],
@@ -185,7 +170,7 @@ export function useTasks(type = "all") {
     //     }
 
     //     // isCompleted (optional check for boolean)
-    //     // if (task.isCompleted != null && typeof task.isCompleted !== 'boolean') {
+    //     // if (Target.isCompleted != null && typeof Target.isCompleted !== 'boolean') {
     //     //   issues.push({ message: 'Completed must be true or false', path: ['isCompleted'] });
     //     // }
 
@@ -194,14 +179,14 @@ export function useTasks(type = "all") {
 
     // ---------------- Effect ----------------
     useEffect(() => {
-        fetchTasks();
-    }, [fetchTasks]);
+        fetchTargets();
+    }, [fetchTargets]);
 
     return {
         target,
         isLoading,
         error,
-        // validateTask,
+        // validateTarget,
         refresh,
         // fetchTargets,
         // addTarget,

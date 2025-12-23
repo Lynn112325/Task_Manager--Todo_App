@@ -12,14 +12,13 @@ export function useTaskType() {
     };
 
     React.useEffect(() => {
-    const interval = setInterval(() => {
-        const hour = new Date().getHours();
-        setType(hour >= 9 && hour < 17 ? "work" : "all");
-    }, 60 * 1000); // check every minute
+        const interval = setInterval(() => {
+            const hour = new Date().getHours();
+            setType(hour >= 9 && hour < 17 ? "work" : "all");
+        }, 60 * 1000); // check every minute
 
-    return () => clearInterval(interval);
-}, []);
-
+        return () => clearInterval(interval);
+    }, []);
 
     return { type, handleTypeChange };
 }

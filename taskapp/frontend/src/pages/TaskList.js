@@ -16,39 +16,33 @@ import {
 } from "@mui/material";
 import dayjs from "dayjs";
 import * as React from "react";
-import { useCallback } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router";
 import MuiDatePicker from "../components/MuiDatePicker";
 import PageContainer from "../components/PageContainer";
 import TaskListItems from "../components/TaskListItems";
 import TaskTypeSelector from "../components/TaskTypeSelector";
-import { useTasks } from "../hooks/task/useTasks.js";
-import { useTaskType } from "../hooks/task/useTaskType.js";
+import { useTasks } from "../hooks/task/useTasks";
+import { useTaskType } from "../hooks/task/useTaskType";
 
 export default function TaskList() {
   const [selectedDate, setSelectedDate] = React.useState(dayjs());
-  // set checked state to an array of task ids that are completed
-  const [listToggle, setListToggle] = React.useState("upcoming"); // "upcoming" | "overdue"
+  const [listToggle, setListToggle] = React.useState("upcoming");
+
   const { type, handleTypeChange } = useTaskType();
+
   const {
-    tasks,
-    isLoading,
-    error,
+    // tasks,
     checked,
-    refresh,
-    updateTaskStatus,
     getTasksByDate,
     getUpcomingTasks,
     getOverdueTasks,
+    toggleTaskCompletion,
+    isLoading,
+    error,
+    refresh,
   } = useTasks(type);
 
-  // useEffect(() => {
-  //   console.log('Checked tasks (after update):', checked);
-  // }, [checked]);
-
   const handleDateChange = (date) => {
-    // update the selected date state
-    // console.log('Selected date:', date);
     setSelectedDate(date);
   };
 
@@ -56,103 +50,36 @@ export default function TaskList() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
-  // select Tasks by Date
-  const [tasksData, setTasksData] = React.useState({
-    rows: [],
-    rowCount: 0,
-  });
-
-  const [tasks2Data, setTasks2Data] = React.useState({ rows: [], rowCount: 0 });
-
-  // Upcoming Tasks
-  const [tasksUpcomingData, setTasksUpcomingData] = React.useState({
-    rows: [],
-    rowCount: 0,
-  });
-
-  // Overdue Tasks
-  const [tasksOverdueData, setTasksOverdueData] = React.useState({
-    rows: [],
-    rowCount: 0,
-  });
-
-  const loadTasksByDate = React.useCallback(async () => {
-
-    try {
-      const taskData = getTasksByDate(
-        selectedDate // Pass selected date to the getTasks function
-      );
-      // console.log("taskData", taskData);
-      setTasksData({
-        rows: taskData,
-        rowCount: taskData.length,
-      });
-    } catch (taskDataError) {
-      console.log(taskDataError);
-    }
-  }, [selectedDate, tasks]);
-
-  const loadUpcoming = React.useCallback(async () => {
-    try {
-      const taskData = getUpcomingTasks();
-      setTasksUpcomingData({
-        rows: taskData,
-        rowCount: taskData.length,
-      });
-
-    } catch (error) {
-      console.log(error);
-    }
-  }, [tasks]);
-
-  const loadOverdue = React.useCallback(async () => {
-    try {
-      const taskData = getOverdueTasks();
-      setTasksOverdueData({
-        rows: taskData,
-        rowCount: taskData.length,
-      });
-    } catch (error) {
-      console.log(error);
-    }
-  }, [tasks]);
-
-  React.useEffect(() => {
-    loadTasksByDate();
-  }, [tasks, selectedDate]);
-
-  React.useEffect(() => {
-    loadUpcoming();
-    loadOverdue();
-  }, [tasks]);
-
-  const loadData = React.useCallback(async () => {
-    refresh();
-    loadTasksByDate();
-    loadUpcoming();
-    loadOverdue();
-  }, [loadTasksByDate, loadUpcoming, loadOverdue]);
-
-  React.useEffect(() => {
-    setTasks2Data(
-      listToggle === "upcoming" ? tasksUpcomingData : tasksOverdueData
-    );
-  }, [listToggle, tasksUpcomingData, tasksOverdueData]);
-
-  const handleRefresh = React.useCallback(() => {
-    if (!isLoading) {
-      loadData();
-    }
-  }, [isLoading, loadData]);
-
-  // handle TaskStatus (checkbox) toggle
-  const handleTaskStatusToggle = useCallback(
-    (task) => async () => {
-      await updateTaskStatus(task);
-    },
-    [updateTaskStatus]
+  const tasksByDate = React.useMemo(
+    () => getTasksByDate(selectedDate),
+    [getTasksByDate, selectedDate, type]
   );
 
+  const upcomingTasks = React.useMemo(
+    () => getUpcomingTasks(),
+    [getUpcomingTasks, type]
+  );
+
+  const overdueTasks = React.useMemo(
+    () => getOverdueTasks(),
+    [getOverdueTasks, type]
+  );
+
+  const sideListTasks = listToggle === "upcoming"
+    ? upcomingTasks
+    : overdueTasks;
+
+  const handleRefresh = () => {
+    if (!isLoading) refresh();
+  };
+
+
+  const handleTaskStatusToggle = React.useCallback(
+    (task) => {
+      toggleTaskCompletion(task);
+    },
+    [toggleTaskCompletion]
+  );
 
   const handleRowView = React.useCallback(
     (task) => {
@@ -173,28 +100,37 @@ export default function TaskList() {
       breadcrumbs={[{ title: pageTitle }]}
       actions={
         <Stack direction="row" alignItems="center" spacing={1}>
+
           <Tooltip title="Reload data" placement="top">
+
             <div>
+
               <IconButton
                 size="small"
                 aria-label="refresh"
                 onClick={handleRefresh}
               >
+
                 <RefreshIcon />
               </IconButton>
             </div>
           </Tooltip>
-          <TaskTypeSelector type={type} handleTypeChange={handleTypeChange} />
+          <TaskTypeSelector
+            type={type}
+            handleTypeChange={handleTypeChange}
+          />
           <Button
             variant="contained"
             onClick={handleCreateClick}
             startIcon={<AddIcon />}
           >
+
             Create
           </Button>
         </Stack>
       }
     >
+
       <Grid
         container
         columns={12}
@@ -202,6 +138,7 @@ export default function TaskList() {
         columnSpacing={{ xs: 1, sm: 2, md: 3 }}
         sx={{ flex: 1 }}
       >
+
         <Grid
           size={{ xs: 12, md: 7 }}
           sx={{
@@ -211,10 +148,12 @@ export default function TaskList() {
             order: { xs: 1, md: 1 },
           }}
         >
+
           {isLoading ? (
             <CircularProgress sx={{ flexGrow: 1 }} />
           ) : error ? (
             <Box sx={{ flexGrow: 1, width: "100%" }}>
+
               <Alert severity="error">{error.message}</Alert>
             </Box>
           ) : (
@@ -227,6 +166,7 @@ export default function TaskList() {
                 boxShadow: 2,
               }}
             >
+
               <List
                 sx={{
                   width: "100%",
@@ -238,7 +178,9 @@ export default function TaskList() {
                 aria-labelledby="DateTasks"
                 subheader={
                   <ListSubheader component="div" id="DateTasks">
+
                     <Typography variant="subtitle2">
+
                       {dayjs(selectedDate).isSame(dayjs(), "day")
                         ? "Today "
                         : ""}
@@ -247,8 +189,9 @@ export default function TaskList() {
                   </ListSubheader>
                 }
               >
+
                 <TaskListItems
-                  rows={tasksData.rows}
+                  rows={tasksByDate}
                   checked={checked}
                   onToggle={handleTaskStatusToggle}
                   onRowView={handleRowView}
@@ -268,12 +211,12 @@ export default function TaskList() {
         >
           <Box
             sx={{
-              // flexGrow: 1,
               width: "100%",
               border: "1px solid divider",
               borderRadius: "15px",
             }}
           >
+
             <MuiDatePicker onDateChange={handleDateChange} />
           </Box>
           {/* Upcoming tasks / Overdue tasks */}
@@ -285,10 +228,12 @@ export default function TaskList() {
               borderRadius: "15px",
             }}
           >
+
             {isLoading ? (
               <CircularProgress sx={{ flexGrow: 1 }} />
             ) : error ? (
               <Box sx={{ flexGrow: 1, width: "100%" }}>
+
                 <Alert severity="error">{error.message}</Alert>
               </Box>
             ) : (
@@ -302,6 +247,7 @@ export default function TaskList() {
                   height: "100%",
                 }}
               >
+
                 <List
                   sx={{
                     width: "100%",
@@ -314,7 +260,6 @@ export default function TaskList() {
                   subheader={
                     <ListSubheader
                       component="div"
-                      id="Upcoming_Tasks"
                       sx={{
                         display: "flex",
                         alignItems: "center",
@@ -335,12 +280,15 @@ export default function TaskList() {
                         }
                         placement="top"
                       >
+
                         <IconButton
                           size="small"
                           onClick={(e) => {
                             e.currentTarget.blur();
                             requestAnimationFrame(() => {
-                              setListToggle(prev => prev === "upcoming" ? "overdue" : "upcoming");
+                              setListToggle((prev) =>
+                                prev === "upcoming" ? "overdue" : "upcoming"
+                              );
                             });
                           }}
                         >
@@ -351,7 +299,7 @@ export default function TaskList() {
                   }
                 >
                   <TaskListItems
-                    rows={tasks2Data.rows}
+                    rows={sideListTasks}
                     checked={checked}
                     onToggle={handleTaskStatusToggle}
                     onRowView={handleRowView}
@@ -361,7 +309,7 @@ export default function TaskList() {
             )}
           </Box>
         </Grid>
-      </Grid >
-    </PageContainer >
+      </Grid>
+    </PageContainer>
   );
 }

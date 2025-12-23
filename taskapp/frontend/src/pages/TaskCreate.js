@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useNavigate } from 'react-router';
 import PageContainer from '../components/PageContainer';
 import TaskForm from '../components/TaskForm';
-import { useTasks } from "../hooks/task/useTasks.js";
+import { useTasksData } from '../hooks/task/useTasksData.js';
 import { useTaskType } from "../hooks/task/useTaskType.js";
 import useNotifications from '../hooks/useNotifications/useNotifications';
 
@@ -18,7 +18,11 @@ const INITIAL_FORM_VALUES = {
 export default function TaskCreate() {
   const navigate = useNavigate();
   const { type } = useTaskType();
-  const { createTask, validateTask } = useTasks(type);
+  const { createTask } = useTasksData(type);
+
+  const validateTask = (values) => {
+
+  }
 
   const notifications = useNotifications();
 
