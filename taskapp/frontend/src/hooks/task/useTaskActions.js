@@ -20,6 +20,7 @@ export function useTaskActions({ updateTask, deleteTask }) {
             notifications.show("Task updated successfully", {
                 severity: "success",
             });
+
         } catch {
             notifications.show("Failed to update task", {
                 severity: "error",
@@ -27,8 +28,27 @@ export function useTaskActions({ updateTask, deleteTask }) {
         }
     };
 
+    const deleteTaskCompletion = async (task) => {
+        const confirmed = await dialogs.confirm(
+            `Are you sure you want to delete the task "${task.title}"? This action cannot be undone.`
+        );
+        if (!confirmed) return;
+
+        try {
+            await deleteTask(task.id);
+            notifications.show("Task deleted successfully", {
+                severity: "success",
+            });
+        } catch {
+            notifications.show("Failed to delete task", {
+                severity: "error",
+            });
+        }
+    };
+
     return {
         toggleTaskCompletion,
+        deleteTaskCompletion,
     };
 }
 
