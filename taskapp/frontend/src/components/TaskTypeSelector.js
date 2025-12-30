@@ -1,23 +1,33 @@
-
 import { MenuItem, Select } from "@mui/material";
+import { TASK_TYPES_WITH_ALL } from "../utils/taskTypes";
 import TaskTypeIcon from "./TaskTypeIcon";
-export default function TaskTypeSelector({ type, handleTypeChange }) {
+
+export default function TaskTypeSelector({
+    type,
+    handleTypeChange,
+}) {
+    const types = TASK_TYPES_WITH_ALL;
+
     return (
         <Select
-            value={type}
+            name="type"
+            label="Type"
             onChange={handleTypeChange}
+            value={type}
             displayEmpty
-            inputProps={{ 'aria-label': 'Without label' }}
+            inputProps={{ "aria-label": "Task type selector" }}
             sx={{ flex: 1, minWidth: 150 }}
         >
-            <MenuItem value="all">
-                <TaskTypeIcon type="all" />
-                <em>All</em>
-            </MenuItem>
-            <MenuItem value={"work"}><TaskTypeIcon type="work"/>Work</MenuItem>
-            <MenuItem value={"life"}><TaskTypeIcon type="life"/>Life</MenuItem>
-            <MenuItem value={"study"}><TaskTypeIcon type="study"/>Study</MenuItem>
-            <MenuItem value={"shopping"}><TaskTypeIcon type="shopping"/>shopping</MenuItem>
+            {types.map((taskType) => (
+                <MenuItem key={taskType} value={taskType}>
+                    <TaskTypeIcon type={taskType} sx={{ mr: 1 }} />
+                    {capitalize(taskType)}
+                </MenuItem>
+            ))}
         </Select>
     );
+}
+
+function capitalize(str) {
+    return str.charAt(0).toUpperCase() + str.slice(1);
 }

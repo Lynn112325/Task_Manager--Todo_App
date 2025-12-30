@@ -33,15 +33,6 @@ export function useTaskSelectors(tasks, type = "all") {
             t => dayjs(t.dueDate).isAfter(dayjs(), "day")
         );
 
-    function toListData(rows = []) {
-        return {
-            rows,
-            rowCount: rows.length,
-        };
-    }
-
-    console.log(tasksFiltered);
-
     return {
         tasksFiltered,
         getTasksByDate,

@@ -8,7 +8,6 @@ export function useTaskType() {
 
     const handleTypeChange = (event) => {
         setType(event.target.value);
-        console.log("Task type changed to:", event.target.value);
     };
 
     React.useEffect(() => {

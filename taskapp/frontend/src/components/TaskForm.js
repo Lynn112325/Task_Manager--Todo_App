@@ -1,6 +1,7 @@
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
+import Divider from '@mui/material/Divider';
 import FormControl from "@mui/material/FormControl";
 import FormGroup from "@mui/material/FormGroup";
 import FormHelperText from "@mui/material/FormHelperText";
@@ -17,6 +18,11 @@ import dayjs from "dayjs";
 import PropTypes from "prop-types";
 import * as React from "react";
 import { useNavigate } from "react-router";
+import { PRIORITIES } from "../utils/priority.js";
+import { TASK_TYPES } from "../utils/taskTypes.js";
+import StyledTextarea from "./StyledTextarea";
+import TaskTypeIcon from "./TaskTypeIcon";
+
 function TaskForm(props) {
   const {
     formState,
@@ -28,6 +34,7 @@ function TaskForm(props) {
   } = props;
 
   const formValues = formState.values;
+  console.log("formValues:", formValues);
   const formErrors = formState.errors;
   const [dateErrors, setDateErrors] = React.useState({
     start_date: "",
@@ -135,12 +142,12 @@ function TaskForm(props) {
       noValidate
       autoComplete="off"
       onReset={handleReset}
-      sx={{ width: "100%" }}
+      sx={{ width: "100%", height: "100%" }}
     >
-      <FormGroup>
-        <Grid container spacing={2} sx={{ mb: 2, width: "100%" }}>
+      <FormGroup sx={{ minHeight: "460px" }}>
+        <Grid container spacing={1} sx={{ mb: 2, width: "100%" }}>
           {/* Title */}
-          <Grid size={{ xs: 12, sm: 4 }} sx={{ display: "flex" }}>
+          <Grid size={{ xs: 12, sm: 6 }} sx={{ display: "flex" }}>
             <TextField
               value={formValues.title ?? ""}
               onChange={handleTextFieldChange}
@@ -152,28 +159,6 @@ function TaskForm(props) {
             />
           </Grid>
 
-          {/* Target */}
-          <Grid size={{ xs: 12, sm: 3 }} sx={{ display: "flex" }}>
-            <FormControl error={!!formErrors.target} fullWidth>
-              <InputLabel id="task-priority-label">Target</InputLabel>
-              <Select
-                value={formValues.target ?? ""}
-                onChange={handleSelectFieldChange}
-                labelId="task-priority-label"
-                name="target"
-                label="Target"
-                defaultValue=""
-                fullWidth
-              >
-                <MenuItem value={1}></MenuItem>
-                <MenuItem value={2}>Medium</MenuItem>
-                <MenuItem value={3}>High</MenuItem>
-                <MenuItem value={4}>Critical</MenuItem>
-                <MenuItem value={5}>Urgent</MenuItem>
-              </Select>
-              <FormHelperText>{formErrors.target ?? " "}</FormHelperText>
-            </FormControl>
-          </Grid>
           {/* Priority */}
           <Grid size={{ xs: 12, sm: 3 }} sx={{ display: "flex" }}>
             <FormControl error={!!formErrors.priority} fullWidth>
@@ -184,38 +169,37 @@ function TaskForm(props) {
                 labelId="task-priority-label"
                 name="priority"
                 label="Priority"
-                defaultValue=""
-                fullWidth
               >
-                <MenuItem value={1}>Low</MenuItem>
-                <MenuItem value={2}>Medium</MenuItem>
-                <MenuItem value={3}>High</MenuItem>
-                <MenuItem value={4}>Critical</MenuItem>
-                <MenuItem value={5}>Urgent</MenuItem>
+                {PRIORITIES.map((p) => (
+                  <MenuItem key={p.value} value={p.value} >
+                    {p.label}
+                  </MenuItem>
+                ))}
               </Select>
               <FormHelperText>{formErrors.priority ?? " "}</FormHelperText>
             </FormControl>
           </Grid>
-          {/* Priority */}
-          <Grid size={{ xs: 12, sm: 2 }} sx={{ display: "flex" }}>
-            <FormControl error={!!formErrors.priority} fullWidth>
-              <InputLabel id="task-priority-label">Priority</InputLabel>
+          {/* Type */}
+          <Grid size={{ xs: 12, sm: 3 }} sx={{ display: "flex" }}>
+            <FormControl error={!!formErrors.type} fullWidth>
+              <InputLabel id="task-type-label">Type</InputLabel>
               <Select
-                value={formValues.priority ?? ""}
+                name="type"
+                label="Type"
                 onChange={handleSelectFieldChange}
-                labelId="task-priority-label"
-                name="priority"
-                label="Priority"
-                defaultValue=""
-                fullWidth
+                value={formValues.type}
+                displayEmpty
+                inputProps={{ "aria-label": "Task type selector" }}
+                sx={{ flex: 1, minWidth: 150 }}
               >
-                <MenuItem value={1}>Low</MenuItem>
-                <MenuItem value={2}>Medium</MenuItem>
-                <MenuItem value={3}>High</MenuItem>
-                <MenuItem value={4}>Critical</MenuItem>
-                <MenuItem value={5}>Urgent</MenuItem>
+                {TASK_TYPES.map((taskType) => (
+                  <MenuItem key={taskType} value={taskType}>
+                    <TaskTypeIcon type={taskType} sx={{ mr: 1 }} />
+                    {taskType}
+                  </MenuItem>
+                ))}
               </Select>
-              <FormHelperText>{formErrors.priority ?? " "}</FormHelperText>
+              <FormHelperText>{formErrors.type ?? " "}</FormHelperText>
             </FormControl>
           </Grid>
 
@@ -223,7 +207,9 @@ function TaskForm(props) {
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <Grid size={{ xs: 12, sm: 6 }} sx={{ display: "flex", mb: 2 }}>
               <DatePicker
+                name="start_date"
                 label="Start Date"
+                // defaultValue={}
                 value={
                   formValues.start_date ? dayjs(formValues.start_date) : null
                 }
@@ -255,24 +241,23 @@ function TaskForm(props) {
               />
             </Grid>
           </LocalizationProvider>
-        </Grid>
-        {/* Description */}
-        <Grid size={{ xs: 12, sm: 12 }} sx={{ display: "flex" }}>
-          <TextField
-            multiline
-            maxRows={4}
-            value={formValues.description ?? ""}
-            onChange={handleTextFieldChange}
-            name="description"
-            label="Description"
-            error={!!formErrors.description}
-            helperText={formErrors.description ?? " "}
-            fullWidth
-          />
+          {/* Description */}
+          <Grid size={{ xs: 12, sm: 12 }} sx={{ display: "flex" }}>
+            <StyledTextarea
+              value={formValues.description ?? ""}
+              readOnly={false}
+              onChange={handleTextFieldChange}
+              name="description"
+              label="Description"
+              error={!!formErrors.description}
+              helperText={formErrors.description ?? " "}
+              fullWidth
+            />
+          </Grid>
         </Grid>
       </FormGroup>
-
-      <Stack direction="row" spacing={2} justifyContent="space-between">
+      <Divider />
+      <Stack direction="row" spacing={2} justifyContent="space-between" sx={{ mt: 2 }}>
         <Button
           variant="contained"
           startIcon={<ArrowBackIcon />}
@@ -280,15 +265,28 @@ function TaskForm(props) {
         >
           Back
         </Button>
-        <Button
-          type="submit"
-          variant="contained"
-          size="large"
-          loading={isSubmitting}
-        >
-          {submitButtonLabel}
-        </Button>
+
+        <Stack direction="row" spacing={2}>
+          <Button
+            variant="outlined"
+            size="large"
+            type="reset"
+            onClick={handleReset}
+          >
+            Reset
+          </Button>
+
+          <Button
+            type="submit"
+            variant="contained"
+            size="large"
+            loading={isSubmitting}
+          >
+            {submitButtonLabel}
+          </Button>
+        </Stack>
       </Stack>
+
     </Box>
   );
 }
@@ -302,7 +300,7 @@ TaskForm.propTypes = {
       type: PropTypes.string,
       start_date: PropTypes.string,
       due_date: PropTypes.string,
-      priority: PropTypes.number,
+      priority: PropTypes.string,
     }).isRequired,
     values: PropTypes.shape({
       title: PropTypes.string,

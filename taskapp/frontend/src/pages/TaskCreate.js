@@ -2,27 +2,26 @@ import * as React from 'react';
 import { useNavigate } from 'react-router';
 import PageContainer from '../components/PageContainer';
 import TaskForm from '../components/TaskForm';
-import { useTasksData } from '../hooks/task/useTasksData.js';
+import { useTasks } from "../hooks/task/useTasks";
 import { useTaskType } from "../hooks/task/useTaskType.js";
+import { validateTask } from '../hooks/task/validateTask.js';
 import useNotifications from '../hooks/useNotifications/useNotifications';
 
 const INITIAL_FORM_VALUES = {
   title: '',
   description: '',
   dueDate: null,
-  priority: 2,
-  type: 'life',
+  priority: null,
+  type: "",
   isCompleted: false,
 };
 
 export default function TaskCreate() {
   const navigate = useNavigate();
   const { type } = useTaskType();
-  const { createTask } = useTasksData(type);
-
-  const validateTask = (values) => {
-
-  }
+  const {
+    createTask,
+  } = useTasks(type);
 
   const notifications = useNotifications();
 
@@ -78,7 +77,7 @@ export default function TaskCreate() {
       return;
     }
     setFormErrors({});
-
+    console.log('Submitting form with values:', formValues);
     try {
       await createTask(formValues);
       notifications.show('Task created successfully.', {

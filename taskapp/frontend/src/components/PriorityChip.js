@@ -1,5 +1,5 @@
 import { Chip } from "@mui/material";
-import { getPriorityColor, getPriorityLabel } from "../utils/priority";
+import { getPriorityChipColor, getPriorityLabel } from "../utils/priority";
 
 export default function PriorityChip({ priority }) {
     return (
@@ -10,7 +10,7 @@ export default function PriorityChip({ priority }) {
             }
             size="small"
             color={
-                getPriorityColor(priority)
+                getPriorityChipColor(priority)
             }
             sx={{ flexShrink: 0 }}
         />
