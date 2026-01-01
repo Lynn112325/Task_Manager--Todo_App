@@ -9,6 +9,7 @@ export function useTasks(type = "all") {
         isLoading,
         error,
         getTaskDetail,
+        createTask,
         updateTask,
         deleteTask,
         fetchTasks,
@@ -16,6 +17,7 @@ export function useTasks(type = "all") {
 
     // Actions
     const actions = useTaskActions({
+        createTask,
         updateTask,
         deleteTask,
     });

@@ -34,6 +34,14 @@ export function useTasksData(type = "all") {
         }
     };
 
+    const createTask = async (data) => {
+        const res = await axios.post(API_URL, data);
+        const created = res.data.data;
+        console.log("Created task:", created);
+        setTasks(prev => [...prev, created]);
+        return created;
+    };
+
     const updateTask = async (id, data) => {
         const res = await axios.patch(`${API_URL}/${id}`, data);
         const updated = res.data.data;
@@ -44,6 +52,9 @@ export function useTasksData(type = "all") {
     };
 
     const deleteTask = async (id) => {
+        if (!id) {
+            throw new Error("deleteTask called without id");
+        }
         await axios.delete(`${API_URL}/${id}`);
         setTasks(prev => prev.filter(t => t.id !== id));
     };
@@ -58,6 +69,7 @@ export function useTasksData(type = "all") {
         error,
         fetchTasks,
         getTaskDetail,
+        createTask,
         updateTask,
         deleteTask,
     };

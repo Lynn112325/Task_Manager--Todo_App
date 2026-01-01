@@ -1,11 +1,9 @@
-import { useNavigate } from "react-router";
 import { useDialogs } from "../useDialogs/useDialogs";
 import useNotifications from "../useNotifications/useNotifications";
 
 export function useTaskActions({ createTask, updateTask, deleteTask }) {
     const dialogs = useDialogs();
     const notifications = useNotifications();
-    const navigate = useNavigate();
 
     const toggleTaskCompletion = async (task) => {
         const confirmed = await dialogs.confirm(
@@ -68,11 +66,11 @@ export function useTaskActions({ createTask, updateTask, deleteTask }) {
                 autoHideDuration: 3000,
             });
 
-            navigate(`/tasks/${createdTask.id}`);
+            return createdTask;
         } catch (createError) {
             notifications.show(
                 `Failed to create task. Reason: ${createError.message}`,
-                { severity: 'error', autoHideDuration: 3000 },
+                { severity: "error", autoHideDuration: 3000 }
             );
             throw createError;
         }
