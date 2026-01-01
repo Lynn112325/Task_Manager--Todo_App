@@ -40,8 +40,8 @@ export function validateTask(task) {
         const due = dayjs(task.dueDate).startOf("day");
         const today = dayjs().startOf("day");
 
-        if (start.isBefore(today)) {
-            pushIssue(issues, "startDate", "Start date cannot be in the past");
+        if (start.isAfter(today)) {
+            pushIssue(issues, "startDate", "Start date cannot be in the future");
         }
 
         if (due.isBefore(start)) {

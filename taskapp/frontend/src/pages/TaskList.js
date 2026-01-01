@@ -110,7 +110,6 @@ export default function TaskList() {
                 aria-label="refresh"
                 onClick={handleRefresh}
               >
-
                 <RefreshIcon />
               </IconButton>
             </div>
@@ -124,7 +123,6 @@ export default function TaskList() {
             onClick={handleCreateClick}
             startIcon={<AddIcon />}
           >
-
             Create
           </Button>
         </Stack>
