@@ -44,6 +44,9 @@ public class TaskController extends BaseController {
     public ResponseEntity<CommonResponse<?>> getTask(@PathVariable("id") Long taskId) {
 
         TaskDto task = taskService.getTaskById(taskId);
+        if (task.templateId() == null) {
+            return ok(new TaskDetailDto(task, null, null, null));
+        }
         TargetDto target = targetService.getTargetByTemplateId(task.templateId());
         RecurringPlanDto recurringPlan = recurringPlanService.getRecurringPlanByTemplateId(task.templateId());
         HabitLogStatsDto habitLogStats = habitLogService.getHabitStatsByTemplateId(task.templateId());
@@ -73,7 +76,7 @@ public class TaskController extends BaseController {
 
     // delete a task
     @DeleteMapping("/{id}")
-    public ResponseEntity<CommonResponse<?>> deleteTask(@PathVariable Long taskId) {
+    public ResponseEntity<CommonResponse<?>> deleteTask(@PathVariable("id") Long taskId) {
         taskService.deleteTask(taskId);
         return ok();
         // 或 ok("deleted");

@@ -26,7 +26,7 @@ export default function TaskShow() {
   const navigate = useNavigate();
 
   const {
-    deleteTask,
+    deleteTaskCompletion,
     getTaskDetail,
     isLoading,
     error
@@ -59,43 +59,15 @@ export default function TaskShow() {
   }, [navigate, taskId]);
 
   const handleTaskDelete = React.useCallback(async () => {
-    if (!task) {
-      return;
-    }
-
-    const confirmed = await dialogs.confirm(
-      `Do you wish to delete Task: ${task.title}?`,
-      {
-        title: `Delete task?`,
-        severity: "error",
-        okText: "Delete",
-        cancelText: "Cancel",
-      }
-    );
-
-    if (confirmed) {
-      // setIsLoading(true);
-      try {
-        await deleteTask(Number(taskId));
-
+    try {
+      const success = await deleteTaskCompletion(task);
+      if (success) {
         navigate("/tasks/todo");
-
-        notifications.show("Task deleted successfully.", {
-          severity: "success",
-          autoHideDuration: 3000,
-        });
-      } catch (deleteError) {
-        notifications.show(
-          `Failed to delete task. Reason:' ${deleteError.message}`,
-          {
-            severity: "error",
-            autoHideDuration: 3000,
-          }
-        );
       }
-      // setIsLoading(false);
+    } catch {
     }
-  }, [task, dialogs, taskId, navigate, notifications]);
+  }, [task, deleteTaskCompletion, navigate]);
+
 
   const handleBack = React.useCallback(() => {
     navigate("/tasks/todo");
@@ -193,7 +165,7 @@ export default function TaskShow() {
         <Stack direction="row" alignItems="center" spacing={1}>
 
           <Tooltip
-            title="Save this task as a template and configure a recurring schedule"
+            title="Reuse this task to quickly create repeated or scheduled tasks"
           >
             <Button startIcon={<RepeatIcon />}
               variant="contained"

@@ -7,7 +7,7 @@ const StyledTextarea = ({
     onChange,
     name,
     readOnly = true,
-    placeholder = "",
+    placeholder = "No description provided.",
 }) => {
     const theme = useTheme();
     const { mode } = useColorScheme();
@@ -39,7 +39,7 @@ const StyledTextarea = ({
                 <TextareaAutosize
                     minRows={4}
                     name={name}
-                    value={value}
+                    value={value || ''}
                     onChange={onChange}
                     readOnly={readOnly}
                     placeholder={placeholder}
