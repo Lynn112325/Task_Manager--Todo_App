@@ -59,7 +59,7 @@ export default function TaskItem({ task, checked, onToggle, onRowView }) {
                                         whiteSpace: "nowrap",
                                     }}
                                 >
-                                    {task.description || ""}
+                                    {task.description || " -- "}
                                 </span>
                             </Tooltip>
 
