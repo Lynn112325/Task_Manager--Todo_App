@@ -1,3 +1,5 @@
+import dayjs from "dayjs";
+
 function required(value) {
     return value == null || String(value).trim() === "";
 }
@@ -18,18 +20,33 @@ export function validateTask(task) {
         pushIssue(issues, "title", "Task title is required");
     }
 
-    // start_date
-    if (required(task.start_date)) {
-        pushIssue(issues, "start_date", "Start date is required");
-    } else if (invalidDate(task.start_date)) {
-        pushIssue(issues, "start_date", "Start date must be a valid date");
+    // startDate
+    if (required(task.startDate)) {
+        pushIssue(issues, "startDate", "Start date is required");
+    } else if (invalidDate(task.startDate)) {
+        pushIssue(issues, "startDate", "Start date must be a valid date");
     }
 
-    // due_date
-    if (required(task.due_date)) {
-        pushIssue(issues, "due_date", "Due date is required");
-    } else if (invalidDate(task.due_date)) {
-        pushIssue(issues, "due_date", "Due date must be a valid date");
+    // dueDate
+    if (required(task.dueDate)) {
+        pushIssue(issues, "dueDate", "Due date is required");
+    } else if (invalidDate(task.dueDate)) {
+        pushIssue(issues, "dueDate", "Due date must be a valid date");
+    }
+
+    // date logic
+    if (task.startDate && task.dueDate) {
+        const start = dayjs(task.startDate).startOf("day");
+        const due = dayjs(task.dueDate).startOf("day");
+        const today = dayjs().startOf("day");
+
+        if (start.isAfter(today)) {
+            pushIssue(issues, "startDate", "Start date cannot be in the future");
+        }
+
+        if (due.isBefore(start)) {
+            pushIssue(issues, "dueDate", "Due date must be after Start date");
+        }
     }
 
     // priority

@@ -1,4 +1,5 @@
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import RefreshIcon from '@mui/icons-material/Refresh';
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Divider from '@mui/material/Divider';
@@ -34,12 +35,8 @@ function TaskForm(props) {
   } = props;
 
   const formValues = formState.values;
-  console.log("formValues:", formValues);
+  // console.log("formValues:", formValues);
   const formErrors = formState.errors;
-  const [dateErrors, setDateErrors] = React.useState({
-    start_date: "",
-    due_date: "",
-  });
 
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
@@ -64,59 +61,9 @@ function TaskForm(props) {
     [onFieldChange]
   );
 
-  const handleNumberFieldChange = React.useCallback(
-    (event) => {
-      onFieldChange(event.target.name, Number(event.target.value));
-    },
-    [onFieldChange]
-  );
-
-  const handleCheckboxFieldChange = React.useCallback(
-    (event, checked) => {
-      onFieldChange(event.target.name, checked);
-    },
-    [onFieldChange]
-  );
-  const handleDateFieldChange = React.useCallback(
-    (fieldName) => (value) => {
-      setDateErrors((prev) => ({ ...prev, [fieldName]: "" }));
-
-      if (value?.isValid()) {
-        if (fieldName === "due_date" && formValues.start_date) {
-          const start = dayjs(formValues.start_date);
-          if (value.isBefore(start, "day")) {
-            setDateErrors((prev) => ({
-              ...prev,
-              due_date: "Due date must be after Start date",
-            }));
-
-            onFieldChange(fieldName, value.toISOString() ?? null);
-            return;
-          }
-        }
-
-        if (fieldName === "start_date" && formValues.due_date) {
-          const due = dayjs(formValues.due_date);
-          if (value.isAfter(due, "day")) {
-            setDateErrors((prev) => ({
-              ...prev,
-              start_date: "Start date must be before Due date",
-            }));
-            onFieldChange(fieldName, value.toISOString() ?? null);
-            return;
-          }
-        }
-
-        setDateErrors((prev) => ({ ...prev, [fieldName]: "" }));
-        onFieldChange(fieldName, value.toISOString() ?? null);
-      } else {
-        // invalid or cleared
-        onFieldChange(fieldName, null);
-        setDateErrors((prev) => ({ ...prev, [fieldName]: "" }));
-      }
-    },
-    [formValues, onFieldChange]
-  );
+  const handleDateFieldChange = (fieldName) => (value) => {
+    onFieldChange(fieldName, value ? value.toISOString() : null);
+  };
 
   const handleSelectFieldChange = React.useCallback(
     (event) => {
@@ -207,18 +154,17 @@ function TaskForm(props) {
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <Grid size={{ xs: 12, sm: 6 }} sx={{ display: "flex", mb: 2 }}>
               <DatePicker
-                name="start_date"
+                name="startDate"
                 label="Start Date"
                 // defaultValue={}
                 value={
-                  formValues.start_date ? dayjs(formValues.start_date) : null
+                  formValues.startDate ? dayjs(formValues.startDate) : null
                 }
-                onChange={handleDateFieldChange("start_date")}
+                onChange={handleDateFieldChange("startDate")}
                 slotProps={{
                   textField: {
-                    error: !!(dateErrors.start_date || formErrors.start_date),
-                    helperText:
-                      dateErrors.start_date ?? formErrors.start_date ?? " ",
+                    error: !!formErrors.startDate,
+                    helperText: formErrors.startDate || " ",
                     fullWidth: true,
                   },
                 }}
@@ -226,15 +172,14 @@ function TaskForm(props) {
             </Grid>
             <Grid size={{ xs: 12, sm: 6 }} sx={{ display: "flex", mb: 2 }}>
               <DatePicker
-                value={formValues.due_date ? dayjs(formValues.due_date) : null}
-                onChange={handleDateFieldChange("due_date")}
-                name="due_date"
+                value={formValues.dueDate ? dayjs(formValues.dueDate) : null}
+                onChange={handleDateFieldChange("dueDate")}
+                name="dueDate"
                 label="Due date"
                 slotProps={{
                   textField: {
-                    error: !!(dateErrors.due_date || formErrors.due_date),
-                    helperText:
-                      dateErrors.due_date ?? formErrors.due_date ?? " ",
+                    error: !!formErrors.dueDate,
+                    helperText: formErrors.dueDate || " ",
                     fullWidth: true,
                   },
                 }}
@@ -249,6 +194,7 @@ function TaskForm(props) {
               onChange={handleTextFieldChange}
               name="description"
               label="Description"
+              placeholder=""
               error={!!formErrors.description}
               helperText={formErrors.description ?? " "}
               fullWidth
@@ -273,7 +219,7 @@ function TaskForm(props) {
             type="reset"
             onClick={handleReset}
           >
-            Reset
+            <RefreshIcon />
           </Button>
 
           <Button
@@ -298,16 +244,16 @@ TaskForm.propTypes = {
       title: PropTypes.string,
       description: PropTypes.string,
       type: PropTypes.string,
-      start_date: PropTypes.string,
-      due_date: PropTypes.string,
+      startDate: PropTypes.string,
+      dueDate: PropTypes.string,
       priority: PropTypes.string,
     }).isRequired,
     values: PropTypes.shape({
       title: PropTypes.string,
       description: PropTypes.string,
       type: PropTypes.string,
-      start_date: PropTypes.string,
-      due_date: PropTypes.string,
+      startDate: PropTypes.string,
+      dueDate: PropTypes.string,
       priority: PropTypes.number,
     }).isRequired,
   }).isRequired,
