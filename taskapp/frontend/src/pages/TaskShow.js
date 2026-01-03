@@ -1,7 +1,10 @@
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import RepeatIcon from '@mui/icons-material/Repeat';
+import ScheduleIcon from '@mui/icons-material/Schedule';
+import { Chip } from "@mui/material";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -18,8 +21,6 @@ import PageContainer from "../components/PageContainer";
 import RecurringPlanCard from "../components/RecurringPlanCard.js";
 import TaskCard from '../components/TaskCard.js';
 import { useTasks } from "../hooks/task/useTasks.js";
-import { useDialogs } from "../hooks/useDialogs/useDialogs";
-import useNotifications from "../hooks/useNotifications/useNotifications";
 
 export default function TaskShow() {
   const { taskId } = useParams();
@@ -32,49 +33,48 @@ export default function TaskShow() {
     error
   } = useTasks();
 
-  const dialogs = useDialogs();
-  const notifications = useNotifications();
+  const [taskData, setTaskData] = React.useState(null);
 
-  const [task, setTask] = React.useState(null);
-  const [recurringPlan, setRecurringPlan] = React.useState(null);
-  const [habitStats, setHabitStats] = React.useState([]);
+  const task = taskData?.task;
+  const recurringPlan = taskData?.recurringPlan;
+  const habitStats = taskData?.habitStats;
 
   const loadData = React.useCallback(async () => {
     try {
-      const taskData = await getTaskDetail(Number(taskId));
-      setTask(taskData.task);
-      setRecurringPlan(taskData.recurringPlan || null);
-      setHabitStats(taskData.habitStats || []);
-    } catch (showDataError) {
-      console.error("Failed to load task:", showDataError);
+      const data = await getTaskDetail(Number(taskId));
+      setTaskData(data);
+    } catch (err) {
+      console.error("Failed to load task:", err);
     }
-  }, [taskId]);
+  }, [taskId, getTaskDetail]);
 
   React.useEffect(() => {
     loadData();
   }, [loadData]);
 
   const handleTaskEdit = React.useCallback(() => {
-    navigate(`/tasks/${taskId}/edit`);
-  }, [navigate, taskId]);
+    if (!taskData?.task) return;
+
+    navigate(`/tasks/${taskId}/edit`, {
+      state: { task: task },
+    });
+  }, [navigate, taskId, taskData]);
 
   const handleTaskDelete = React.useCallback(async () => {
-    try {
-      const success = await deleteTaskCompletion(task);
-      if (success) {
-        navigate("/tasks/todo");
-      }
-    } catch {
-    }
-  }, [task, deleteTaskCompletion, navigate]);
+    if (!taskData?.task) return;
 
+    const success = await deleteTaskCompletion(task);
+    if (success) {
+      navigate("/tasks/todo");
+    }
+  }, [taskData, deleteTaskCompletion, navigate]);
 
   const handleBack = React.useCallback(() => {
     navigate("/tasks/todo");
   }, [navigate]);
 
   const renderShow = React.useMemo(() => {
-    if (isLoading) {
+    if (!taskData && isLoading) {
       return (
         <Box
           sx={{
@@ -109,7 +109,7 @@ export default function TaskShow() {
                 size={{ xs: 12, sm: 12, md: 7 }}
                 sx={{ display: "flex" }}
               >
-                <TaskCard task={task} />
+                <TaskCard task={taskData.task} />
               </Grid>
 
               <Grid
@@ -121,7 +121,16 @@ export default function TaskShow() {
                 <HabitStatsCard habitStats={habitStats} />
               </Grid>
             </Grid>
-
+            <Stack direction="row" justifyContent="flex-end" sx={{ mt: 2 }}>
+              <Chip
+                size="medium"
+                icon={task.isCompleted ? <CheckCircleIcon /> : <ScheduleIcon />}
+                label={task.isCompleted ? "Completed" : "In Progress"}
+                color={task.isCompleted ? "success" : "warning"}
+                variant="outlined"
+              // sx={{ boxShadow: 1 }}
+              />
+            </Stack>
           </Box>
         </Card >
         <Divider sx={{ my: 3 }} />
@@ -135,7 +144,7 @@ export default function TaskShow() {
           </Button>
           <Stack direction="row" spacing={2}>
             <Button
-              variant="contained"
+              variant="outlined"
               startIcon={<EditIcon />}
               onClick={handleTaskEdit}
             >
