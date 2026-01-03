@@ -39,31 +39,39 @@ public class TaskController extends BaseController {
         return ok(taskService.getTasksForCurrentUser());
     }
 
-    // get a specific task by taskId
     @GetMapping("/{id}")
-    public ResponseEntity<CommonResponse<?>> getTask(@PathVariable("id") Long taskId) {
-
-        TaskDto task = taskService.getTaskById(taskId);
-        if (task.templateId() == null) {
-            return ok(new TaskDetailDto(task, null, null, null));
-        }
-        TargetDto target = targetService.getTargetByTemplateId(task.templateId());
-        RecurringPlanDto recurringPlan = recurringPlanService.getRecurringPlanByTemplateId(task.templateId());
-        HabitLogStatsDto habitLogStats = habitLogService.getHabitStatsByTemplateId(task.templateId());
-
-        TaskDetailDto TaskDetailDto = new TaskDetailDto(
-                task,
-                recurringPlan,
-                target,
-                habitLogStats);
-
-        return ok(TaskDetailDto);
+    public ResponseEntity<CommonResponse<?>> getTask(
+            @PathVariable Long id) {
+        TaskDto task = taskService.getTaskById(id);
+        return ok(task);
     }
 
     // add a new task
     @PostMapping
     public ResponseEntity<CommonResponse<?>> createTask(@RequestBody Task task) {
         return created(taskService.createTask(task));
+    }
+
+    @GetMapping("/{id}/detail")
+    public ResponseEntity<CommonResponse<?>> getTaskDetail(
+            @PathVariable Long id) {
+        TaskDto task = taskService.getTaskById(id);
+
+        if (task.templateId() == null) {
+            return ok(new TaskDetailDto(task, null, null, null));
+        }
+
+        TargetDto target = targetService.getTargetByTemplateId(task.templateId());
+
+        RecurringPlanDto recurringPlan = recurringPlanService.getRecurringPlanByTemplateId(task.templateId());
+
+        HabitLogStatsDto habitLogStats = habitLogService.getHabitStatsByTemplateId(task.templateId());
+
+        return ok(new TaskDetailDto(
+                task,
+                recurringPlan,
+                target,
+                habitLogStats));
     }
 
     // update an existing task
