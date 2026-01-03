@@ -9,6 +9,7 @@ export function useTasks(type = "all") {
         isLoading,
         error,
         getTaskDetail,
+        getTask,
         createTask,
         updateTask,
         deleteTask,

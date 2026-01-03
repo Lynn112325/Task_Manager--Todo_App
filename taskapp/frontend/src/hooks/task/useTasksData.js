@@ -22,10 +22,22 @@ export function useTasksData(type = "all") {
         }
     }, []);
 
-    const getTaskDetail = async (id) => {
+    const getTask = async (id) => {
         try {
             setIsLoading(true);
             const res = await axios.get(`${API_URL}/${id}`);
+            return res.data.data;
+        } catch (err) {
+            setError(getUserFriendlyError(err));
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const getTaskDetail = async (id) => {
+        try {
+            setIsLoading(true);
+            const res = await axios.get(`${API_URL}/${id}/detail`);
             return res.data.data;
         } catch (err) {
             setError(getUserFriendlyError(err));
