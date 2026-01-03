@@ -31,9 +31,23 @@ function formatFrequency(plan) {
 }
 
 export default function RecurringPlanCard({ recurringPlan }) {
-    if (!recurringPlan) return null;
     const plan = recurringPlan;
-
+    if (plan == null) {
+        return (
+            <Card variant="outlined" sx={{ backgroundColor: "#fafafa" }}>
+                <CardContent>
+                    <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1.5 }}>
+                        <Typography variant="h6" fontWeight={600}>
+                            Recurring Plan
+                        </Typography>
+                    </Box>
+                    <Typography color="text.secondary">
+                        No recurring plan associated.
+                    </Typography>
+                </CardContent>
+            </Card>
+        );
+    }
     return (
         <Card variant="outlined" sx={{ backgroundColor: "#fafafa" }}>
             <CardContent>
