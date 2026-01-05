@@ -40,6 +40,7 @@ export function useTasks(type = "all") {
 
         // raw access
         refresh: fetchTasks,
+        getTask,
         getTaskDetail,
     };
 }
