@@ -30,7 +30,6 @@ export function useTaskActions({ createTask, updateTask, deleteTask }) {
 
     const deleteTaskCompletion = async (task) => {
 
-
         if (!task?.id) {
             console.error("Invalid task:", task);
             return false;
@@ -76,11 +75,29 @@ export function useTaskActions({ createTask, updateTask, deleteTask }) {
         }
     };
 
+    const editTaskCompletion = async (taskData) => {
+        try {
+            const editedTask = await updateTask(taskData.id, taskData);
+            notifications.show('Task edited successfully.', {
+                severity: 'success',
+                autoHideDuration: 3000,
+            });
+
+            return editedTask;
+        } catch (editError) {
+            notifications.show(`Failed to edit task. Reason: ${editError.message}`, {
+                severity: 'error',
+                autoHideDuration: 3000,
+            });
+            throw editError;
+        }
+    }
 
     return {
         toggleTaskCompletion,
         deleteTaskCompletion,
         createTaskCompletion,
+        editTaskCompletion,
     };
 }
 
