@@ -18,7 +18,9 @@ const StyledTextarea = ({
         : 'rgba(252, 252, 252, 0.79)';
 
     const borderColor = alpha(theme.palette.divider, isDark ? 0.1 : 0.8);
-    const textColor = isDark ? '#fff' : alpha(theme.palette.text.primary, 0.65);
+    const textColor = !readOnly
+        ? '#000000ff'
+        : (isDark ? '#fff' : alpha(theme.palette.text.primary, 0.65));
 
     return (
         <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column' }}>
@@ -50,7 +52,7 @@ const StyledTextarea = ({
                         resize: 'none',
                         backgroundColor: 'transparent',
                         fontFamily: 'inherit',
-                        fontSize: 16,
+                        fontSize: 15,
                         color: textColor,
                         padding: 12,
                         boxSizing: 'border-box',

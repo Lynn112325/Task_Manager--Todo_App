@@ -101,13 +101,20 @@ export default function TaskShow() {
 
     return task ? (
       <Box sx={{ flexGrow: 1, width: "100%" }}>
-        <Card variant="outlined" sx={{ width: "100%", boxShadow: 2, minHeight: "80%" }}>
-          <Box sx={{ p: 2 }}>
+        <Card variant="outlined" sx={{
+          width: "100%", boxShadow: 2, minHeight: "80%", display: 'flex', flexDirection: 'column'
+        }}>
+          <Box sx={{
+            p: 2,
+            flexGrow: 1,
+            display: 'flex',
+            flexDirection: 'column'
+          }}>
 
             <Grid container spacing={2}>
               <Grid
                 size={{ xs: 12, sm: 12, md: 7 }}
-                sx={{ display: "flex" }}
+                sx={{ display: "flex", flexGrow: 1 }}
               >
                 <TaskCard task={taskData.task} />
               </Grid>
@@ -121,14 +128,14 @@ export default function TaskShow() {
                 <HabitStatsCard habitStats={habitStats} />
               </Grid>
             </Grid>
-            <Stack direction="row" justifyContent="flex-end" sx={{ mt: 2 }}>
+
+            <Stack direction="row" justifyContent="flex-end" sx={{ mt: 'auto', pt: 2, pb: 1 }}>
               <Chip
                 size="medium"
                 icon={task.isCompleted ? <CheckCircleIcon /> : <ScheduleIcon />}
                 label={task.isCompleted ? "Completed" : "In Progress"}
                 color={task.isCompleted ? "success" : "warning"}
                 variant="outlined"
-              // sx={{ boxShadow: 1 }}
               />
             </Stack>
           </Box>
