@@ -1,19 +1,9 @@
 import * as React from 'react';
 import { validateTask } from './validateTask';
 
-const EMPTY_TASK = {
-    title: '',
-    description: '',
-    startDate: "",
-    dueDate: "",
-    priority: null,
-    type: "",
-    isCompleted: false,
-};
-
 export default function useTaskForm({ initialValues, onSubmit }) {
     const [formState, setFormState] = React.useState(() => ({
-        values: initialValues ?? EMPTY_TASK,
+        values: initialValues,
         errors: {},
     }));
 
