@@ -3,7 +3,7 @@ import axios from "../../axiosConfig";
 import { useError } from "../useError";
 
 const API_URL = "/api/tasks";
-export function useTasksData(type = "all") {
+export function useTasksData() {
     const [tasks, setTasks] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -22,7 +22,7 @@ export function useTasksData(type = "all") {
         }
     }, []);
 
-    const getTask = async (id) => {
+    const getTask = useCallback(async (id) => {
         try {
             setIsLoading(true);
             const res = await axios.get(`${API_URL}/${id}`);
@@ -32,44 +32,45 @@ export function useTasksData(type = "all") {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, []);
 
-    const getTaskDetail = async (id) => {
+    const getTaskDetail = useCallback(async (id) => {
         try {
             setIsLoading(true);
             const res = await axios.get(`${API_URL}/${id}/detail`);
             return res.data.data;
         } catch (err) {
             setError(getUserFriendlyError(err));
+            throw err;
         } finally {
             setIsLoading(false);
         }
-    };
+    }, []);
 
-    const createTask = async (data) => {
+    const createTask = useCallback(async (data) => {
         const res = await axios.post(API_URL, data);
         const created = res.data.data;
         console.log("Created task:", created);
         setTasks(prev => [...prev, created]);
         return created;
-    };
+    }, []);
 
-    const updateTask = async (id, data) => {
+    const updateTask = useCallback(async (id, data) => {
         const res = await axios.patch(`${API_URL}/${id}`, data);
         const updated = res.data.data;
         setTasks(prev =>
             prev.map(t => (t.id === id ? updated : t))
         );
         return updated;
-    };
+    }, []);
 
-    const deleteTask = async (id) => {
+    const deleteTask = useCallback(async (id) => {
         if (!id) {
             throw new Error("deleteTask called without id");
         }
         await axios.delete(`${API_URL}/${id}`);
         setTasks(prev => prev.filter(t => t.id !== id));
-    };
+    }, []);
 
     useEffect(() => {
         fetchTasks();
@@ -80,6 +81,7 @@ export function useTasksData(type = "all") {
         isLoading,
         error,
         fetchTasks,
+        getTask,
         getTaskDetail,
         createTask,
         updateTask,
