@@ -1,4 +1,7 @@
+import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
+import EventAvailableIcon from '@mui/icons-material/EventAvailable';
 import {
+  alpha,
   Avatar,
   Box,
   Card,
@@ -6,95 +9,155 @@ import {
   CardHeader,
   Chip,
   Divider,
-  TextField,
+  Stack,
   Typography,
+  useTheme
 } from "@mui/material";
-import { Grid } from "@mui/system";
 import dayjs from "dayjs";
 import PriorityChip from "./PriorityChip";
-import StyledTextarea from "./StyledTextarea";
 import TaskTypeIcon from "./TaskTypeIcon";
+
+const DateDisplay = ({ icon, label, date, color = "text.secondary" }) => {
+  if (!date) return null;
+  return (
+    <Box sx={{ flex: 1, display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
+      <Box sx={{
+        color: 'action.active',
+        bgcolor: 'action.hover',
+        p: 1,
+        borderRadius: 1.5,
+        display: 'flex'
+      }}>
+        {icon}
+      </Box>
+      <Box>
+        <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
+          {label}
+        </Typography>
+        <Typography variant="body2" sx={{ fontWeight: 600, color: color }}>
+          {formatDateCustom(date)}
+        </Typography>
+      </Box>
+    </Box>
+  );
+};
 
 function formatDateCustom(dateStr) {
   return dayjs(dateStr).format("YYYY/MM/DD (ddd)");
 }
 export default function TaskCard({ task }) {
+  const theme = useTheme();
   if (!task) return null;
 
   return (
-    <Card sx={{ backgroundColor: "#fafafa", flex: 1 }}>
+    <Card
+      variant="outlined"
+      sx={{
+        backgroundColor: "#fff",
+        flex: 1,
+        borderRadius: 3,
+        border: '1px solid',
+        borderColor: 'divider',
+        display: 'flex',
+        flexDirection: 'column',
+        // pb: 0
+      }}
+    >
       <CardHeader
-        sx={{ height: "60px" }}
+        disableTypography
+        sx={{ pb: 0 }}
         avatar={
           <Avatar
-            aria-label="task"
             sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
+              bgcolor: alpha(theme.palette.primary.main, 0.1),
+              color: theme.palette.primary.main,
+              width: 48,
+              height: 48,
+              borderRadius: 2
             }}
           >
-            <TaskTypeIcon
-              type={task.type}
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            />
+            <TaskTypeIcon type={task.type} sx={{ p: 0.1 }} />
           </Avatar>
         }
-        title={
-          <Typography variant="h5" component="div" sx={{ fontWeight: 600 }}>
-            {task.title}
-          </Typography>
-        }
-        subheader={<PriorityChip priority={task.priority} />}
         action={
           task.type && (
-            <Box sx={{ m: 2, ms: 1, me: 1 }}>
-              <Chip
-                variant="outlined"
-                label={task.type}
-                size="small"
-                sx={{ flexShrink: 0 }}
-              />
-            </Box>
+            <Chip
+              label={task.type}
+              size="small"
+              sx={{
+                fontWeight: 600,
+                borderRadius: 1.5,
+                bgcolor: 'action.selected',
+                color: 'text.primary',
+                m: 1
+              }}
+            />
           )
+        }
+        title={
+          <Box sx={{ mb: 0.5 }}>
+            <Typography variant="h6" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
+              {task.title}
+            </Typography>
+          </Box>
+        }
+        subheader={
+          <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}>
+            <PriorityChip priority={task.priority} />
+          </Box>
         }
       />
 
-      <CardContent>
-        <Divider sx={{ my: 2 }} />
+      <CardContent sx={{ pt: 1 }}>
 
-        <StyledTextarea value={task.description} />
+        {/* Description Area */}
+        <Box
+          sx={{
+            p: 2,
+            borderRadius: 2,
+            bgcolor: 'action.hover',
+            minHeight: '100px',
+            mb: 3
+          }}
+        >
+          <Typography variant="body2" color="text.primary" sx={{ whiteSpace: 'pre-wrap', lineHeight: 1.6 }}>
+            {task.description || "No description provided."}
+          </Typography>
+        </Box>
 
-        {/* Dates */}
-        <Grid container sx={{ mt: 3 }} spacing={2}>
-          {task.startDate && (
-            <Grid size={{ xs: 12, sm: 6, md: 6 }}>
-              <TextField
-                label="Start Date"
-                value={formatDateCustom(task.startDate)}
-                size="small"
-                disabled
-                fullWidth
-              />
-            </Grid>
+        <Stack
+          direction={{ xs: 'column', sm: 'row' }}
+          spacing={2}
+          divider={<Divider orientation="vertical" flexItem sx={{ display: { xs: 'none', sm: 'block' } }} />}
+        >
+          <DateDisplay
+            icon={<CalendarTodayIcon fontSize="small" />}
+            label="Start Date"
+            date={task.startDate}
+          />
+
+          <DateDisplay
+            icon={<EventAvailableIcon fontSize="small" />}
+            label="Due Date"
+            date={task.dueDate}
+            color={task.dueDate ? "text.primary" : "text.secondary"}
+          />
+        </Stack>
+        <Divider sx={{ mt: 2, mb: 1, borderStyle: 'dashed' }} />
+
+        {/* Metadata (Created/Updated) */}
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, flexWrap: 'wrap', mb: -1, pb: 0 }}>
+          {task.createdAt && (
+            <Typography variant="caption" color="text.disabled" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              Created: {dayjs(task.createdAt).format('YYYY-MM-DD HH:mm')}
+            </Typography>
           )}
-
-          {task.dueDate && (
-            <Grid size={{ xs: 12, sm: 6, md: 6 }}>
-              <TextField
-                label="Due Date"
-                value={formatDateCustom(task.dueDate)}
-                size="small"
-                disabled
-                fullWidth
-              />
-            </Grid>
+          {task.updatedAt && (
+            <Typography variant="caption" color="text.disabled" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              Updated: {dayjs(task.updatedAt).format('YYYY-MM-DD HH:mm')}
+            </Typography>
           )}
-        </Grid>
+        </Box>
       </CardContent>
     </Card>
   );

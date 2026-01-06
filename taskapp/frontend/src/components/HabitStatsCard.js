@@ -1,4 +1,4 @@
-import { Card, CardContent, Typography } from "@mui/material";
+import { Box, Card, CardContent, Typography } from "@mui/material";
 import { Grid } from "@mui/system";
 
 const HabitStatsCard = ({ habitStats }) => {
@@ -32,34 +32,51 @@ const HabitStatsCard = ({ habitStats }) => {
     }
 
     return (
-        <Card variant="outlined" sx={{ backgroundColor: "#fafafa" }}>
+        <Card variant="outlined" sx={{ borderRadius: 2 }}>
             <CardContent>
-                <Typography variant="h6" sx={{ mb: 1 }}>
+                <Typography variant="subtitle2" sx={{ mb: 2, color: "text.secondary", fontWeight: 700, letterSpacing: 0.5 }}>
                     Habit Log Summary
                 </Typography>
+
                 <Grid container spacing={2}>
                     {statItems.map((item) => (
-                        <Grid item size={4}
-                            key={item.label}
-                            sx={{
-                                minWidth: 60,
-                                px: 2,
-                                py: 0.5,
-                                border: "1px solid",
-                                borderRadius: 1,
-                                borderColor: item.color,
-                                display: "flex",
-                                justifyContent: "center",
-                                alignItems: "center",
-                                color: item.color,
-                                fontWeight: 500,
-                                backgroundColor: "#fbfbfbd8",
-                            }}
-                        >
-                            <Typography variant="body2">
-                                {item.label}: {item.value}
-                            </Typography>
-                        </Grid >
+                        <Grid item size={4} key={item.label}>
+                            <Box
+                                sx={{
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    alignItems: "flex-start",
+                                    borderLeft: `3px solid ${item.color}`,
+                                    pl: 1.5,
+                                    py: 0.5,
+                                    "&:hover": {
+                                        bgcolor: "action.hover",
+                                        borderRadius: "0 4px 4px 0",
+                                    },
+                                }}
+                            >
+                                <Typography
+                                    variant="caption"
+                                    sx={{
+                                        color: "text.secondary",
+                                        fontWeight: 500,
+                                        lineHeight: 1
+                                    }}
+                                >
+                                    {item.label}
+                                </Typography>
+                                <Typography
+                                    variant="h6"
+                                    sx={{
+                                        color: "text.primary", // 自動適應 Dark/Light Mode 文字顏色
+                                        fontWeight: 700,
+                                        mt: 0.5
+                                    }}
+                                >
+                                    {item.value}
+                                </Typography>
+                            </Box>
+                        </Grid>
                     ))}
                 </Grid>
             </CardContent>
