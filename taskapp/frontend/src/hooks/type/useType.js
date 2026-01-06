@@ -1,6 +1,6 @@
 import React from "react";
 
-export function useTaskType() {
+export function useType() {
     const currentHour = new Date().getHours();
     const initialType = currentHour >= 9 && currentHour < 17 ? "work" : "all";
 

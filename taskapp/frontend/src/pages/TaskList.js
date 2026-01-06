@@ -22,13 +22,13 @@ import PageContainer from "../components/PageContainer";
 import TaskListItems from "../components/TaskListItems";
 import TaskTypeSelector from "../components/TaskTypeSelector";
 import { useTasks } from "../hooks/task/useTasks";
-import { useTaskType } from "../hooks/task/useTaskType";
+import { useType } from "../hooks/type/useType";
 
 export default function TaskList() {
   const [selectedDate, setSelectedDate] = React.useState(dayjs());
   const [listToggle, setListToggle] = React.useState("upcoming");
 
-  const { type, handleTypeChange } = useTaskType();
+  const { type, handleTypeChange } = useType();
 
   const {
     // tasks,

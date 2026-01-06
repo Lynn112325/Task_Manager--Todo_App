@@ -4,7 +4,7 @@ import PageContainer from '../components/PageContainer';
 import TaskForm from '../components/TaskForm';
 import useTaskForm from '../hooks/task/useTaskForm.js';
 import { useTasks } from "../hooks/task/useTasks";
-import { useTaskType } from "../hooks/task/useTaskType.js";
+import { useType } from "../hooks/type/useType.js";
 
 const INITIAL_FORM_VALUES = {
   title: '',
@@ -18,7 +18,7 @@ const INITIAL_FORM_VALUES = {
 
 export default function TaskCreate() {
   const navigate = useNavigate();
-  const { type } = useTaskType();
+  const { type } = useType();
   const {
     createTaskCompletion
   } = useTasks(type);
