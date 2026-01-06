@@ -38,6 +38,7 @@ export default function TaskShow() {
   const task = taskData?.task;
   const recurringPlan = taskData?.recurringPlan;
   const habitStats = taskData?.habitStats;
+  const targetTitle = taskData?.target.title;
 
   const loadData = React.useCallback(async () => {
     try {
@@ -123,7 +124,7 @@ export default function TaskShow() {
                 size={{ xs: 12, sm: 12, md: 5 }}
                 sx={{ display: "flex", flexDirection: "column" }}
               >
-                <RecurringPlanCard recurringPlan={recurringPlan} />
+                <RecurringPlanCard recurringPlan={recurringPlan} targetTitle={targetTitle} />
                 <Grid sx={{ height: 14 }} />
                 <HabitStatsCard habitStats={habitStats} />
               </Grid>
@@ -180,6 +181,7 @@ export default function TaskShow() {
       actions={
         <Stack direction="row" alignItems="center" spacing={1}>
 
+          {/* if no re */}
           <Tooltip
             title="Reuse this task to quickly create repeated or scheduled tasks"
           >

@@ -8,7 +8,8 @@ public record TaskTemplateDto(
         String description,
         int priority,
         LocalDateTime createdAt,
-        LocalDateTime updatedAt
+        LocalDateTime updatedAt,
 
+        String targetTitle
 ) {
 }

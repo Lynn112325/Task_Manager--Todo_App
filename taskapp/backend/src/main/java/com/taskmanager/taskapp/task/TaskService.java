@@ -6,11 +6,7 @@ import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
-import com.taskmanager.taskapp.habitlog.HabitLogRepository;
-import com.taskmanager.taskapp.recurringplan.RecurringPlanRepository;
-import com.taskmanager.taskapp.recurringplan.RecurringPlanService;
 import com.taskmanager.taskapp.security.MyUserDetailsService;
-import com.taskmanager.taskapp.target.TargetRepository;
 import com.taskmanager.taskapp.task.dto.TaskDto;
 import com.taskmanager.taskapp.user.User;
 import com.taskmanager.taskapp.user.UserRepository;
@@ -24,10 +20,6 @@ public class TaskService {
     private final TaskRepository taskRepository;
     private final UserRepository userRepository;
     private final MyUserDetailsService myUserDetailsService;
-    private final HabitLogRepository habitLogRepository;
-    private final RecurringPlanRepository recurringPlanRepository;
-    private final TargetRepository targetRepository;
-    private final RecurringPlanService recurringPlanService;
 
     // transform Task to TaskDto
     private TaskDto toDto(Task task) {
