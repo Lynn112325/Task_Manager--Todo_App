@@ -34,7 +34,7 @@ export default function RecurringPlanCard({ recurringPlan, targetTitle }) {
 
     if (!plan) {
         return (
-            <Card variant="outlined" sx={{ borderRadius: 2, height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+            <Card variant="outlined" sx={{ borderRadius: 2, flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
                 <CardContent sx={{ textAlign: 'center', py: 2 }}>
                     <Typography variant="body2" color="text.secondary">
                         No recurring plan active.

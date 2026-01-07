@@ -39,10 +39,6 @@ public class RecurringPlan {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // @ManyToOne(fetch = FetchType.LAZY)
-    // @JoinColumn(name = "target_id", nullable = false)
-    // private Target target;
-
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "task_template_id")
     private TaskTemplate taskTemplate;
@@ -61,8 +57,13 @@ public class RecurringPlan {
     private LocalDateTime recurrenceStart;
     private LocalDateTime recurrenceEnd;
 
-    @Column(name = "is_active", columnDefinition = "BOOLEAN DEFAULT NULL")
-    private Boolean isActive;
+    @Builder.Default
+    @Column(name = "is_active", nullable = false)
+    private Boolean isActive = true;
+
+    @Builder.Default
+    @Column(name = "is_habit", nullable = false)
+    private Boolean isHabit = false;
 
     private LocalDateTime nextRunAt;
     private LocalDateTime lastGeneratedAt;

@@ -29,6 +29,7 @@ public class RecurringPlanService {
                                 r.getRecurrenceStart(),
                                 r.getRecurrenceEnd(),
                                 r.getIsActive(),
+                                r.getIsHabit(),
                                 r.getNextRunAt(),
                                 r.getLastGeneratedAt(),
                                 r.getCreatedAt(),

@@ -38,7 +38,7 @@ export default function TaskShow() {
   const task = taskData?.task;
   const recurringPlan = taskData?.recurringPlan;
   const habitStats = taskData?.habitStats;
-  const targetTitle = taskData?.target.title;
+  const targetTitle = taskData?.target?.title;
 
   const loadData = React.useCallback(async () => {
     try {
@@ -126,7 +126,7 @@ export default function TaskShow() {
               >
                 <RecurringPlanCard recurringPlan={recurringPlan} targetTitle={targetTitle} />
                 <Grid sx={{ height: 14 }} />
-                <HabitStatsCard habitStats={habitStats} />
+                <HabitStatsCard habitStats={habitStats} isHabit={recurringPlan?.isHabit} />
               </Grid>
             </Grid>
 

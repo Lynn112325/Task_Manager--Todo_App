@@ -7,15 +7,16 @@ import com.taskmanager.taskapp.enums.RecurrenceType;
 import com.taskmanager.taskapp.enums.Weekday;
 
 public record RecurringPlanDto(
-        Long id,
-        RecurrenceType recurrenceType,
-        int recurrenceInterval,
-        List<Weekday> recurrenceDays,
-        LocalDateTime recurrenceStart,
-        LocalDateTime recurrenceEnd,
-        Boolean isActive,
-        LocalDateTime nextRunAt,
-        LocalDateTime lastGeneratedAt,
-        LocalDateTime createdAt,
-        LocalDateTime updatedAt) {
+                Long id,
+                RecurrenceType recurrenceType,
+                int recurrenceInterval,
+                List<Weekday> recurrenceDays,
+                LocalDateTime recurrenceStart,
+                LocalDateTime recurrenceEnd,
+                Boolean isActive,
+                Boolean isHabit,
+                LocalDateTime nextRunAt,
+                LocalDateTime lastGeneratedAt,
+                LocalDateTime createdAt,
+                LocalDateTime updatedAt) {
 }

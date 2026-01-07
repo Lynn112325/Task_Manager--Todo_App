@@ -1,7 +1,7 @@
 import { Box, Card, CardContent, Typography } from "@mui/material";
 import { Grid } from "@mui/system";
 
-const HabitStatsCard = ({ habitStats }) => {
+const HabitStatsCard = ({ isHabit, habitStats }) => {
     const stats = habitStats || { doneCount: 0, skippedCount: 0, missedCount: 0 };
 
     const statItems = [
@@ -9,6 +9,18 @@ const HabitStatsCard = ({ habitStats }) => {
         { label: "Skipped", value: stats.skippedCount, color: "#ff9800" },
         { label: "Missed", value: stats.missedCount, color: "#f44336" },
     ];
+
+    if (!isHabit) {
+        return (
+            <Card variant="outlined" sx={{ borderRadius: 2, flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                <CardContent sx={{ textAlign: 'center', py: 2 }}>
+                    <Typography variant="body2" color="text.secondary">
+                        This task is not set as a habit.
+                    </Typography>
+                </CardContent>
+            </Card>
+        );
+    }
 
     const hasNoData =
         !habitStats ||
@@ -18,13 +30,10 @@ const HabitStatsCard = ({ habitStats }) => {
 
     if (hasNoData) {
         return (
-            <Card variant="outlined" sx={{ backgroundColor: "#fafafa" }}>
-                <CardContent>
-                    <Typography variant="h6" sx={{ mb: 1 }}>
-                        Habit Log
-                    </Typography>
-                    <Typography color="text.secondary">
-                        No habit records found yet.
+            <Card variant="outlined" sx={{ borderRadius: 2, flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                <CardContent sx={{ textAlign: 'center', py: 2 }}>
+                    <Typography variant="body2" color="text.secondary">
+                        No activity recorded for this habit yet.
                     </Typography>
                 </CardContent>
             </Card>
@@ -68,7 +77,7 @@ const HabitStatsCard = ({ habitStats }) => {
                                 <Typography
                                     variant="h6"
                                     sx={{
-                                        color: "text.primary", // 自動適應 Dark/Light Mode 文字顏色
+                                        color: "text.primary",
                                         fontWeight: 700,
                                         mt: 0.5
                                     }}
