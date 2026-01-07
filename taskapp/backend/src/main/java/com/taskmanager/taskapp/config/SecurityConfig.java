@@ -46,56 +46,53 @@ public class SecurityConfig {
                 // .csrf(csrf -> csrf.disable())
                 // let the browser access the CSRF token (XSRF-TOKEN) cookie
                 .csrf((csrf) -> csrf
-                .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-                .csrfTokenRequestHandler(new SpaCsrfTokenRequestHandler())
-                )
+                        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                        .csrfTokenRequestHandler(new SpaCsrfTokenRequestHandler()))
                 .cors(cors -> cors
-                .configurationSource(corsConfigurationSource())
-                )
+                        .configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> auth
-                .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
-                .requestMatchers("/api/**").authenticated()
-                .anyRequest().permitAll()
-                )
+                        .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers("/api/**").authenticated()
+                        .anyRequest().permitAll())
                 .formLogin(form -> form
-                .loginProcessingUrl("/login")
-                .successHandler((request, response, authentication) -> {
-                    response.setContentType("application/json;charset=UTF-8");
-                    response.getWriter().write("{\"status\":\"ok\"}");
-                })
-                .failureHandler((request, response, exception) -> {
-                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                    response.setContentType("application/json;charset=UTF-8");
-                    response.getWriter().write("{\"error\":\"Invalid username or password\"}");
-                }))
+                        .loginProcessingUrl("/login")
+                        .successHandler((request, response, authentication) -> {
+                            response.setContentType("application/json;charset=UTF-8");
+                            response.getWriter().write("{\"status\":\"ok\"}");
+                        })
+                        .failureHandler((request, response, exception) -> {
+                            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                            response.setContentType("application/json;charset=UTF-8");
+                            response.getWriter().write("{\"error\":\"Invalid username or password\"}");
+                        }))
                 .logout(logout -> logout
-                .logoutUrl("/logout") // logout endpoint (frontend posts to this URL)
-                // .logoutSuccessUrl("http://localhost:3000/login") // logout success redirect
-                .logoutSuccessHandler((request, response, authentication) -> {
-                    response.setStatus(HttpServletResponse.SC_OK);
-                    response.getWriter().write("Logout successful");
-                })
-                .invalidateHttpSession(true) // let the server invalidate the session
-                .deleteCookies("JSESSIONID") // delete session cookie
-                .permitAll()
-                )
+                        .logoutUrl("/logout") // logout endpoint (frontend posts to this URL)
+                        // .logoutSuccessUrl("http://localhost:3000/login") // logout success redirect
+                        .logoutSuccessHandler((request, response, authentication) -> {
+                            response.setStatus(HttpServletResponse.SC_OK);
+                            response.getWriter().write("Logout successful");
+                        })
+                        .invalidateHttpSession(true) // let the server invalidate the session
+                        .deleteCookies("JSESSIONID") // delete session cookie
+                        .permitAll())
                 // limit session to one per user
                 .sessionManagement(session -> session
-                .maximumSessions(1)
-                );
+                        .maximumSessions(1));
         // skip CSRF protection for simplicity
         // http
-        //         .authorizeHttpRequests(auth -> auth
-        //         .requestMatchers(
-        //                 "/", "/index.html",
-        //                 "/static/**", "/favicon.ico", "/manifest.json",
-        //                 "/assets/**", "/js/**", "/css/**", "/images/**", "/api/public/**", "/robots.txt"
-        //         ).permitAll()
-        //         .anyRequest().permitAll()
-        //         )
-        //         .csrf(csrf -> csrf.disable())
-        //         .formLogin(form -> form.disable())
-        //         .httpBasic(httpBasic -> httpBasic.disable());config.setAllowCredentials(true);config.setAllowCredentials(true);
+        // .authorizeHttpRequests(auth -> auth
+        // .requestMatchers(
+        // "/", "/index.html",
+        // "/static/**", "/favicon.ico", "/manifest.json",
+        // "/assets/**", "/js/**", "/css/**", "/images/**", "/api/public/**",
+        // "/robots.txt"
+        // ).permitAll()
+        // .anyRequest().permitAll()
+        // )
+        // .csrf(csrf -> csrf.disable())
+        // .formLogin(form -> form.disable())
+        // .httpBasic(httpBasic ->
+        // httpBasic.disable());config.setAllowCredentials(true);config.setAllowCredentials(true);
 
         return http.build();
     }
@@ -118,12 +115,10 @@ public class SecurityConfig {
 
         // set the user and authority queries
         manager.setUsersByUsernameQuery(
-                "SELECT username, password, true as enabled FROM users WHERE username = ?"
-        );
+                "SELECT username, password, true as enabled FROM users WHERE username = ?");
 
         manager.setAuthoritiesByUsernameQuery(
-                "SELECT username, 'ROLE_USER' AS authority FROM users WHERE username = ?"
-        );
+                "SELECT username, 'ROLE_USER' AS authority FROM users WHERE username = ?");
         return manager;
     }
 
@@ -159,12 +154,14 @@ final class SpaCsrfTokenRequestHandler implements CsrfTokenRequestHandler {
     @Override
     public void handle(HttpServletRequest request, HttpServletResponse response, Supplier<CsrfToken> csrfToken) {
         /*
-		 * Always use XorCsrfTokenRequestAttributeHandler to provide BREACH protection of
-		 * the CsrfToken when it is rendered in the response body.
+         * Always use XorCsrfTokenRequestAttributeHandler to provide BREACH protection
+         * of
+         * the CsrfToken when it is rendered in the response body.
          */
         this.xor.handle(request, response, csrfToken);
         /*
-		 * Render the token value to a cookie by causing the deferred token to be loaded.
+         * Render the token value to a cookie by causing the deferred token to be
+         * loaded.
          */
         csrfToken.get();
     }
@@ -173,15 +170,18 @@ final class SpaCsrfTokenRequestHandler implements CsrfTokenRequestHandler {
     public String resolveCsrfTokenValue(HttpServletRequest request, CsrfToken csrfToken) {
         String headerValue = request.getHeader(csrfToken.getHeaderName());
         /*
-		 * If the request contains a request header, use CsrfTokenRequestAttributeHandler
-		 * to resolve the CsrfToken. This applies when a single-page application includes
-		 * the header value automatically, which was obtained via a cookie containing the
-		 * raw CsrfToken.
-		 *
-		 * In all other cases (e.g. if the request contains a request parameter), use
-		 * XorCsrfTokenRequestAttributeHandler to resolve the CsrfToken. This applies
-		 * when a server-side rendered form includes the _csrf request parameter as a
-		 * hidden input.
+         * If the request contains a request header, use
+         * CsrfTokenRequestAttributeHandler
+         * to resolve the CsrfToken. This applies when a single-page application
+         * includes
+         * the header value automatically, which was obtained via a cookie containing
+         * the
+         * raw CsrfToken.
+         *
+         * In all other cases (e.g. if the request contains a request parameter), use
+         * XorCsrfTokenRequestAttributeHandler to resolve the CsrfToken. This applies
+         * when a server-side rendered form includes the _csrf request parameter as a
+         * hidden input.
          */
         return (StringUtils.hasText(headerValue) ? this.plain : this.xor).resolveCsrfTokenValue(request, csrfToken);
     }
