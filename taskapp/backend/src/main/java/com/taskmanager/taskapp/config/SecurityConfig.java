@@ -52,6 +52,7 @@ public class SecurityConfig {
                         .configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers("/api/csrf").permitAll() // Allow anonymous access to get CSRF cookie
                         .requestMatchers("/api/**").authenticated()
                         .anyRequest().permitAll())
                 .formLogin(form -> form
@@ -75,6 +76,12 @@ public class SecurityConfig {
                         .invalidateHttpSession(true) // let the server invalidate the session
                         .deleteCookies("JSESSIONID") // delete session cookie
                         .permitAll())
+                .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                            response.setContentType("application/json;charset=UTF-8");
+                            response.getWriter().write("{\"error\":\"Session expired or unauthorized\"}");
+                        }))
                 // limit session to one per user
                 .sessionManagement(session -> session
                         .maximumSessions(1));
