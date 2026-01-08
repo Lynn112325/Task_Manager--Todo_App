@@ -17,4 +17,26 @@ axios.interceptors.request.use((config) => {
     return config;
 });
 
+axios.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        const { status, config } = error.response || {};
+
+        if (status === 401) {
+            // Skip redirect if the failed request is a status check or login
+            const silentApis = ['/api/user/me', '/api/csrf', '/login'];
+            const isSilent = silentApis.some(url => config.url.includes(url));
+            if (!isSilent) {
+                console.warn("Session expired, redirecting to login...");
+                sessionStorage.removeItem("currentUser");
+                window.location.hash = "/";
+            }
+        }
+
+        // Always reject the promise so the caller (e.g., LoginPage) can handle it
+        return Promise.reject(error);
+    }
+);
+
+
 export default axios;
