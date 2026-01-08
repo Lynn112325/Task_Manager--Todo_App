@@ -20,7 +20,7 @@ import PropTypes from "prop-types";
 import * as React from "react";
 import { useNavigate } from "react-router";
 import { PRIORITIES } from "../utils/priority.js";
-import { TASK_TYPES } from "../utils/taskTypes.js";
+import { TYPES } from "../utils/types.js";
 import StyledTextarea from "./StyledTextarea";
 import TaskTypeIcon from "./TaskTypeIcon";
 
@@ -139,7 +139,7 @@ function TaskForm(props) {
                 inputProps={{ "aria-label": "Task type selector" }}
                 sx={{ flex: 1, minWidth: 150 }}
               >
-                {TASK_TYPES.map((taskType) => (
+                {TYPES.map((taskType) => (
                   <MenuItem key={taskType} value={taskType}>
                     <TaskTypeIcon type={taskType} sx={{ mr: 1 }} />
                     {taskType}

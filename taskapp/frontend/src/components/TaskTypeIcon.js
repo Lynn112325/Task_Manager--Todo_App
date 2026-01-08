@@ -1,5 +1,5 @@
 import FormatListBulletedOutlinedIcon from "@mui/icons-material/FormatListBulletedOutlined";
-import { TASK_TYPE_CONFIG } from "../utils/taskTypes";
+import { TYPE_CONFIG } from "../utils/types";
 
 export default function TaskTypeIcon({
     type,
@@ -7,7 +7,7 @@ export default function TaskTypeIcon({
     sx = { mr: 2 },
 }) {
     const Icon =
-        TASK_TYPE_CONFIG[type]?.icon || FormatListBulletedOutlinedIcon;
+        TYPE_CONFIG[type]?.icon || FormatListBulletedOutlinedIcon;
 
     return <Icon fontSize={fontSize} sx={sx} />;
 }

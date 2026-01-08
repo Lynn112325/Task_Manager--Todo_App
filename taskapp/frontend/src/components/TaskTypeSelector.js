@@ -1,12 +1,12 @@
 import { MenuItem, Select } from "@mui/material";
-import { TASK_TYPES_WITH_ALL } from "../utils/taskTypes";
+import { TYPES_WITH_ALL } from "../utils/types";
 import TaskTypeIcon from "./TaskTypeIcon";
 
 export default function TaskTypeSelector({
     type,
     handleTypeChange,
 }) {
-    const types = TASK_TYPES_WITH_ALL;
+    const types = TYPES_WITH_ALL;
 
     return (
         <Select
