@@ -10,11 +10,9 @@ import Typography from "@mui/material/Typography";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import PropTypes from "prop-types";
 import * as React from "react";
-import { useCurrentUser } from "../hooks/useCurrentUser";
 import OptionsMenu from "./OptionsMenu";
 
 import AssignmentIcon from "@mui/icons-material/Assignment";
-import AssignmentTurnedInIcon from "@mui/icons-material/AssignmentTurnedIn";
 import BarChartIcon from "@mui/icons-material/BarChart";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import DashboardIcon from "@mui/icons-material/Dashboard";
@@ -23,6 +21,7 @@ import LayersIcon from "@mui/icons-material/Layers";
 import { matchPath, useLocation } from "react-router";
 import { DRAWER_WIDTH, MINI_DRAWER_WIDTH } from "../constants";
 import DashboardSidebarContext from "../context/DashboardSidebarContext";
+import { useAuth } from "../context/UserContext";
 import {
   getDrawerSxTransitionMixin,
   getDrawerWidthTransitionMixin,
@@ -38,7 +37,9 @@ function DashboardSidebar({
   container,
 }) {
   const theme = useTheme();
-  const { user, loading, error } = useCurrentUser();
+  const { user, loading } = useAuth();
+
+  // const targetPages
 
   // Define the task pages
   const taskPages = [
@@ -49,13 +50,13 @@ function DashboardSidebar({
       href: "/tasks/todo",
       match: "/tasks/todo",
     },
-    {
-      id: "allTasks",
-      title: "All Tasks",
-      icon: <AssignmentTurnedInIcon />,
-      href: "/tasks",
-      match: "/tasks",
-    },
+    // {
+    //   id: "allTasks",
+    //   title: "All Tasks",
+    //   icon: <AssignmentTurnedInIcon />,
+    //   href: "/tasks",
+    //   match: "/tasks",
+    // },
   ];
 
   const { pathname } = useLocation();
@@ -161,6 +162,13 @@ function DashboardSidebar({
               icon={<DashboardIcon />}
               href="/dashboard"
               selected={!!matchPath("/dashboard", pathname) || pathname === "/"}
+            />
+            <DashboardSidebarPageItem
+              id="targets"
+              title="Targets"
+              icon={<CalendarMonthIcon />}
+              href="/targets"
+              selected={!!matchPath("/targets", pathname) || pathname === "/"}
             />
             <DashboardSidebarPageItem
               id="tasks"

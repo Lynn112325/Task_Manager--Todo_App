@@ -17,6 +17,7 @@ import * as React from "react";
 import { useEffect } from "react";
 import { useNavigate } from "react-router";
 import axios from "../axiosConfig";
+import { useAuth } from "../context/UserContext";
 import useNotifications from "../hooks/useNotifications/useNotifications";
 import AppTheme from "../shared-theme/AppTheme";
 import ColorModeSelect from "../shared-theme/ColorModeSelect";
@@ -71,12 +72,20 @@ export default function SignIn(props) {
     const [open, setOpen] = React.useState(false);
     const notifications = useNotifications();
     const navigate = useNavigate();
+    const { fetchUser } = useAuth();
 
     useEffect(() => {
         // get CSRF token from the backend when user visits the login page
-        axios.get("/api/csrf").then(res => {
-            // console.log("CSRF cookie should be set:", document.cookie);
-        });
+        const initSession = async () => {
+            try {
+                await axios.get('/api/csrf');
+                // console.log("CSRF cookie should be set:", document.cookie);
+            } catch (err) {
+                // Silently handle the error for the initial CSRF fetch
+                console.log("CSRF initialized (checking existing session)");
+            }
+        };
+        initSession();
     }, []);
 
     const handleClickOpen = () => {
@@ -109,6 +118,14 @@ export default function SignIn(props) {
 
             if (res.data.status === "ok") {
                 navigate("/tasks/todo");
+                // Fetching user details to update global context
+                const userData = await fetchUser();
+
+                if (userData) {
+                    // 3. Navigate only after Context is updated
+                    // English: Ensure ProtectedRoute sees the user before navigating
+                    navigate("/tasks/todo");
+                }
             }
         } catch (error) {
             notifications.show("Invalid username or password", {

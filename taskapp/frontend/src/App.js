@@ -4,7 +4,9 @@ import "@fontsource/roboto/500.css";
 import "@fontsource/roboto/700.css";
 import CssBaseline from "@mui/material/CssBaseline";
 import { createHashRouter, RouterProvider } from "react-router";
+import { Navigate, Outlet } from 'react-router-dom';
 import DashboardLayout from "./components/DashboardLayout";
+import { useAuth, UserProvider } from "./context/UserContext";
 import DialogsProvider from "./hooks/useDialogs/DialogsProvider";
 import NotificationsProvider from "./hooks/useNotifications/NotificationsProvider";
 import LoginPage from "./pages/LoginPage";
@@ -21,6 +23,20 @@ import {
   formInputCustomizations,
   sidebarCustomizations,
 } from "./theme/customizations";
+
+const ProtectedRoute = () => {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return null;
+  }
+
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return <Outlet />;
+};
 
 const router = createHashRouter([
   {
@@ -40,6 +56,7 @@ const router = createHashRouter([
     Component: NotFoundPage,
   },
   {
+    element: <ProtectedRoute />,
     Component: DashboardLayout,
     children: [
       {
@@ -75,13 +92,15 @@ const themeComponents = {
 
 export default function App(props) {
   return (
-    <AppTheme {...props} themeComponents={themeComponents}>
-      <CssBaseline enableColorScheme />
-      <NotificationsProvider>
-        <DialogsProvider>
-          <RouterProvider router={router} />
-        </DialogsProvider>
-      </NotificationsProvider>
-    </AppTheme>
+    <UserProvider>
+      <AppTheme {...props} themeComponents={themeComponents}>
+        <CssBaseline enableColorScheme />
+        <NotificationsProvider>
+          <DialogsProvider>
+            <RouterProvider router={router} />
+          </DialogsProvider>
+        </NotificationsProvider>
+      </AppTheme>
+    </UserProvider>
   );
 }
