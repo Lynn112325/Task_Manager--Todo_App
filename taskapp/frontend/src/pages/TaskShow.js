@@ -79,13 +79,10 @@ export default function TaskShow() {
       return (
         <Box
           sx={{
-            flex: 1,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            width: "100%",
-            m: 1,
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            flexGrow: 1,
           }}
         >
           <CircularProgress />
