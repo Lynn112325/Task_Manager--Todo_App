@@ -16,7 +16,7 @@ import {
 } from "@mui/material";
 import dayjs from "dayjs";
 import * as React from "react";
-import { useLocation, useNavigate, useSearchParams } from "react-router";
+import { useNavigate } from "react-router";
 import MuiDatePicker from "../components/MuiDatePicker";
 import PageContainer from "../components/PageContainer";
 import TaskListItems from "../components/TaskListItems";
@@ -37,6 +37,7 @@ export default function TaskList() {
     getUpcomingTasks,
     getOverdueTasks,
     toggleTaskCompletion,
+    fetchTasks,
     isLoading,
     error,
     refresh,
@@ -46,8 +47,10 @@ export default function TaskList() {
     setSelectedDate(date);
   };
 
-  const { pathname } = useLocation();
-  const [searchParams] = useSearchParams();
+  React.useEffect(() => {
+    fetchTasks();
+  }, [fetchTasks]);
+
   const navigate = useNavigate();
 
   const tasksByDate = React.useMemo(
@@ -148,7 +151,16 @@ export default function TaskList() {
         >
 
           {isLoading ? (
-            <CircularProgress sx={{ flexGrow: 1 }} />
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                flexGrow: 1,
+              }}
+            >
+              <CircularProgress />
+            </Box>
           ) : error ? (
             <Box sx={{ flexGrow: 1, width: "100%" }}>
 
@@ -228,7 +240,16 @@ export default function TaskList() {
           >
 
             {isLoading ? (
-              <CircularProgress sx={{ flexGrow: 1 }} />
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  flexGrow: 1,
+                }}
+              >
+                <CircularProgress />
+              </Box>
             ) : error ? (
               <Box sx={{ flexGrow: 1, width: "100%" }}>
 

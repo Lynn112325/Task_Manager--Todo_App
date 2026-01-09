@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import axios from "../../axiosConfig";
 import { useError } from "../useError";
 
@@ -71,10 +71,6 @@ export function useTasksData() {
         await axios.delete(`${API_URL}/${id}`);
         setTasks(prev => prev.filter(t => t.id !== id));
     }, []);
-
-    useEffect(() => {
-        fetchTasks();
-    }, [fetchTasks]);
 
     return {
         tasks,

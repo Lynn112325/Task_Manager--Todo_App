@@ -1,5 +1,4 @@
-import Alert from '@mui/material/Alert';
-import CircularProgress from '@mui/material/CircularProgress';
+import { Alert, Box, CircularProgress } from '@mui/material';
 import * as React from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { useLocation } from 'react-router-dom';
@@ -19,22 +18,22 @@ export default function TaskEdit() {
   const [task, setTask] = React.useState(initialTask);
 
   React.useEffect(() => {
-    if (task) return;
 
     const loadData = async () => {
-      const data = await getTask(Number(taskId));
-      setTask(data.task);
+      const fetchedTask = await getTask(Number(taskId));
+      if (fetchedTask) {
+        setTask(fetchedTask);
+      }
     };
 
     loadData();
-  }, [task, taskId, getTask]);
+  }, [taskId, getTask]);
 
   const handleEdit = async (formValues) => {
     const editedTask = await editTaskCompletion(formValues);
     navigate(`/tasks/${editedTask.id}`);
   };
 
-  // ⭐ 在 Page 層使用 hook
   const {
     formState,
     handleFieldChange,
@@ -46,9 +45,15 @@ export default function TaskEdit() {
     enableReinitialize: true,
   });
 
-  if (isLoading || !task) {
-    return <CircularProgress />;
+  if (isLoading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexGrow: 1 }}>
+        <CircularProgress />
+      </Box>
+    );
   }
+
+  if (!task) return <Alert severity="warning">Task not found.</Alert>;
 
   if (error) {
     return <Alert severity="error">{error.message}</Alert>;
