@@ -3,6 +3,8 @@ import "@fontsource/roboto/400.css";
 import "@fontsource/roboto/500.css";
 import "@fontsource/roboto/700.css";
 import CssBaseline from "@mui/material/CssBaseline";
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { createHashRouter, RouterProvider } from "react-router";
 import { Navigate, Outlet } from 'react-router-dom';
 import DashboardLayout from "./components/DashboardLayout";
@@ -37,6 +39,14 @@ const ProtectedRoute = () => {
 
   return <Outlet />;
 };
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60,
+    },
+  },
+});
 
 const router = createHashRouter([
   {
@@ -93,14 +103,17 @@ const themeComponents = {
 export default function App(props) {
   return (
     <UserProvider>
-      <AppTheme {...props} themeComponents={themeComponents}>
-        <CssBaseline enableColorScheme />
-        <NotificationsProvider>
-          <DialogsProvider>
-            <RouterProvider router={router} />
-          </DialogsProvider>
-        </NotificationsProvider>
-      </AppTheme>
+      <QueryClientProvider client={queryClient}>
+        <AppTheme {...props} themeComponents={themeComponents}>
+          <CssBaseline enableColorScheme />
+          <NotificationsProvider>
+            <DialogsProvider>
+              <RouterProvider router={router} />
+            </DialogsProvider>
+          </NotificationsProvider>
+        </AppTheme>
+        <ReactQueryDevtools initialIsOpen={false} />
+      </QueryClientProvider>
     </UserProvider>
   );
 }
