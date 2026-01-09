@@ -1,7 +1,5 @@
 package com.taskmanager.taskapp.target;
 
-import java.util.List;
-
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -23,7 +21,7 @@ public class TargetController extends BaseController {
 
     // get all targets for the current user
     @GetMapping
-    public ResponseEntity<CommonResponse<?>> getAllTargets() {
+    public ResponseEntity<CommonResponse<?>> getTargets() {
         return ok(targetService.getTargetsForCurrentUser());
     }
 
