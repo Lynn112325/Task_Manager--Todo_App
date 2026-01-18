@@ -13,7 +13,6 @@ bin/
 /.pnp
 .pnp.js
 *.log
-*.gitignore
 
 # testing
 /coverage
