@@ -1,5 +1,13 @@
+import AssignmentIcon from "@mui/icons-material/Assignment";
+import BarChartIcon from "@mui/icons-material/BarChart";
+import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
+import DashboardIcon from "@mui/icons-material/Dashboard";
+import DescriptionIcon from "@mui/icons-material/Description";
+import InboxIcon from '@mui/icons-material/Inbox';
+import LayersIcon from "@mui/icons-material/Layers";
 import Avatar from "@mui/material/Avatar";
 import Box from "@mui/material/Box";
+import CircularProgress from '@mui/material/CircularProgress';
 import Drawer from "@mui/material/Drawer";
 import List from "@mui/material/List";
 import Skeleton from "@mui/material/Skeleton";
@@ -10,25 +18,21 @@ import Typography from "@mui/material/Typography";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import PropTypes from "prop-types";
 import * as React from "react";
-import OptionsMenu from "./OptionsMenu";
-
-import AssignmentIcon from "@mui/icons-material/Assignment";
-import BarChartIcon from "@mui/icons-material/BarChart";
-import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
-import DashboardIcon from "@mui/icons-material/Dashboard";
-import DescriptionIcon from "@mui/icons-material/Description";
-import LayersIcon from "@mui/icons-material/Layers";
+import { useMemo } from "react";
 import { matchPath, useLocation } from "react-router";
 import { DRAWER_WIDTH, MINI_DRAWER_WIDTH } from "../constants";
 import DashboardSidebarContext from "../context/DashboardSidebarContext";
 import { useAuth } from "../context/UserContext";
+import { useTarget } from "../hooks/target/useTarget";
 import {
   getDrawerSxTransitionMixin,
   getDrawerWidthTransitionMixin,
 } from "../mixins";
+import { TYPES, TYPE_CONFIG } from "../utils/types";
 import DashboardSidebarDividerItem from "./DashboardSidebarDividerItem";
 import DashboardSidebarHeaderItem from "./DashboardSidebarHeaderItem";
 import DashboardSidebarPageItem from "./DashboardSidebarPageItem";
+import OptionsMenu from "./OptionsMenu";
 
 function DashboardSidebar({
   expanded = true,
@@ -38,8 +42,31 @@ function DashboardSidebar({
 }) {
   const theme = useTheme();
   const { user, loading } = useAuth();
+  const { targets, isLoading } = useTarget();
 
-  // const targetPages
+  const targetPages = useMemo(() => {
+
+    return TYPES.map(typeKey => {
+      const config = TYPE_CONFIG[typeKey];
+      const IconComponent = config.icon;
+      const relatedTargets = targets.filter(t => t.type === typeKey);
+
+      return {
+        ...config,
+        title: config.label,
+        icon: IconComponent ? <IconComponent /> : null,
+        id: typeKey,
+        href: `/targets/${typeKey}`,
+        match: `/targets/${typeKey}`,
+        subItems: relatedTargets.map(target => ({
+          id: `${target.id}`,
+          title: target.title,
+          href: `/targets/${target.id}`,
+          match: `/targets/${target.id}`,
+        }))
+      };
+    });
+  }, [targets]);
 
   // Define the task pages
   const taskPages = [
@@ -155,7 +182,7 @@ function DashboardSidebar({
               width: mini ? MINI_DRAWER_WIDTH : "auto",
             }}
           >
-            <DashboardSidebarHeaderItem>Main items</DashboardSidebarHeaderItem>
+            <DashboardSidebarHeaderItem>Dashboard</DashboardSidebarHeaderItem>
             <DashboardSidebarPageItem
               id="dashboard"
               title="Dashboard"
@@ -163,13 +190,8 @@ function DashboardSidebar({
               href="/dashboard"
               selected={!!matchPath("/dashboard", pathname) || pathname === "/"}
             />
-            <DashboardSidebarPageItem
-              id="targets"
-              title="Targets"
-              icon={<CalendarMonthIcon />}
-              href="/targets"
-              selected={!!matchPath("/targets", pathname) || pathname === "/"}
-            />
+            <DashboardSidebarDividerItem />
+            <DashboardSidebarHeaderItem>Tasks</DashboardSidebarHeaderItem>
             <DashboardSidebarPageItem
               id="tasks"
               title="Tasks"
@@ -206,6 +228,43 @@ function DashboardSidebar({
               href="/personal"
               selected={!!matchPath('/personal/*', pathname) || pathname === '/'}
             /> */}
+            <DashboardSidebarDividerItem />
+            <DashboardSidebarHeaderItem>Targets</DashboardSidebarHeaderItem>
+            <DashboardSidebarPageItem
+              id="inbox"
+              title="inbox"
+              icon={<InboxIcon />}
+              href="/inbox"
+              selected={!!matchPath("/inbox", pathname) || pathname === "/"}
+            />
+
+            {targetPages.map((page) => (
+              <DashboardSidebarPageItem
+                key={page.id}
+                id={page.id}
+                title={page.title}
+                icon={page.icon}
+                href={page.href}
+                selected={!!matchPath(page.match, pathname)}
+                expanded={expandedItemIds.includes(page.id)}
+                nestedNavigation={
+                  page.subItems && page.subItems.length > 0 ? (
+                    <List dense>
+                      {page.subItems.map((target) => (
+                        <DashboardSidebarPageItem
+                          key={target.id}
+                          id={target.id}
+                          title={target.title}
+                          href={target.href}
+                          selected={!!matchPath(target.match, pathname)}
+                        />
+                      ))}
+                    </List>
+                  ) : null
+                }
+              />
+            ))}
+
             <DashboardSidebarDividerItem />
             <DashboardSidebarHeaderItem>Other items</DashboardSidebarHeaderItem>
             <DashboardSidebarPageItem
@@ -304,6 +363,8 @@ function DashboardSidebar({
       pathname,
       user,
       loading,
+      targets,
+      isLoading
     ]
   );
 
@@ -345,6 +406,13 @@ function DashboardSidebar({
     hasDrawerTransitions,
   ]);
 
+  if (isLoading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
   return (
     <DashboardSidebarContext.Provider value={sidebarContextValue}>
       <Drawer

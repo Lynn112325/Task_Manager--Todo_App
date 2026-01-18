@@ -14,6 +14,7 @@ import NotificationsProvider from "./hooks/useNotifications/NotificationsProvide
 import LoginPage from "./pages/LoginPage";
 import NotFoundPage from "./pages/NotFoundPage";
 import SignUpPage from "./pages/SignUpPage";
+import TargetDetail from './pages/TargetDetail';
 import TaskCreate from "./pages/TaskCreate";
 import TaskEdit from "./pages/TaskEdit";
 import TaskList from "./pages/TaskList";
@@ -26,7 +27,7 @@ import {
   sidebarCustomizations,
 } from "./theme/customizations";
 
-const ProtectedRoute = () => {
+const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
 
   if (loading) {
@@ -37,7 +38,7 @@ const ProtectedRoute = () => {
     return <Navigate to="/login" replace />;
   }
 
-  return <Outlet />;
+  return children ? children : <Outlet />;
 };
 
 const queryClient = new QueryClient({
@@ -51,44 +52,51 @@ const queryClient = new QueryClient({
 const router = createHashRouter([
   {
     path: "/login",
-    Component: LoginPage,
+    element: <LoginPage />,
   },
   {
     path: "/",
-    Component: LoginPage,
+    element: <LoginPage />,
   },
   {
     path: "/signup",
-    Component: SignUpPage,
+    element: <SignUpPage />,
   },
   {
     path: "*",
-    Component: NotFoundPage,
+    element: <NotFoundPage />,
   },
   {
-    element: <ProtectedRoute />,
-    Component: DashboardLayout,
+    element: (
+      <ProtectedRoute>
+        <DashboardLayout />
+      </ProtectedRoute>
+    ),
     children: [
       {
         path: "/tasks/todo",
-        Component: TaskList,
+        element: <TaskList />,
       },
       {
         path: "/tasks/:taskId",
-        Component: TaskShow,
+        element: <TaskShow />,
       },
       {
         path: "/tasks/new",
-        Component: TaskCreate,
+        element: <TaskCreate />,
       },
       {
         path: "/tasks/:taskId/edit",
-        Component: TaskEdit,
+        element: <TaskEdit />,
+      },
+      {
+        path: 'targets/:targetId',
+        element: <TargetDetail />,
       },
       // Fallback route for the example routes in dashboard sidebar items
       {
         path: "*",
-        Component: TaskList,
+        element: <TaskList />,
       },
     ],
   },
