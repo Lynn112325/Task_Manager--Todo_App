@@ -1,4 +1,4 @@
-package com.taskmanager.taskapp.tasktemplate;
+package com.taskmanager.taskapp.TaskSchedule.tasktemplate;
 
 import java.util.List;
 
@@ -20,7 +20,7 @@ public class TaskTemplateService {
     private final MyUserDetailsService myUserDetailsService;
 
     // transform TaskTemplate to TaskTemplateDto
-    private TaskTemplateDto toDto(TaskTemplate taskTemplate) {
+    public TaskTemplateDto toDto(TaskTemplate taskTemplate) {
         return new TaskTemplateDto(
                 taskTemplate.getId(),
                 taskTemplate.getTitle(),

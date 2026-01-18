@@ -1,4 +1,4 @@
-package com.taskmanager.taskapp.recurringplan;
+package com.taskmanager.taskapp.TaskSchedule.recurringplan;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -6,9 +6,9 @@ import java.util.List;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import com.taskmanager.taskapp.TaskSchedule.tasktemplate.TaskTemplate;
 import com.taskmanager.taskapp.enums.RecurrenceType;
 import com.taskmanager.taskapp.enums.Weekday;
-import com.taskmanager.taskapp.tasktemplate.TaskTemplate;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
@@ -26,6 +26,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import com.taskmanager.taskapp.enums.PlanStatus;
 
 @Entity
 @Table(name = "recurring_plans")
@@ -58,8 +59,9 @@ public class RecurringPlan {
     private LocalDateTime recurrenceEnd;
 
     @Builder.Default
-    @Column(name = "is_active", nullable = false)
-    private Boolean isActive = true;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private PlanStatus status = PlanStatus.ACTIVE;
 
     @Builder.Default
     @Column(name = "is_habit", nullable = false)

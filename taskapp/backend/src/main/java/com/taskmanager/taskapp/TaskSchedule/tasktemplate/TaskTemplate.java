@@ -1,4 +1,4 @@
-package com.taskmanager.taskapp.tasktemplate;
+package com.taskmanager.taskapp.TaskSchedule.tasktemplate;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -6,7 +6,7 @@ import java.util.List;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
-import com.taskmanager.taskapp.recurringplan.RecurringPlan;
+import com.taskmanager.taskapp.TaskSchedule.recurringplan.RecurringPlan;
 import com.taskmanager.taskapp.target.Target;
 import com.taskmanager.taskapp.task.Task;
 
@@ -41,11 +41,17 @@ public class TaskTemplate {
 
     // Target
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "target_id", nullable = false)
+    @JoinColumn(name = "target_id", nullable = true)
     private Target target;
 
-    // Recurring Plan
-    @OneToOne(mappedBy = "taskTemplate", fetch = FetchType.LAZY)
+    @Column(name = "user_id", nullable = false)
+    private Long userId;
+
+    /**
+     * mappedBy = "taskTemplate": map to RecurringPlan.taskTemplate
+     * cascade = CascadeType.ALL: delete the plan when deleting the template
+     */
+    @OneToOne(mappedBy = "taskTemplate", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private RecurringPlan recurringPlan;
 
     @OneToMany(mappedBy = "taskTemplate", cascade = CascadeType.ALL, orphanRemoval = true)

@@ -1,5 +1,6 @@
-package com.taskmanager.taskapp.recurringplan;
+package com.taskmanager.taskapp.TaskSchedule.recurringplan;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.http.HttpStatus;
@@ -10,8 +11,10 @@ import com.taskmanager.taskapp.security.MyUserDetailsService;
 import com.taskmanager.taskapp.target.TargetRepository;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class RecurringPlanService {
 
@@ -20,7 +23,7 @@ public class RecurringPlanService {
         private final MyUserDetailsService myUserDetailsService;
 
         // transform RecurringPlan to RecurringPlanDto
-        private RecurringPlanDto toDto(RecurringPlan r) {
+        public RecurringPlanDto toDto(RecurringPlan r) {
                 return new RecurringPlanDto(
                                 r.getId(),
                                 r.getRecurrenceType(),
@@ -28,7 +31,8 @@ public class RecurringPlanService {
                                 r.getRecurrenceDays(),
                                 r.getRecurrenceStart(),
                                 r.getRecurrenceEnd(),
-                                r.getIsActive(),
+                                RecurringPlanDto.computeDisplayStatus(r.getStatus(), r.getRecurrenceStart(),
+                                                r.getRecurrenceEnd()),
                                 r.getIsHabit(),
                                 r.getNextRunAt(),
                                 r.getLastGeneratedAt(),
@@ -40,7 +44,7 @@ public class RecurringPlanService {
         public RecurringPlanDto getRecurringPlanById(Long recurringPlanId) {
 
                 // check ownership
-                Long userId = recurringPlanRepository.findUserIdByRecurringPlanId(recurringPlanId)
+                Long userId = recurringPlanRepository.findUserIdByPlanId(recurringPlanId)
                                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                                                 "Recurring plan not found"));
 
@@ -68,14 +72,22 @@ public class RecurringPlanService {
 
         // get recurring plans by targetId
         public List<RecurringPlanDto> getRecurringPlansByTargetId(Long targetId) {
+                log.info("Fetching recurring plans for target ID: {}", targetId);
 
                 myUserDetailsService.checkOwnership(targetRepository.findById(targetId)
                                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                                                 "These recurring plans do not belong to the current user"))
                                 .getUser().getId());
 
-                return recurringPlanRepository.findRecurringPlanDtoByTargetId(targetId)
+                log.info("Current user ID: {}", myUserDetailsService.getCurrentUserId());
+
+                List<RecurringPlan> recurringPlans = recurringPlanRepository.findAllByTargetId(targetId)
                                 .stream()
+                                .toList();
+
+                log.info("Found {} recurring plans from database", recurringPlans.size());
+                return recurringPlans.stream()
+                                .map(this::toDto)
                                 .toList();
         }
 }

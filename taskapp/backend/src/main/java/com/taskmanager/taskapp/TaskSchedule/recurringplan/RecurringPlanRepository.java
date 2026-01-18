@@ -1,4 +1,4 @@
-package com.taskmanager.taskapp.recurringplan;
+package com.taskmanager.taskapp.TaskSchedule.recurringplan;
 
 import java.util.List;
 import java.util.Optional;
@@ -26,31 +26,29 @@ public interface RecurringPlanRepository extends JpaRepository<RecurringPlan, Lo
 
         // Custom query
         @Query("""
-                        SELECT r
-                        FROM RecurringPlan r
-                        JOIN r.taskTemplate tt
+                        SELECT r FROM RecurringPlan r
+                        JOIN FETCH r.taskTemplate tt
                         JOIN tt.target t
                         WHERE t.id = :targetId
                         """)
-        List<RecurringPlanDto> findRecurringPlanDtoByTargetId(@Param("targetId") Long targetId);
+        List<RecurringPlan> findAllByTargetId(@Param("targetId") Long targetId);
 
         // Custom query to find User ID by RecurringPlan ID
         @Query("""
-                        SELECT u.id
+                        SELECT t.user.id
                         FROM RecurringPlan r
                         JOIN r.taskTemplate tt
                         JOIN tt.target t
-                        JOIN t.user u
                         WHERE r.id = :recurringPlanId
                         """)
-        Optional<Long> findUserIdByRecurringPlanId(@Param("recurringPlanId") Long recurringPlanId);
+        Optional<Long> findUserIdByPlanId(@Param("recurringPlanId") Long recurringPlanId);
 
         // Custom query to fetch RecurringPlanDto by TaskTemplate ID
         @Query("""
-                            SELECT r
-                            FROM RecurringPlan r
-                            JOIN r.taskTemplate tt
-                            WHERE tt.id = :taskTemplateId
+                                SELECT r
+                                FROM RecurringPlan r
+                                JOIN r.taskTemplate tt
+                                WHERE tt.id = :taskTemplateId
                         """)
         Optional<RecurringPlan> findByTemplateId(@Param("taskTemplateId") Long taskTemplateId);
 
