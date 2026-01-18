@@ -10,14 +10,14 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.taskmanager.taskapp.TaskSchedule.recurringplan.RecurringPlanDto;
+import com.taskmanager.taskapp.TaskSchedule.recurringplan.RecurringPlanService;
 import com.taskmanager.taskapp.api.BaseController;
 import com.taskmanager.taskapp.api.CommonResponse;
 import com.taskmanager.taskapp.habitlog.HabitLogService;
 import com.taskmanager.taskapp.habitlog.HabitLogStatsDto;
-import com.taskmanager.taskapp.recurringplan.RecurringPlanDto;
-import com.taskmanager.taskapp.recurringplan.RecurringPlanService;
-import com.taskmanager.taskapp.target.TargetDto;
 import com.taskmanager.taskapp.target.TargetService;
+import com.taskmanager.taskapp.target.dto.TargetDto;
 import com.taskmanager.taskapp.task.dto.TaskDetailDto;
 import com.taskmanager.taskapp.task.dto.TaskDto;
 

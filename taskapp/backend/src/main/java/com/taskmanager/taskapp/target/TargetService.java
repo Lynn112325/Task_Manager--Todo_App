@@ -3,8 +3,10 @@ package com.taskmanager.taskapp.target;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.taskmanager.taskapp.security.MyUserDetailsService;
+import com.taskmanager.taskapp.target.dto.TargetDto;
 
 import lombok.RequiredArgsConstructor;
 
@@ -26,6 +28,7 @@ public class TargetService {
     }
 
     // get targets for current user
+    @Transactional(readOnly = true)
     public List<TargetDto> getTargetsForCurrentUser() {
         Long userId = myUserDetailsService.getCurrentUserId();
 
@@ -36,6 +39,7 @@ public class TargetService {
     }
 
     // get target by targetId and check owner
+    @Transactional(readOnly = true)
     public TargetDto getTargetByIdForCurrentUser(Long targetId) {
         // get the target by id
         Target target = targetRepository.findById(targetId).orElseThrow(() -> new RuntimeException("Target not found"));
@@ -54,5 +58,4 @@ public class TargetService {
 
         return targetDto;
     }
-
 }

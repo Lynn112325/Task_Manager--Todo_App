@@ -1,4 +1,4 @@
-package com.taskmanager.taskapp.target;
+package com.taskmanager.taskapp.target.dto;
 
 import java.time.LocalDateTime;
 

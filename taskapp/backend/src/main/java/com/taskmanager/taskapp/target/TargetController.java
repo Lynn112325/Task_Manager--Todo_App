@@ -8,16 +8,16 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.taskmanager.taskapp.api.BaseController;
 import com.taskmanager.taskapp.api.CommonResponse;
+import com.taskmanager.taskapp.target.dto.TargetDto;
+
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/targets")
+@RequiredArgsConstructor
 public class TargetController extends BaseController {
 
     private final TargetService targetService;
-
-    public TargetController(TargetService targetService) {
-        this.targetService = targetService;
-    }
 
     // get all targets for the current user
     @GetMapping

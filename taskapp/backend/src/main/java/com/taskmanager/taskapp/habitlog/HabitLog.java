@@ -5,8 +5,8 @@ import java.time.LocalDateTime;
 
 import org.hibernate.annotations.CreationTimestamp;
 
+import com.taskmanager.taskapp.TaskSchedule.tasktemplate.TaskTemplate;
 import com.taskmanager.taskapp.enums.HabitLogStatus;
-import com.taskmanager.taskapp.tasktemplate.TaskTemplate;
 import com.taskmanager.taskapp.user.User;
 
 import jakarta.persistence.Column;
@@ -27,7 +27,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "habit_logs", uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "task_template_id", "log_date"}))
+@Table(name = "habit_logs", uniqueConstraints = @UniqueConstraint(columnNames = { "user_id", "task_template_id",
+        "log_date" }))
 @Data
 @Builder
 @NoArgsConstructor
