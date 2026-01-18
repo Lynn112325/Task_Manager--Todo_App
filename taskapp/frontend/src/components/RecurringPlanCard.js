@@ -1,102 +1,97 @@
-import { Box, Card, CardContent, CardHeader, Chip, Grid, Tooltip, Typography } from "@mui/material";
+import {
+    alpha,
+    Box,
+    Card,
+    CardContent,
+    CardHeader,
+    Chip,
+    Grid,
+    Stack,
+    Tooltip,
+    Typography
+} from '@mui/material';
 import dayjs from "dayjs";
+import { useMemo } from 'react';
+import { formatDateCustom, formatFrequency, getPlanPeriodLabel } from '../utils/planFormatters';
+import { PLAN_STATUS_CONFIG } from '../utils/planStatus';
 
-function formatDateCustom(dateStr) {
-    return dayjs(dateStr).format("YYYY/MM/DD (ddd)");
-}
-
-// Frequency formatter (保持原本邏輯，UI層面處理換行)
-function formatFrequency(plan) {
-    const t = plan.recurrenceType;
-    if (t === "DAILY") return "Every day";
-
-    const interval = plan.recurrenceInterval;
-    const base = t === "WEEKLY" ? "week"
-        : t === "MONTHLY" ? "month"
-            : t === "YEARLY" ? "year"
-                : t.toLowerCase();
-
-    let weekDays = "";
-    if (plan.recurrenceDays.length > 0) {
-        weekDays = " on " + plan.recurrenceDays.map(d => d).join(", ")
-    }
-    return interval === 1
-        ? `Every ${base}` + weekDays
-        : `Every ${interval} ${base}s` + weekDays;
-}
-
-export default function RecurringPlanCard({ recurringPlan, targetTitle }) {
+export default function RecurringPlanCard({ recurringPlan, targetTitle = "" }) {
     const plan = recurringPlan;
+    const status = plan?.displayStatus || "PAUSED";
+    const config = PLAN_STATUS_CONFIG[status] || PLAN_STATUS_CONFIG.PAUSED;
 
-    const periodText = (!plan?.recurrenceStart && !plan?.recurrenceEnd)
-        ? "∞"
-        : `${plan?.recurrenceStart ? formatDateCustom(plan.recurrenceStart) : 'Now'} — ${plan?.recurrenceEnd ? formatDateCustom(plan.recurrenceEnd) : '∞'}`;
+    const periodLabel = useMemo(() =>
+        getPlanPeriodLabel(recurringPlan, status),
+        [recurringPlan, status]);
 
     if (!plan) {
         return (
-            <Card variant="outlined" sx={{ borderRadius: 2, flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                <CardContent sx={{ textAlign: 'center', py: 2 }}>
-                    <Typography variant="body2" color="text.secondary">
-                        No recurring plan active.
-                    </Typography>
-                </CardContent>
+            <Card variant="outlined" sx={{ borderRadius: 2, height: 110, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Typography variant="body2" color="text.secondary">No recurring plan active.</Typography>
             </Card>
         );
     }
 
     return (
-        <Card variant="outlined" sx={{ borderRadius: 2 }}>
+        <Card variant="outlined" sx={{ borderRadius: 2, opacity: status === 'COMPLETED' ? 0.7 : 1 }}>
             <CardHeader
-                sx={{}}
+                sx={{ pb: 0, pt: 1.5 }}
                 title={
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
                         <Typography variant="subtitle2" sx={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                            🔄 Recurring Plan
+                            Recurring Plan
                         </Typography>
                         <Chip
-                            label={plan.isActive ? "Active" : "Inactive"}
-                            color={plan.isActive ? "success" : "default"}
+                            icon={config.icon}
+                            label={config.label}
                             size="small"
                             variant="soft"
-                            sx={{ height: 20, fontSize: "0.65rem", fontWeight: 700, borderRadius: 1 }}
+                            sx={{
+                                height: 20,
+                                fontSize: "0.65rem",
+                                fontWeight: 700,
+                                borderRadius: 1,
+                                bgcolor: alpha(config.color, 0.1),
+                                color: config.color,
+                                '& .MuiChip-icon': { color: 'inherit', fontSize: 12 }
+                            }}
                         />
                     </Box>
                 }
                 subheader={
-                    <Typography variant="caption" color="text.secondary" noWrap sx={{ display: 'block', mt: 0.5 }}>
+                    <Typography variant="caption" color="text.secondary" noWrap sx={{ display: 'block', mt: 0.2, ml: 0.5 }}>
                         Target: {targetTitle}
                     </Typography>
                 }
             />
 
-            <CardContent sx={{ p: 1 }}>
-                <Grid container spacing={1.5} alignItems="stretch">
-
-                    <Grid item size={5}>
+            <CardContent sx={{ p: 1, '&:last-child': { pb: 1 } }}>
+                <Grid container spacing={1} alignItems="stretch">
+                    {/* Left: Frequency Box */}
+                    <Grid size={5}>
                         <Box sx={{
-                            borderLeft: `3px solid`,
-                            borderColor: 'primary.main',
-                            bgcolor: 'action.hover',
+                            borderLeft: `3px solid ${config.color} `,
+                            bgcolor: alpha(config.color, 0.04),
                             pl: 1, pr: 0.5, py: 1,
-                            borderRadius: 1,
+                            borderRadius: '0 4px 4px 0',
                             height: '100%',
                             display: 'flex',
                             flexDirection: 'column',
                             justifyContent: 'center'
                         }}>
-                            <Typography variant="caption" color="text.secondary" sx={{ lineHeight: 1, mb: 0.5 }}>
+                            <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.6rem', letterSpacing: 0.5 }}>
                                 Frequency
                             </Typography>
-                            <Tooltip title={formatFrequency(plan)} placement="top">
+                            <Tooltip title={formatFrequency(plan)} arrow>
                                 <Typography
                                     variant="body2"
                                     fontWeight={700}
                                     sx={{
                                         lineHeight: 1.2,
-                                        fontSize: '0.8rem',
-                                        wordBreak: 'break-word',
+                                        fontSize: '0.75rem',
+                                        color: config.color,
                                         display: '-webkit-box',
-                                        WebkitLineClamp: 3,
+                                        WebkitLineClamp: 2,
                                         WebkitBoxOrient: 'vertical',
                                         overflow: 'hidden'
                                     }}
@@ -107,50 +102,34 @@ export default function RecurringPlanCard({ recurringPlan, targetTitle }) {
                         </Box>
                     </Grid>
 
-                    <Grid item size={7}>
-                        <Box sx={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            justifyContent: 'center',
-                            height: '100%',
-                            gap: 0.8
-                        }}>
-                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', minWidth: 0 }}>
-                                <Typography variant="caption" color="text.secondary" sx={{ whiteSpace: 'nowrap', mr: 1 }}>
-                                    Next Run
-                                </Typography>
-                                <Typography variant="caption" fontWeight={700} color="primary.main" noWrap>
+                    {/* Right: Details */}
+                    <Grid size={7}>
+                        <Stack spacing={0.5} sx={{ height: '100%', justifyContent: 'center', pl: 0.5 }}>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <Typography variant="caption" color="text.secondary">Next Run</Typography>
+                                <Typography variant="caption" fontWeight={700} color={config.color}>
                                     {formatDateCustom(plan.nextRunAt)}
                                 </Typography>
                             </Box>
-                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', minWidth: 0 }}>
-                                <Typography variant="caption" color="text.secondary" sx={{ whiteSpace: 'nowrap', mr: 1 }}>
-                                    Period
-                                </Typography>
-                                <Tooltip title={periodText} placement="left">
-                                    <Typography
-                                        variant="caption"
-                                        fontWeight={600}
-                                        sx={{
-                                            color: 'text.primary',
-                                            whiteSpace: 'nowrap',
-                                            overflow: 'hidden',
-                                            textOverflow: 'ellipsis',
-                                            maxWidth: '100%',
-                                            textAlign: 'right'
-                                        }}
-                                    >
-                                        {periodText}
-                                    </Typography>
+
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <Typography variant="caption" color="text.secondary">Period</Typography>
+                                <Tooltip title={periodLabel} placement="left">
+                                    <Stack direction="row" alignItems="center" spacing={0.5} sx={{ maxWidth: '70%' }}>
+                                        <Box sx={{ display: 'flex', fontSize: 12 }}>{config.icon}</Box>
+                                        <Typography variant="caption" fontWeight={600} noWrap sx={{ fontSize: '0.65rem' }}>
+                                            {periodLabel}
+                                        </Typography>
+                                    </Stack>
                                 </Tooltip>
                             </Box>
-                        </Box>
+                        </Stack>
                     </Grid>
 
                     {/* Footer */}
-                    <Grid item size={12} sx={{ pt: '4px !important' }}>
-                        <Typography variant="caption" color="text.disabled" sx={{ fontStyle: 'italic', display: 'block', textAlign: 'right', fontSize: '0.65rem' }}>
-                            Last generated: {dayjs(plan.lastGenerateAt).format("YYYY/MM/DD (ddd) HH:mm")}
+                    <Grid size={12}>
+                        <Typography variant="caption" color="text.disabled" sx={{ fontStyle: 'italic', display: 'block', textAlign: 'right', fontSize: '0.6rem', mt: 0.5 }}>
+                            Last sync: {plan.lastGenerateAt ? dayjs(plan.lastGenerateAt).format("MM/DD HH:mm") : 'Never'}
                         </Typography>
                     </Grid>
                 </Grid>
