@@ -13,6 +13,7 @@ bin/
 /.pnp
 .pnp.js
 *.log
+*.txt
 
 # testing
 /coverage
