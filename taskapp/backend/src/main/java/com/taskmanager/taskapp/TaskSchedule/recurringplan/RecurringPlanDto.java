@@ -4,9 +4,9 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import com.taskmanager.taskapp.enums.PlanStatus;
 import com.taskmanager.taskapp.enums.RecurrenceType;
 import com.taskmanager.taskapp.enums.Weekday;
-import com.taskmanager.taskapp.enums.PlanStatus;
 
 public record RecurringPlanDto(
                 Long id,
@@ -22,9 +22,16 @@ public record RecurringPlanDto(
                 LocalDateTime createdAt,
                 LocalDateTime updatedAt) {
 
-        public static String computeDisplayStatus(PlanStatus status, LocalDateTime start, LocalDateTime end) {
+        public static String computeDisplayStatus(PlanStatus status, RecurrenceType type, LocalDateTime start,
+                        LocalDateTime end) {
                 if (status == PlanStatus.PAUSED)
                         return "PAUSED";
+
+                // MANUAL_TRIGGER Template
+                if (type == RecurrenceType.NONE) {
+                        return "MANUAL_TRIGGER";
+                }
+
                 LocalDate today = LocalDate.now();
                 if (start != null) {
                         LocalDate startDate = start.toLocalDate();

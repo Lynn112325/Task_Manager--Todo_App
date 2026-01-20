@@ -4,6 +4,7 @@ import {
     Pause as PauseIcon,
     HourglassTop as UpcomingIcon
 } from '@mui/icons-material';
+import BoltIcon from '@mui/icons-material/Bolt';
 import { alpha } from '@mui/material/styles';
 
 export const PLAN_STATUS_CONFIG = {
@@ -32,6 +33,13 @@ export const PLAN_STATUS_CONFIG = {
         icon: <CompletedIcon fontSize="inherit" />,
         label: 'Completed'
     },
+    MANUAL_TRIGGER: {
+        color: alpha('#279c6d', 0.7),
+        opacity: 0.8,
+        icon: <BoltIcon fontSize="inherit" />,
+        label: 'Smart Template'
+    },
+
 };
 
 export const DEFAULT_STATUS_CONFIG = PLAN_STATUS_CONFIG.PAUSED;

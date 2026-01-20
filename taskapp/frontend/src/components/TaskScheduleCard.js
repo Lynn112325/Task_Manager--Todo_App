@@ -4,7 +4,8 @@ import {
     EventRepeat as EventRepeatIcon,
     MoreVert as MoreVertIcon,
     Pause as PauseIcon,
-    PlayArrow as PlayArrowIcon
+    PlayArrow as PlayArrowIcon,
+    Bolt as RunNowIcon
 } from '@mui/icons-material';
 import {
     Box,
@@ -53,6 +54,7 @@ export default function TaskScheduleCard({ data, onEdit, onDelete, onToggleActiv
     const periodLabel = useMemo(() =>
         getPlanPeriodLabel(recurringPlan, status),
         [recurringPlan, status]);
+    const frequencyLabel = formatFrequency(recurringPlan);
 
     return (
         <Card
@@ -121,13 +123,19 @@ export default function TaskScheduleCard({ data, onEdit, onDelete, onToggleActiv
                 {/* Info Rows */}
                 <Stack spacing={0.5}>
                     {/* Frequency */}
-                    <Stack direction="row" alignItems="center" spacing={1}>
-                        <EventRepeatIcon color="action" sx={{ fontSize: ICON_SIZE }} />
-                        <Typography variant="caption" fontWeight={600} color="text.primary" sx={{ fontSize: '0.75rem' }}>
-                            {formatFrequency(recurringPlan)}
-                        </Typography>
-                    </Stack>
-
+                    {frequencyLabel && frequencyLabel !== "NONE" && (
+                        <Stack direction="row" alignItems="center" spacing={1}>
+                            <EventRepeatIcon color="action" sx={{ fontSize: ICON_SIZE }} />
+                            <Typography
+                                variant="caption"
+                                fontWeight={600}
+                                color="text.primary"
+                                sx={{ fontSize: '0.75rem' }}
+                            >
+                                {frequencyLabel}
+                            </Typography>
+                        </Stack>
+                    )}
                     {/* Period */}
                     <Stack direction="row" alignItems="center" spacing={1}>
                         <Box sx={{ color: config.color, display: 'flex' }}>{config.icon}</Box>
@@ -138,23 +146,57 @@ export default function TaskScheduleCard({ data, onEdit, onDelete, onToggleActiv
 
             {/* Compact Menu */}
             <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
-                <MenuItem dense onClick={() => handleAction('edit')}>
-                    <ListItemIcon><EditIcon fontSize="small" /></ListItemIcon>
-                    <ListItemText>Edit</ListItemText>
+                {/* 1. Edit Item */}
+                <MenuItem dense onClick={() => handleAction('edit')} sx={{ minHeight: '28px', py: 0.5 }}>
+                    <ListItemIcon sx={{ minWidth: '26px !important' }}>
+                        <EditIcon sx={{ fontSize: '0.9rem' }} />
+                    </ListItemIcon>
+                    <ListItemText
+                        primary="Edit"
+                        slotProps={{ primary: { sx: { fontSize: '0.75rem', mt: 0.5 } } }}
+                    />
                 </MenuItem>
 
-                {/* if the task is not completed, show pause/resume button */}
+                {/* 2. Run Now (Quick Use) */}
                 {status !== "COMPLETED" && (
-                    <MenuItem dense onClick={() => handleAction('toggle')}>
-                        <ListItemIcon>{isRunning ? <PauseIcon fontSize="small" /> : <PlayArrowIcon fontSize="small" />}</ListItemIcon>
-                        <ListItemText>{isRunning ? "Pause" : "Resume"}</ListItemText>
+                    <MenuItem dense onClick={() => handleAction('trigger')} sx={{ minHeight: '28px', py: 0.5 }}>
+                        <ListItemIcon sx={{ minWidth: '26px !important' }}>
+                            <RunNowIcon sx={{ fontSize: '0.9rem' }} />
+                        </ListItemIcon>
+                        <ListItemText
+                            primary="Run Now"
+                            slotProps={{ primary: { sx: { fontSize: '0.75rem', fontWeight: 500, mt: 0.5 } } }}
+                        />
+                    </MenuItem>
+                )}
+
+                {/* 3. Toggle Schedule */}
+                {status !== "COMPLETED" && recurringPlan?.recurrenceType !== "NONE" && (
+                    <MenuItem dense onClick={() => handleAction('toggle')} sx={{ minHeight: '28px', py: 0.5 }}>
+                        <ListItemIcon sx={{ minWidth: '26px !important' }}>
+                            {isRunning ?
+                                <PauseIcon sx={{ fontSize: '0.9rem' }} /> :
+                                <PlayArrowIcon sx={{ fontSize: '0.9rem' }} />
+                            }
+                        </ListItemIcon>
+                        <ListItemText
+                            primary={isRunning ? "Pause Schedule" : "Resume Schedule"}
+                            slotProps={{ primary: { sx: { fontSize: '0.75rem' } } }}
+                        />
                     </MenuItem>
                 )}
 
                 <Divider sx={{ my: 0.5 }} />
-                <MenuItem dense onClick={() => handleAction('delete')} sx={{ color: 'error.main' }}>
-                    <ListItemIcon><DeleteIcon fontSize="small" color="error" /></ListItemIcon>
-                    <ListItemText>Delete</ListItemText>
+
+                {/* 4. Delete Item */}
+                <MenuItem dense onClick={() => handleAction('delete')} sx={{ minHeight: '28px', py: 0.5, color: 'error.main' }}>
+                    <ListItemIcon sx={{ minWidth: '26px !important' }}>
+                        <DeleteIcon sx={{ fontSize: '0.9rem', color: 'error.main' }} />
+                    </ListItemIcon>
+                    <ListItemText
+                        primary="Delete"
+                        slotProps={{ primary: { sx: { fontSize: '0.75rem' } } }}
+                    />
                 </MenuItem>
             </Menu>
         </Card>

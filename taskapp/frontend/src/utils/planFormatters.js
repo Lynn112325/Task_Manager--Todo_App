@@ -10,6 +10,8 @@ export const formatFrequency = (plan) => {
     const t = plan.recurrenceType;
     if (t === "DAILY") return "Every day";
 
+    if (t === "NONE") return "NONE";
+
     const interval = plan.recurrenceInterval === 1 ? "" : plan.recurrenceInterval;
     const base = t === "WEEKLY" ? "week"
         : t === "MONTHLY" ? "month"
@@ -28,6 +30,9 @@ export const formatFrequency = (plan) => {
 };
 
 export const getPlanPeriodLabel = (plan, status) => {
+    if (status == "MANUAL_TRIGGER") {
+        return "Smart Template (Manual/Auto)";
+    }
     const start = plan?.recurrenceStart;
     const end = plan?.recurrenceEnd;
     const format = (d) => dayjs(d).format("YYYY/MM/DD");

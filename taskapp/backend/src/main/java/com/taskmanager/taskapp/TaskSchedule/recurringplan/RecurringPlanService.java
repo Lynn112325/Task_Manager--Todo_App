@@ -1,6 +1,5 @@
 package com.taskmanager.taskapp.TaskSchedule.recurringplan;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.http.HttpStatus;
@@ -31,7 +30,8 @@ public class RecurringPlanService {
                                 r.getRecurrenceDays(),
                                 r.getRecurrenceStart(),
                                 r.getRecurrenceEnd(),
-                                RecurringPlanDto.computeDisplayStatus(r.getStatus(), r.getRecurrenceStart(),
+                                RecurringPlanDto.computeDisplayStatus(r.getStatus(), r.getRecurrenceType(),
+                                                r.getRecurrenceStart(),
                                                 r.getRecurrenceEnd()),
                                 r.getIsHabit(),
                                 r.getNextRunAt(),

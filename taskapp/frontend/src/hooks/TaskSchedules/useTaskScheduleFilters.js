@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 
 export function useTaskScheduleFilters(taskSchedules = []) {
-    const [filterStatus, setFilterStatus] = useState('ALL'); // ALL, ONGOING, UPCOMING, PAUSED, EXPIRED
+    const [filterStatus, setFilterStatus] = useState('ALL'); // ALL, ONGOING, UPCOMING, PAUSED, MANUAL_TRIGGER, COMPLETED
     const [filterType, setFilterType] = useState('ALL');     // ALL, DAILY, WEEKLY, MONTHLY, NONE
     const [searchTerm, setSearchTerm] = useState('');
 
@@ -32,7 +32,7 @@ export function useTaskScheduleFilters(taskSchedules = []) {
             const templateB = b.taskTemplate;
 
             // sort by status order
-            const statusOrder = { 'ONGOING': 1, 'UPCOMING': 2, 'PAUSED': 3, 'COMPLETED': 4 };
+            const statusOrder = { 'ONGOING': 1, 'UPCOMING': 2, 'PAUSED': 3, 'MANUAL_TRIGGER': 4, 'COMPLETED': 5 };
             if (statusOrder[planA.displayStatus] !== statusOrder[planB.displayStatus]) {
                 return statusOrder[planA.displayStatus] - statusOrder[planB.displayStatus];
             }

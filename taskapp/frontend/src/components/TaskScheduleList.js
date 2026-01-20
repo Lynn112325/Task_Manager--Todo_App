@@ -1,4 +1,5 @@
 import {
+    Bolt as BoltIcon,
     EventRepeat as RepeatIcon
 } from '@mui/icons-material';
 import CloseIcon from '@mui/icons-material/Close';
@@ -8,6 +9,7 @@ import {
     Badge,
     Box,
     Button,
+    Divider,
     FormControl,
     Grid,
     IconButton,
@@ -131,17 +133,38 @@ export default function TaskScheduleList({ taskSchedules: initialData, handleEdi
                     </Typography>
 
                     <FormControl size="small" fullWidth>
-                        <InputLabel>Status</InputLabel>
+                        {/* 建議將 Label 改為更具包容性的名稱 */}
+                        <InputLabel>Schedule Status</InputLabel>
                         <Select
                             value={filterStatus}
-                            label="Status"
+                            label="Schedule Status"
                             onChange={(e) => setFilterStatus(e.target.value)}
                         >
-                            <MenuItem value="ALL">All Status</MenuItem>
+                            <MenuItem value="ALL">All Plans</MenuItem>
+
+                            <Divider sx={{ my: 0.5, opacity: 0.6 }}>
+                                <Typography variant="caption" sx={{ px: 1.5, color: 'text.disabled', fontWeight: 700 }}>
+                                    AUTOMATIC
+                                </Typography>
+                            </Divider>
+
                             <MenuItem value="ONGOING">Ongoing (Active Now)</MenuItem>
                             <MenuItem value="UPCOMING">Upcoming (Scheduled)</MenuItem>
                             <MenuItem value="PAUSED">Paused (Manual Off)</MenuItem>
-                            <MenuItem value="COMPLETED">Completed (Time Ended)</MenuItem>
+                            <MenuItem value="COMPLETED">Completed (Expired)</MenuItem>
+
+                            <Divider sx={{ my: 0.5, opacity: 0.6 }}>
+                                <Typography variant="caption" sx={{ px: 1.5, color: 'text.disabled', fontWeight: 700 }}>
+                                    ON-DEMAND
+                                </Typography>
+                            </Divider>
+
+                            <MenuItem value="MANUAL_TRIGGER">
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                    <BoltIcon sx={{ fontSize: '1rem', color: '#279c6d' }} />
+                                    Smart Templates
+                                </Box>
+                            </MenuItem>
                         </Select>
                     </FormControl>
 
