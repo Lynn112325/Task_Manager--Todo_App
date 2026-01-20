@@ -17,8 +17,13 @@ import dayjs from "dayjs";
 import PriorityChip from "./PriorityChip";
 import TaskTypeIcon from "./TaskTypeIcon";
 
-const DateDisplay = ({ icon, label, date, color = "text.secondary" }) => {
-  if (!date) return null;
+const DateDisplay = ({ icon, label, date, fallbackText, color = "text.secondary" }) => {
+  const isValidDate = date && !isNaN(new Date(date).getTime());
+
+  const displayValue = isValidDate
+    ? formatDateCustom(date)
+    : fallbackText;
+
   return (
     <Box sx={{ flex: 1, display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
       <Box sx={{
@@ -34,8 +39,16 @@ const DateDisplay = ({ icon, label, date, color = "text.secondary" }) => {
         <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
           {label}
         </Typography>
-        <Typography variant="body2" sx={{ fontWeight: 600, color: color }}>
-          {formatDateCustom(date)}
+        <Typography variant="body2"
+          sx={{
+            color: isValidDate ? color : "text.secondary",
+            fontWeight: isValidDate ? 600 : 400,
+            fontStyle: isValidDate ? 'normal' : 'italic',
+            textDecoration: isValidDate ? 'none' : 'line-through',
+            textDecorationColor: 'rgba(0, 0, 0, 0.2)',
+            transition: 'all 0.2s ease'
+          }}>
+          {displayValue}
         </Typography>
       </Box>
     </Box>
@@ -134,13 +147,14 @@ export default function TaskCard({ task }) {
             icon={<CalendarTodayIcon fontSize="small" />}
             label="Start Date"
             date={task.startDate}
+            fallbackText="Not set"
           />
 
           <DateDisplay
             icon={<EventAvailableIcon fontSize="small" />}
             label="Due Date"
-            date={task.dueDate}
-            color={task.dueDate ? "text.primary" : "text.secondary"}
+            date={task.dueDate ? task.dueDate : "No Deadline"}
+            color={task.dueDate ? "primary.main" : "text.secondary"}
           />
         </Stack>
         <Divider sx={{ mt: 2, mb: 1, borderStyle: 'dashed' }} />

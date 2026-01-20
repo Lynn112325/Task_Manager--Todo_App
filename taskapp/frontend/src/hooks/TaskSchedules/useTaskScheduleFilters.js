@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 
 export function useTaskScheduleFilters(taskSchedules = []) {
-    const [filterStatus, setFilterStatus] = useState('ALL'); // ALL, ONGOING, UPCOMING, PAUSED, MANUAL_TRIGGER, COMPLETED
+    const [filterStatus, setFilterStatus] = useState('ALL'); // ALL, ONGOING, UPCOMING, PAUSED, COMPLETED
     const [filterType, setFilterType] = useState('ALL');     // ALL, DAILY, WEEKLY, MONTHLY, NONE
     const [searchTerm, setSearchTerm] = useState('');
 

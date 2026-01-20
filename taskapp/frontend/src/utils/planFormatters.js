@@ -29,20 +29,50 @@ export const formatFrequency = (plan) => {
     return `Every ${interval} ${base}${s}${weekDays}`;
 };
 
+/**
+ * Generates a user-friendly display label for the blueprint's timeframe.
+ * @param {Object} plan - Plan object containing recurrenceStart and recurrenceEnd.
+ * @param {string} status - Blueprint status (MANUAL_TRIGGER, PAUSED, COMPLETED, etc.)
+ */
 export const getPlanPeriodLabel = (plan, status) => {
-    if (status == "MANUAL_TRIGGER") {
-        return "Smart Template (Manual/Auto)";
-    }
     const start = plan?.recurrenceStart;
     const end = plan?.recurrenceEnd;
-    const format = (d) => dayjs(d).format("YYYY/MM/DD");
 
-    if (status === "PAUSED") return "Currently Paused";
-    if (status === "COMPLETED") return end ? `Ended on ${format(end)}` : "Completed";
-    if (status === "UPCOMING") return `Starts ${format(start)}`;
+    // Helper: format dates using custom utility or fallback to raw string
+    const format = (d) => (typeof formatDateCustom === 'function' ? formatDateCustom(d) : d);
+    const dateRange = (s, e) => `${format(s)} — ${format(e)}`;
 
-    if (!start && !end) return "Active Continuous Plan";
-    if (start && !end) return `Active since ${format(start)}`;
+    // Handle static, non-recurring templates
+    if (status === "MANUAL_TRIGGER") {
+        if (start || end) {
+            if (start && end) return dateRange(start, end);
+            return start ? `Scheduled: ${format(start)}` : `Deadline: ${format(end)}`;
+        }
+        return "Smart Template (Manual)";
+    }
 
-    return `${format(start)} — ${format(end)}`;
+    // Handle recurring plan life cycles
+    switch (status) {
+        case "PAUSED":
+            return "Currently Paused";
+
+        case "COMPLETED":
+            return end
+                ? `Blueprint cycle ended on ${format(end)}`
+                : "Execution Completed";
+
+        case "UPCOMING":
+            return start
+                ? `Scheduled to start ${format(start)}`
+                : "Upcoming Plan";
+
+        case "ONGOING":
+        default:
+            // Display active date ranges or start/end points
+            if (start && end) return dateRange(start, end);
+            if (start) return `Active since ${format(start)}`;
+            if (end) return `Ends on ${format(end)}`;
+
+            return "Active Continuous Blueprint";
+    }
 };

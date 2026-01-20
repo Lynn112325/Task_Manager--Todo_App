@@ -55,12 +55,12 @@ export default function RecurringPlanCard({ recurringPlan, targetTitle = "" }) {
                                 color: config.color,
                                 '& .MuiChip-icon': { color: 'inherit', fontSize: 12 },
                                 cursor: 'pointer',
-                                ":hover": {
-                                    bgcolor: alpha(config.color, 0.08),
-                                    borderColor: config.color,
-                                    transform: 'translateY(-1px)',
-                                    boxShadow: `0 4px 12px ${alpha(config.color, 0.1)}`
-                                }
+                                // ":hover": {
+                                //     bgcolor: alpha(config.color, 0.08),
+                                //     borderColor: config.color,
+                                //     transform: 'translateY(-1px)',
+                                //     boxShadow: `0 4px 12px ${alpha(config.color, 0.1)}`
+                                // }
                             }}
                         />
                     </Box>
@@ -149,10 +149,17 @@ export default function RecurringPlanCard({ recurringPlan, targetTitle = "" }) {
                         borderRadius: 1,
                         p: 1.5,
                         textAlign: 'center',
-                        border: `1px dashed ${alpha(config.color, 0.2)}`
+                        border: `1px dashed ${alpha(config.color, 0.2)}`,
+                        cursor: "pointer",
+                        ":hover": {
+                            bgcolor: alpha(config.color, 0.08),
+                            borderColor: config.color,
+                            transform: 'translateY(-1px)',
+                            boxShadow: `0 4px 12px ${alpha(config.color, 0.1)}`
+                        }
                     }}>
                         <Typography variant="body2" fontWeight={600} color={config.color} sx={{ fontSize: '0.75rem' }}>
-                            {periodLabel}
+                            One-off Template for quick use
                         </Typography>
                     </Box>
                 )}

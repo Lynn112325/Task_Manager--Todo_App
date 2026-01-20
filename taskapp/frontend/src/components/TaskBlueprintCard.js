@@ -180,8 +180,8 @@ export default function TaskBlueprintCard({ data, onEdit, onDelete, onToggleActi
                             }
                         </ListItemIcon>
                         <ListItemText
-                            primary={isRunning ? "Pause Schedule" : "Resume Schedule"}
-                            slotProps={{ primary: { sx: { fontSize: '0.75rem' } } }}
+                            primary={isRunning ? "Pause" : "Resume"}
+                            slotProps={{ primary: { sx: { fontSize: '0.75rem', fontWeight: 500, mt: 0.5 } } }}
                         />
                     </MenuItem>
                 )}
