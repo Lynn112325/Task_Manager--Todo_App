@@ -24,10 +24,10 @@ import {
     Typography
 } from '@mui/material';
 import { useState } from 'react';
-import TaskScheduleCard from '../components/TaskScheduleCard';
+import TaskBlueprintCard from '../components/TaskBlueprintCard';
 import { useTaskSchedules } from '../hooks/TaskSchedules/useTaskSchedules';
 
-export default function TaskScheduleList({ taskSchedules: initialData, handleEdit, handleDelete, handleToggle }) {
+export default function TaskBlueprintList({ taskSchedules: initialData, handleEdit, handleDelete, handleToggle }) {
 
     const {
         taskSchedules: filteredSchedules,
@@ -216,7 +216,7 @@ export default function TaskScheduleList({ taskSchedules: initialData, handleEdi
                 }}
             >
                 {filteredSchedules.map((item) => (
-                    <TaskScheduleCard
+                    <TaskBlueprintCard
                         key={item.taskTemplate.id}
                         data={item}
                         onEdit={handleEdit}

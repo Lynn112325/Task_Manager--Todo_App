@@ -27,7 +27,7 @@ import { PLAN_STATUS_CONFIG } from '../utils/planStatus';
 
 const ICON_SIZE = 16;
 
-export default function TaskScheduleCard({ data, onEdit, onDelete, onToggleActive }) {
+export default function TaskBlueprintCard({ data, onEdit, onDelete, onToggleActive }) {
     const { taskTemplate, recurringPlan } = data || {};
 
     const [anchorEl, setAnchorEl] = useState(null);

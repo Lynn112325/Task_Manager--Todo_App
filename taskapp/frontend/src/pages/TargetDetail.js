@@ -16,7 +16,7 @@ import dayjs from 'dayjs';
 import * as React from "react";
 import { useParams } from "react-router";
 import { TargetHeader, TargetHeaderSkeleton } from '../components/TargetHeader';
-import TaskScheduleList from '../components/TaskScheduleList';
+import TaskBlueprintList from '../components/TaskBlueprintList';
 import { useTarget } from '../hooks/target/useTarget';
 import { useTaskSchedules } from '../hooks/TaskSchedules/useTaskSchedules';
 
@@ -118,7 +118,7 @@ export default function TargetDetail() {
 
                 {/* --- C. CONTENT: Task Blueprints --- */}
                 <Grid size={{ xs: 12, md: 8 }}>
-                    <TaskScheduleList
+                    <TaskBlueprintList
                         taskSchedules={taskSchedules}
                         handleEdit={handleEdit}
                         handleDelete={handleDelete}
