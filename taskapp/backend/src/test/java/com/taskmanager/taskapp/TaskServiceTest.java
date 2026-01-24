@@ -25,6 +25,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 
+import com.taskmanager.taskapp.enums.TaskStatus;
 import com.taskmanager.taskapp.security.MyUserDetails;
 import com.taskmanager.taskapp.target.TargetRepository;
 import com.taskmanager.taskapp.task.Task;
@@ -73,25 +74,26 @@ class TaskServiceTest {
 
         user = new User();
         user.setId(1L);
+        TaskStatus status = TaskStatus.ACTIVE;
 
         task2 = new Task();
         task2.setId(1L);
         task2.setUser(user);
         task2.setTitle("Test Task 2");
         task2.setDescription("Description 2");
-        task2.setIsCompleted(false);
+        task2.setStatus(status);
 
         task1 = new Task();
         task1.setId(2L);
         task1.setUser(user);
         task1.setTitle("Test Task 1");
         task1.setDescription("Description 1");
-        task1.setIsCompleted(false);
+        task1.setStatus(status);
     }
 
     @AfterEach
     void tearDown() {
-        // stub MyUserDetailsService to return current user id and allow ownership
+        // stub MyUserDetailssService to return current user id and allow ownership
         // checks
         when(myUserDetailsService.getCurrentUserId()).thenReturn(1L);
         // default do nothing for checkOwnership

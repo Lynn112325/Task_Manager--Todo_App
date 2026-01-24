@@ -15,7 +15,7 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
 
     @Query("""
                 SELECT new com.taskmanager.taskapp.task.dto.TaskDto(
-                    t.id, t.title, t.description, t.isCompleted, t.priority, t.type,
+                    t.id, t.title, t.description, t.status, t.priority, t.type,
                     t.createdAt, t.updatedAt, t.startDate, t.dueDate, tt.id
                 )
                 FROM Task t

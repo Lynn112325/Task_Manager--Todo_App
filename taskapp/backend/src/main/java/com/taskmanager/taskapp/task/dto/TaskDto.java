@@ -2,13 +2,14 @@ package com.taskmanager.taskapp.task.dto;
 
 import java.time.LocalDateTime;
 
+import com.taskmanager.taskapp.enums.TaskStatus;
 import com.taskmanager.taskapp.enums.Type;
 
 public record TaskDto(
         Long id,
         String title,
         String description,
-        Boolean isCompleted,
+        TaskStatus status,
         Integer priority,
         Type type,
         LocalDateTime createdAt,

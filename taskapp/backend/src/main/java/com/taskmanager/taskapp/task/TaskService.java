@@ -1,7 +1,6 @@
 package com.taskmanager.taskapp.task;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.stereotype.Service;
@@ -27,7 +26,7 @@ public class TaskService {
                 task.getId(),
                 task.getTitle(),
                 task.getDescription(),
-                task.getIsCompleted(),
+                task.getStatus(),
                 task.getPriority(),
                 task.getType(),
                 task.getCreatedAt(),
@@ -41,7 +40,7 @@ public class TaskService {
     private Task applyNonNullUpdates(TaskDto updates, Task existingTask) {
         Optional.ofNullable(updates.title()).ifPresent(existingTask::setTitle);
         Optional.ofNullable(updates.description()).ifPresent(existingTask::setDescription);
-        Optional.ofNullable(updates.isCompleted()).ifPresent(existingTask::setIsCompleted);
+        Optional.ofNullable(updates.status()).ifPresent(existingTask::setStatus);
         Optional.ofNullable(updates.priority()).ifPresent(existingTask::setPriority);
         Optional.ofNullable(updates.type()).ifPresent(existingTask::setType);
         Optional.ofNullable(updates.startDate()).ifPresent(existingTask::setStartDate);
@@ -111,11 +110,13 @@ public class TaskService {
     }
 
     // 任務摘要（完成率等）
-    public Map<String, Object> getUserTaskSummary(Long userId) {
-        List<Task> tasks = taskRepository.findByUser_Id(userId);
-        long completed = tasks.stream().filter(task -> task.getIsCompleted()).count();
-        double completionRate = tasks.isEmpty() ? 0 : (completed * 100.0 / tasks.size());
-        return Map.of("total", tasks.size(), "completed", completed, "completionRate", completionRate);
-    }
+    // public Map<String, Object> getUserTaskSummary(Long userId) {
+    // List<Task> tasks = taskRepository.findByUser_Id(userId);
+    // long completed = tasks.stream().filter(task -> task.getStaus()).count();
+    // double completionRate = tasks.isEmpty() ? 0 : (completed * 100.0 /
+    // tasks.size());
+    // return Map.of("total", tasks.size(), "completed", completed,
+    // "completionRate", completionRate);
+    // }
 
 }

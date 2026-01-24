@@ -6,6 +6,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import com.taskmanager.taskapp.TaskSchedule.tasktemplate.TaskTemplate;
+import com.taskmanager.taskapp.enums.TaskStatus;
 import com.taskmanager.taskapp.enums.Type;
 import com.taskmanager.taskapp.user.User;
 
@@ -61,8 +62,13 @@ public class Task {
     @Column(length = 20)
     private Type type;
 
-    @Column(name = "is_completed", columnDefinition = "BOOLEAN DEFAULT FALSE", nullable = false)
-    private Boolean isCompleted;
+    // @Column(name = "is_completed", columnDefinition = "BOOLEAN DEFAULT FALSE", nullable = false)
+    // private Boolean isCompleted;
+
+    @Builder.Default
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false)
+    private TaskStatus status = TaskStatus.ACTIVE;
 
     @CreationTimestamp
     private LocalDateTime createdAt;
