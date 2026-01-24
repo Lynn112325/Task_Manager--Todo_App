@@ -1,6 +1,6 @@
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import CancelIcon from '@mui/icons-material/Cancel';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import RepeatIcon from '@mui/icons-material/Repeat';
 import ScheduleIcon from '@mui/icons-material/Schedule';
@@ -22,12 +22,30 @@ import RecurringPlanCard from "../components/RecurringPlanCard.js";
 import TaskCard from '../components/TaskCard.js';
 import { useTasks } from "../hooks/task/useTasks.js";
 
+const STATUS_CONFIG = {
+  ACTIVE: {
+    label: "In Progress",
+    color: "warning",
+    icon: <ScheduleIcon />,
+  },
+  COMPLETED: {
+    label: "Completed",
+    color: "success",
+    icon: <CheckCircleIcon />,
+  },
+  CANCELED: {
+    label: "Discarded",
+    color: "error",
+    icon: <CancelIcon />,
+  }
+};
+
 export default function TaskShow() {
   const { taskId } = useParams();
   const navigate = useNavigate();
 
   const {
-    deleteTaskCompletion,
+    // cancelTaskAction,
     getTaskDetail,
     isLoading,
     error
@@ -39,6 +57,7 @@ export default function TaskShow() {
   const recurringPlan = taskData?.recurringPlan;
   const habitStats = taskData?.habitStats;
   const targetTitle = taskData?.target?.title;
+  const config = STATUS_CONFIG[taskData?.task.status] || STATUS_CONFIG.ACTIVE;
 
   const loadData = React.useCallback(async () => {
     try {
@@ -53,6 +72,7 @@ export default function TaskShow() {
     loadData();
   }, [loadData]);
 
+
   const handleTaskEdit = React.useCallback(() => {
     if (!taskData?.task) return;
 
@@ -61,14 +81,14 @@ export default function TaskShow() {
     });
   }, [navigate, taskId, taskData]);
 
-  const handleTaskDelete = React.useCallback(async () => {
-    if (!taskData?.task) return;
+  // const handleTaskDelete = React.useCallback(async () => {
+  //   if (!taskData?.task) return;
 
-    const success = await deleteTaskCompletion(task);
-    if (success) {
-      navigate("/tasks/todo");
-    }
-  }, [taskData, deleteTaskCompletion, navigate]);
+  //   const success = await cancelTaskAction(task);
+  //   if (success) {
+  //     navigate("/tasks/todo");
+  //   }
+  // }, [taskData, cancelTaskAction, navigate]);
 
   const handleBack = React.useCallback(() => {
     navigate("/tasks/todo");
@@ -130,10 +150,11 @@ export default function TaskShow() {
             <Stack direction="row" justifyContent="flex-end" sx={{ mt: 'auto', pt: 2, pb: 1 }}>
               <Chip
                 size="medium"
-                icon={task.isCompleted ? <CheckCircleIcon /> : <ScheduleIcon />}
-                label={task.isCompleted ? "Completed" : "In Progress"}
-                color={task.isCompleted ? "success" : "warning"}
+                icon={config.icon}
+                label={config.label}
+                color={config.color}
                 variant="outlined"
+                sx={{ fontWeight: 500 }}
               />
             </Stack>
           </Box>
@@ -155,19 +176,11 @@ export default function TaskShow() {
             >
               Edit
             </Button>
-            <Button
-              variant="contained"
-              color="error"
-              startIcon={<DeleteIcon />}
-              onClick={handleTaskDelete}
-            >
-              Delete
-            </Button>
           </Stack>
         </Stack>
       </Box >
     ) : null;
-  }, [isLoading, error, task, handleBack, handleTaskEdit, handleTaskDelete]);
+  }, [isLoading, error, task, handleBack, handleTaskEdit /*, handleTaskDelete*/]);
 
   const pageTitle = `Task ${taskId}`;
 
@@ -178,7 +191,7 @@ export default function TaskShow() {
       actions={
         <Stack direction="row" alignItems="center" spacing={1}>
 
-          {/* if no re */}
+          {/* if no template id, show this btn (unimplemented) */}
           <Tooltip
             title="Reuse this task to quickly create repeated or scheduled tasks"
           >

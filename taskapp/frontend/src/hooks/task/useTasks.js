@@ -20,7 +20,7 @@ export function useTasks(type = "all") {
     const actions = useTaskActions({
         createTask,
         updateTask,
-        deleteTask,
+        // deleteTask,
     });
 
     // Selectors

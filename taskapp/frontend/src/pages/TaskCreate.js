@@ -20,11 +20,11 @@ export default function TaskCreate() {
   const navigate = useNavigate();
   const { type } = useType();
   const {
-    createTaskCompletion
+    createTaskAction
   } = useTasks(type);
 
   const handleCreate = async (formValues) => {
-    const createdTask = await createTaskCompletion(formValues);
+    const createdTask = await createTaskAction(formValues);
     navigate(`/tasks/${createdTask.id}`);
   };
 

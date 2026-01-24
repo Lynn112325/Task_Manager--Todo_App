@@ -1,14 +1,20 @@
 import dayjs from "dayjs";
 import { useMemo } from "react";
 
+const statusWeight = {
+    ACTIVE: 1,
+    CANCELED: 2,
+    COMPLETED: 3
+};
 export function useTaskSelectors(tasks, type = "all") {
+
     const tasksFiltered = useMemo(() => {
         return [...tasks]
             .filter(t => type === "all" || t.type === type)
             .sort((a, b) => {
-                // incomplete first
-                if (a.isCompleted !== b.isCompleted) {
-                    return a.isCompleted ? 1 : -1;
+                // sort tasks based on status weight
+                if (a.status !== b.status) {
+                    return (statusWeight[a.status] || 0) - (statusWeight[b.status] || 0);
                 }
                 // priority desc
                 if (a.priority !== b.priority) {

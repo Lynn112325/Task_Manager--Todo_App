@@ -12,7 +12,7 @@ export default function TaskEdit() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const { getTask, editTaskCompletion, isLoading, error } = useTasks();
+  const { getTask, editTaskAction, isLoading, error } = useTasks();
 
   const initialTask = location.state?.task ?? null;
   const [task, setTask] = React.useState(initialTask);
@@ -30,7 +30,7 @@ export default function TaskEdit() {
   }, [taskId, getTask]);
 
   const handleEdit = async (formValues) => {
-    const editedTask = await editTaskCompletion(formValues);
+    const editedTask = await editTaskAction(formValues);
     navigate(`/tasks/${editedTask.id}`);
   };
 

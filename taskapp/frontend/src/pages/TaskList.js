@@ -10,9 +10,11 @@ import {
   IconButton,
   List,
   ListSubheader,
+  MenuItem,
+  Select,
   Stack,
   Tooltip,
-  Typography,
+  Typography
 } from "@mui/material";
 import dayjs from "dayjs";
 import * as React from "react";
@@ -26,6 +28,7 @@ import { useType } from "../hooks/type/useType";
 
 export default function TaskList() {
   const [selectedDate, setSelectedDate] = React.useState(dayjs());
+  const [statusFilter, setStatusFilter] = React.useState("ACTIVE");
   const [listToggle, setListToggle] = React.useState("upcoming");
 
   const { type, handleTypeChange } = useType();
@@ -36,7 +39,7 @@ export default function TaskList() {
     getTasksByDate,
     getUpcomingTasks,
     getOverdueTasks,
-    toggleTaskCompletion,
+    toggleTaskAction,
     fetchTasks,
     isLoading,
     error,
@@ -53,10 +56,14 @@ export default function TaskList() {
 
   const navigate = useNavigate();
 
-  const tasksByDate = React.useMemo(
-    () => getTasksByDate(selectedDate),
-    [getTasksByDate, selectedDate, type]
-  );
+  const tasksByDate = React.useMemo(() => {
+    const rawTasks = getTasksByDate(selectedDate);
+    return rawTasks.filter(task => task.status === statusFilter);
+  }, [getTasksByDate, selectedDate, statusFilter, type]);
+
+  const handleStatusChange = (event) => {
+    setStatusFilter(event.target.value);
+  };
 
   const upcomingTasks = React.useMemo(
     () => getUpcomingTasks(),
@@ -76,12 +83,11 @@ export default function TaskList() {
     if (!isLoading) refresh();
   };
 
-
-  const handleTaskStatusToggle = React.useCallback(
-    (task) => {
-      toggleTaskCompletion(task);
+  const onStatusUpdate = React.useCallback(
+    (task, newStatus) => {
+      toggleTaskAction(task, newStatus);
     },
-    [toggleTaskCompletion]
+    [toggleTaskAction]
   );
 
   const handleRowView = React.useCallback(
@@ -107,7 +113,6 @@ export default function TaskList() {
           <Tooltip title="Reload data" placement="top">
 
             <div>
-
               <IconButton
                 size="small"
                 aria-label="refresh"
@@ -117,6 +122,27 @@ export default function TaskList() {
               </IconButton>
             </div>
           </Tooltip>
+
+          <Select
+            name="status"
+            label="Status"
+            value={statusFilter}
+            displayEmpty
+            inputProps={{ "aria-label": "Status selector" }}
+            sx={{ flex: 1, minWidth: 150 }}
+            onChange={handleStatusChange}
+          >
+            <MenuItem key="ACTIVE" value="ACTIVE">
+              Ongoing
+            </MenuItem>
+            <MenuItem key="COMPLETED" value="COMPLETED">
+              Completed
+            </MenuItem>
+            <MenuItem key="CANCELED" value="CANCELED">
+              Discarded
+            </MenuItem>
+          </Select>
+
           <TaskTypeSelector
             type={type}
             handleTypeChange={handleTypeChange}
@@ -202,8 +228,7 @@ export default function TaskList() {
 
                 <TaskListItems
                   rows={tasksByDate}
-                  checked={checked}
-                  onToggle={handleTaskStatusToggle}
+                  onStatusUpdate={onStatusUpdate}
                   onRowView={handleRowView}
                 />
               </List>
@@ -320,7 +345,7 @@ export default function TaskList() {
                   <TaskListItems
                     rows={sideListTasks}
                     checked={checked}
-                    onToggle={handleTaskStatusToggle}
+                    onStatusUpdate={onStatusUpdate}
                     onRowView={handleRowView}
                   />
                 </List>
