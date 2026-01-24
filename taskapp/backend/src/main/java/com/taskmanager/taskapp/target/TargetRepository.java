@@ -1,12 +1,11 @@
 package com.taskmanager.taskapp.target;
+
 import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-
-import com.taskmanager.taskapp.target.dto.TargetDto;
 
 public interface TargetRepository extends JpaRepository<Target, Long> {
 
@@ -16,7 +15,7 @@ public interface TargetRepository extends JpaRepository<Target, Long> {
 
     // Custom query to find TargetDto by TaskTemplate ID
     @Query("""
-            SELECT new com.taskmanager.taskapp.target.dto.TargetDto(
+            SELECT new com.taskmanager.taskapp.target.TargetDto(
                 t.id,
                 t.title,
                 t.description,

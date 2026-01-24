@@ -6,7 +6,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.taskmanager.taskapp.security.MyUserDetailsService;
-import com.taskmanager.taskapp.target.dto.TargetDto;
 
 import lombok.RequiredArgsConstructor;
 

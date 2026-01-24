@@ -8,7 +8,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.taskmanager.taskapp.api.BaseController;
 import com.taskmanager.taskapp.api.CommonResponse;
-import com.taskmanager.taskapp.target.dto.TargetDto;
 
 import lombok.RequiredArgsConstructor;
 

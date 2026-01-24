@@ -16,8 +16,8 @@ import com.taskmanager.taskapp.api.BaseController;
 import com.taskmanager.taskapp.api.CommonResponse;
 import com.taskmanager.taskapp.habitlog.HabitLogService;
 import com.taskmanager.taskapp.habitlog.HabitLogStatsDto;
+import com.taskmanager.taskapp.target.TargetDto;
 import com.taskmanager.taskapp.target.TargetService;
-import com.taskmanager.taskapp.target.dto.TargetDto;
 import com.taskmanager.taskapp.task.dto.TaskDetailDto;
 import com.taskmanager.taskapp.task.dto.TaskDto;
 
