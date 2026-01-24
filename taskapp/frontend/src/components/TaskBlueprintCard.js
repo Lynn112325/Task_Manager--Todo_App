@@ -164,7 +164,7 @@ export default function TaskBlueprintCard({ data, onEdit, onDelete, onToggleActi
                             <RunNowIcon sx={{ fontSize: '0.9rem' }} />
                         </ListItemIcon>
                         <ListItemText
-                            primary="Run Now"
+                            primary="Generate Task"
                             slotProps={{ primary: { sx: { fontSize: '0.75rem', fontWeight: 500, mt: 0.5 } } }}
                         />
                     </MenuItem>
