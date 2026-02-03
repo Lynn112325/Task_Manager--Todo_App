@@ -30,29 +30,21 @@ export default function TaskList() {
   const [selectedDate, setSelectedDate] = React.useState(dayjs());
   const [statusFilter, setStatusFilter] = React.useState("ACTIVE");
   const [listToggle, setListToggle] = React.useState("upcoming");
-
   const { type, handleTypeChange } = useType();
 
   const {
-    // tasks,
-    checked,
     getTasksByDate,
-    getUpcomingTasks,
-    getOverdueTasks,
-    toggleTaskAction,
-    fetchTasks,
+    upcomingTasks,     // Memoized & Sorted from hook
+    overdueTasks,      // Memoized & Sorted from hook
     isLoading,
+    toggleTaskAction,
     error,
-    refresh,
-  } = useTasks(type);
+    refresh
+  } = useTasks(selectedDate, type);
 
   const handleDateChange = (date) => {
     setSelectedDate(date);
   };
-
-  React.useEffect(() => {
-    fetchTasks();
-  }, [fetchTasks]);
 
   const navigate = useNavigate();
 
@@ -65,19 +57,10 @@ export default function TaskList() {
     setStatusFilter(event.target.value);
   };
 
-  const upcomingTasks = React.useMemo(
-    () => getUpcomingTasks(),
-    [getUpcomingTasks, type]
-  );
-
-  const overdueTasks = React.useMemo(
-    () => getOverdueTasks(),
-    [getOverdueTasks, type]
-  );
-
-  const sideListTasks = listToggle === "upcoming"
-    ? upcomingTasks
-    : overdueTasks;
+  const sideListTasks = React.useMemo(() => {
+    const rawSideTasks = listToggle === "upcoming" ? upcomingTasks : overdueTasks;
+    return rawSideTasks.filter(task => task.status === statusFilter);
+  }, [listToggle, upcomingTasks, overdueTasks, statusFilter]);
 
   const handleRefresh = () => {
     if (!isLoading) refresh();
@@ -344,7 +327,6 @@ export default function TaskList() {
                 >
                   <TaskListItems
                     rows={sideListTasks}
-                    checked={checked}
                     onStatusUpdate={onStatusUpdate}
                     onRowView={handleRowView}
                   />

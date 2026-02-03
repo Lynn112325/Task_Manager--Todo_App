@@ -1,48 +1,62 @@
 import dayjs from "dayjs";
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 
-const statusWeight = {
-    ACTIVE: 1,
-    CANCELED: 2,
-    COMPLETED: 3
-};
-export function useTaskSelectors(tasks, type = "all") {
+export function useTaskSelectors(allData, type = "all") {
+    // Destructure data from useTasksData
+    const {
+        overdueTasks = [],
+        currentMonthTasks = [],
+        nextMonthTasks = [],
+        displayMonthTasks = []
+    } = allData;
 
-    const tasksFiltered = useMemo(() => {
-        return [...tasks]
-            .filter(t => type === "all" || t.type === type)
-            .sort((a, b) => {
-                // sort tasks based on status weight
-                if (a.status !== b.status) {
-                    return (statusWeight[a.status] || 0) - (statusWeight[b.status] || 0);
-                }
-                // priority desc
-                if (a.priority !== b.priority) {
-                    return b.priority - a.priority;
-                }
-                // due date asc
-                return dayjs(a.dueDate).unix() - dayjs(b.dueDate).unix();
-            });
-    }, [tasks, type]);
-
-    const getTasksByDate = (date) =>
-        tasksFiltered.filter(
-            t => dayjs(t.dueDate).isSame(date, "day")
+    /**
+     * 1. Specific Date Selector
+     * Uses displayMonthTasks because it adapts to the calendar view.
+     */
+    const getTasksByDate = useCallback((date) => {
+        const filtered = displayMonthTasks.filter(t =>
+            dayjs(t.dueDate).isSame(date, "day")
         );
-    const getOverdueTasks = () =>
-        tasksFiltered.filter(
-            t => dayjs(t.dueDate).isBefore(dayjs(), "day") && !t.isCompleted
-        );
+        return type === "all" ? filtered : filtered.filter(t => t.type === type);
+    }, [displayMonthTasks, type]);
 
-    const getUpcomingTasks = () =>
-        tasksFiltered.filter(
-            t => dayjs(t.dueDate).isAfter(dayjs(), "day")
-        );
+    /**
+     * 2. Overdue Selector
+     * We use the specific overdueTasks array from the backend.
+     * It's already filtered for status='ACTIVE' and sorted by the DB.
+     */
+    const overdue = useMemo(() => {
+        if (type === "all") return overdueTasks;
+        return overdueTasks.filter(t => t.type === type);
+    }, [overdueTasks, type]);
+
+    /**
+     * 3. Upcoming Selector (Next 14 Days)
+     * Combines current and next month to ensure no "end-of-month" gaps.
+     */
+    const upcoming = useMemo(() => {
+        const today = dayjs().startOf("day");
+        const horizon = today.add(14, "day").endOf("day");
+
+        const combined = [...currentMonthTasks, ...nextMonthTasks];
+
+        return combined.filter(t => {
+            const d = dayjs(t.dueDate);
+            // const isActive = t.status === "ACTIVE";
+            const isUpcomingDate = d.isAfter(today, "day") && d.isBefore(horizon);
+            const matchesType = type === "all" || t.type === type;
+
+            // return isActive && isUpcomingDate && matchesType;
+            return isUpcomingDate && matchesType;
+
+        });
+    }, [currentMonthTasks, nextMonthTasks, type]);
 
     return {
-        tasksFiltered,
         getTasksByDate,
-        getOverdueTasks,
-        getUpcomingTasks
+        overdueTasks: overdue,
+        upcomingTasks: upcoming
     };
 }
+

@@ -1,86 +1,90 @@
-import { useCallback, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import dayjs from "dayjs";
+import { useMemo } from "react";
 import axios from "../../axiosConfig";
-import { useError } from "../useError";
 
 const API_URL = "/api/tasks";
-export function useTasksData() {
-    const [tasks, setTasks] = useState([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const { getUserFriendlyError } = useError();
 
-    const fetchTasks = useCallback(async () => {
-        try {
-            setIsLoading(true);
-            const res = await axios.get(API_URL);
-            setTasks(res.data?.data ?? []);
-            // console.log("Fetched tasks:", res.data?.data ?? []);
-        } catch (err) {
-            setError(getUserFriendlyError(err));
-        } finally {
-            setIsLoading(false);
+export function useTasksData(selectedDate = null) {
+    const queryClient = useQueryClient();
+
+    // --- Date Setup ---
+    const today = dayjs();
+    const currentMonthStr = today.format("YYYY-MM");
+    const nextMonthStr = today.add(1, "month").format("YYYY-MM");
+
+    // If no date is selected, default to current month
+    const selectedMonthStr = selectedDate
+        ? dayjs(selectedDate).format("YYYY-MM")
+        : currentMonthStr;
+
+    // Check if today is within the last 7 days of the month
+    const isEndOfMonth = today.date() > (today.daysInMonth() - 7);
+
+    // --- Queries ---
+
+    // 1. OVERDUE: Fetch all active tasks from the past (High Priority)
+    const overdueQuery = useQuery({
+        queryKey: ["tasks", "overdue"],
+        queryFn: () => axios.get(`${API_URL}?status=active&overdue=true`).then(res => res.data.data),
+        staleTime: 1000 * 60 * 2,
+    });
+
+    // 2. CURRENT MONTH: Always synced (used for Today & Upcoming views)
+    const currentMonthQuery = useQuery({
+        queryKey: ["tasks", "month", currentMonthStr],
+        queryFn: () => axios.get(`${API_URL}/month?month=${currentMonthStr}`).then(res => res.data.data),
+        staleTime: 1000 * 60 * 1,
+    });
+
+    // 3. SELECTED MONTH: Only fetch if user looks at a different month
+    // Note: If selectedMonthStr === currentMonthStr, React Query dedupes this automatically
+    const selectedMonthQuery = useQuery({
+        queryKey: ["tasks", "month", selectedMonthStr],
+        queryFn: () => axios.get(`${API_URL}/month?month=${selectedMonthStr}`).then(res => res.data.data),
+        enabled: !!selectedDate && selectedMonthStr !== currentMonthStr,
+        staleTime: 1000 * 60 * 5,
+    });
+
+    // 4. NEXT MONTH: Prefetch next month only near the end of the current month
+    const nextMonthQuery = useQuery({
+        queryKey: ["tasks", "month", nextMonthStr],
+        queryFn: () => axios.get(`${API_URL}/month?month=${nextMonthStr}`).then(res => res.data.data),
+        enabled: isEndOfMonth,
+        staleTime: 1000 * 60 * 10, // Low priority, longer cache
+    });
+
+    // --- Data Unification ---
+
+    // Determine which month data to return for the Calendar/List view
+    const displayMonthTasks = useMemo(() => {
+        if (selectedMonthStr === currentMonthStr) {
+            return currentMonthQuery.data ?? [];
         }
-    }, []);
+        return selectedMonthQuery.data ?? [];
+    }, [selectedMonthStr, currentMonthStr, currentMonthQuery.data, selectedMonthQuery.data]);
 
-    const getTask = useCallback(async (id) => {
-        try {
-            setIsLoading(true);
-            const res = await axios.get(`${API_URL}/${id}`);
-            return res.data.data;
-        } catch (err) {
-            setError(getUserFriendlyError(err));
-        } finally {
-            setIsLoading(false);
-        }
-    }, []);
+    const invalidateAllTasks = () => {
+        // Refresh all task-related queries
+        queryClient.invalidateQueries({ queryKey: ["tasks"] });
+    };
 
-    const getTaskDetail = useCallback(async (id) => {
-        try {
-            setIsLoading(true);
-            const res = await axios.get(`${API_URL}/${id}/detail`);
-            return res.data.data;
-        } catch (err) {
-            setError(getUserFriendlyError(err));
-            throw err;
-        } finally {
-            setIsLoading(false);
-        }
-    }, []);
-
-    const createTask = useCallback(async (data) => {
-        const res = await axios.post(API_URL, data);
-        const created = res.data.data;
-        console.log("Created task:", created);
-        setTasks(prev => [...prev, created]);
-        return created;
-    }, []);
-
-    const updateTask = useCallback(async (id, data) => {
-        const res = await axios.patch(`${API_URL}/${id}`, data);
-        const updated = res.data.data;
-        setTasks(prev =>
-            prev.map(t => (t.id === id ? updated : t))
-        );
-        return updated;
-    }, []);
-
-    const deleteTask = useCallback(async (id) => {
-        if (!id) {
-            throw new Error("deleteTask called without id");
-        }
-        await axios.delete(`${API_URL}/${id}`);
-        setTasks(prev => prev.filter(t => t.id !== id));
-    }, []);
+    // Combine loading/error states
+    const isLoading = overdueQuery.isLoading || currentMonthQuery.isLoading || selectedMonthQuery.isLoading;
+    const isError = overdueQuery.isError || currentMonthQuery.isError || selectedMonthQuery.isError;
 
     return {
-        tasks,
+        // Raw Data Sources
+        overdueTasks: overdueQuery.data ?? [],         // For Overdue Section
+        currentMonthTasks: currentMonthQuery.data ?? [], // For "Today" / "Upcoming" calculation
+        nextMonthTasks: nextMonthQuery.data ?? [],     // For "Upcoming" calculation (cross-month)
+        displayMonthTasks,                             // For Calendar / Main List View
+
+        // State
         isLoading,
-        error,
-        fetchTasks,
-        getTask,
-        getTaskDetail,
-        createTask,
-        updateTask,
-        deleteTask,
+        isError,
+        // isPrefetching: nextMonthQuery.isFetching,
+
+        refresh: invalidateAllTasks,
     };
 }

@@ -20,7 +20,7 @@ import HabitStatsCard from "../components/HabitStatsCard.js";
 import PageContainer from "../components/PageContainer";
 import RecurringPlanCard from "../components/RecurringPlanCard.js";
 import TaskCard from '../components/TaskCard.js';
-import { useTasks } from "../hooks/task/useTasks.js";
+import { useTaskDetail } from "../hooks/task/useTaskDetail.js";
 
 const STATUS_CONFIG = {
   ACTIVE: {
@@ -45,33 +45,20 @@ export default function TaskShow() {
   const navigate = useNavigate();
 
   const {
-    // cancelTaskAction,
-    getTaskDetail,
+    detail: taskData,
     isLoading,
+    isError,
     error
-  } = useTasks();
+  } = useTaskDetail(taskId);
 
-  const [taskData, setTaskData] = React.useState(null);
 
   const task = taskData?.task;
   const recurringPlan = taskData?.recurringPlan;
   const habitStats = taskData?.habitStats;
   const targetTitle = taskData?.target?.title;
-  const config = STATUS_CONFIG[taskData?.task.status] || STATUS_CONFIG.ACTIVE;
-
-  const loadData = React.useCallback(async () => {
-    try {
-      const data = await getTaskDetail(Number(taskId));
-      setTaskData(data);
-    } catch (err) {
-      console.error("Failed to load task:", err);
-    }
-  }, [taskId, getTaskDetail]);
-
-  React.useEffect(() => {
-    loadData();
-  }, [loadData]);
-
+  const config = task?.status
+    ? (STATUS_CONFIG[task.status] || STATUS_CONFIG.ACTIVE)
+    : STATUS_CONFIG.ACTIVE;
 
   const handleTaskEdit = React.useCallback(() => {
     if (!taskData?.task) return;

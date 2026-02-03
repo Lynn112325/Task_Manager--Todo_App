@@ -1,14 +1,38 @@
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import axios from "../../axiosConfig";
 import { useDialogs } from "../useDialogs/useDialogs";
 import useNotifications from "../useNotifications/useNotifications";
 
-export function useTaskActions({ createTask, updateTask }) {
+const API_URL = "/api/tasks";
+
+export function useTaskActions() {
     const dialogs = useDialogs();
     const notifications = useNotifications();
+    const queryClient = useQueryClient();
 
+    const invalidateAllTasks = () => {
+        queryClient.invalidateQueries({ queryKey: ["tasks"] });
+    };
+
+    const createTaskMutation = useMutation({
+        mutationFn: (data) => axios.post(API_URL, data).then(r => r.data.data),
+        onSuccess: invalidateAllTasks
+    });
+
+    const updateTaskMutation = useMutation({
+        mutationFn: ({ id, data }) => axios.patch(`${API_URL}/${id}`, data).then(r => r.data.data),
+        onSuccess: invalidateAllTasks
+    });
+
+    // const deleteTaskMutation = useMutation({
+    //     mutationFn: (id) => axios.delete(`${API_URL}/${id}`),
+    //     onSuccess: invalidateAllTasks
+    // });
     // 
+
     const toggleTaskAction = async (task, requestedStatus = null) => {
         if (!task?.id) return;
-        console.log(requestedStatus);
+
         let targetStatus;
 
         // Determine the target status to change
@@ -34,8 +58,9 @@ export function useTaskActions({ createTask, updateTask }) {
         if (!confirmed) return;
 
         try {
-            await updateTask(task.id, {
-                status: targetStatus,
+            await updateTaskMutation.mutateAsync({
+                id: task.id,
+                data: { status: targetStatus }
             });
 
             notifications.show(`Task marked as ${targetStatus.toLowerCase()}`, {
@@ -67,7 +92,10 @@ export function useTaskActions({ createTask, updateTask }) {
         if (!confirmed) return false;
 
         try {
-            await updateTask(task.id, "CANCELED");
+            await updateTaskMutation.mutateAsync({
+                id: task.id,
+                data: { status: "CANCELED" }
+            });
 
             notifications.show("Task has been canceled", {
                 severity: "info",
@@ -83,7 +111,7 @@ export function useTaskActions({ createTask, updateTask }) {
 
     const createTaskAction = async (taskData) => {
         try {
-            const createdTask = await createTask(taskData);
+            const createdTask = await createTaskMutation.mutateAsync(taskData);;
 
             notifications.show('Task created successfully.', {
                 severity: 'success',
@@ -102,7 +130,10 @@ export function useTaskActions({ createTask, updateTask }) {
 
     const editTaskAction = async (taskData) => {
         try {
-            const editedTask = await updateTask(taskData.id, taskData);
+            const editedTask = await updateTaskMutation.mutateAsync({
+                id: taskData.id,
+                data: taskData
+            });
             notifications.show('Task edited successfully.', {
                 severity: 'success',
                 autoHideDuration: 3000,

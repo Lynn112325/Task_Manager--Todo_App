@@ -17,17 +17,6 @@ export default function TaskEdit() {
   const initialTask = location.state?.task ?? null;
   const [task, setTask] = React.useState(initialTask);
 
-  React.useEffect(() => {
-
-    const loadData = async () => {
-      const fetchedTask = await getTask(Number(taskId));
-      if (fetchedTask) {
-        setTask(fetchedTask);
-      }
-    };
-
-    loadData();
-  }, [taskId, getTask]);
 
   const handleEdit = async (formValues) => {
     const editedTask = await editTaskAction(formValues);

@@ -2,46 +2,47 @@ import { useTaskActions } from "./useTaskActions";
 import { useTasksData } from "./useTasksData";
 import { useTaskSelectors } from "./useTaskSelectors";
 
-export function useTasks(type = "all") {
+export function useTasks(selectedDate = null, type = "all") {
     // Data
     const {
-        tasks,
+        // Raw Data Sources
+        overdueTasks,        // For Overdue Section
+        currentMonthTasks,   // For "Today" / "Upcoming" calculation
+        nextMonthTasks,      // For "Upcoming" calculation (cross-month)
+        displayMonthTasks,   // For Calendar / Main List View
+
+        // State
         isLoading,
-        error,
-        getTaskDetail,
-        getTask,
-        createTask,
-        updateTask,
-        deleteTask,
-        fetchTasks,
-    } = useTasksData();
+        isError,
+        isPrefetching,
+
+        refresh,
+    } = useTasksData(selectedDate);
 
     // Actions
-    const actions = useTaskActions({
-        createTask,
-        updateTask,
-        // deleteTask,
-    });
+    const actions = useTaskActions();
 
     // Selectors
-    const selectors = useTaskSelectors(tasks, type);
+    const selectors = useTaskSelectors({
+        overdueTasks,
+        currentMonthTasks,
+        nextMonthTasks,
+        displayMonthTasks
+    }, type);
 
     return {
-        // data
-        tasks: selectors.tasksFiltered,
-        isLoading,
-        error,
-
-        // actions
-        ...actions,
-
-        // derived
+        // Data for the UI
         ...selectors,
 
+        // Status for the UI
+        isLoading,
+        error: isError,
+        // isPrefetching,
+
+        // Methods for the UI
+        ...actions,
+
         // raw access
-        refresh: fetchTasks,
-        fetchTasks,
-        getTask,
-        getTaskDetail,
+        refresh,
     };
 }
