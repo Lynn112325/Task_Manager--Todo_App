@@ -15,6 +15,7 @@ bin/
 *.log
 *.txt
 *.gz
+*.lst
 
 # testing
 /coverage
