@@ -1,5 +1,6 @@
 package com.taskmanager.taskapp.task;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -22,7 +23,56 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
                 LEFT JOIN t.taskTemplate tt
                 WHERE t.id = :taskId AND t.user.id = :userId
             """)
-    Optional<TaskDto> findTaskDtoByIdAndUserId(@Param("taskId") Long taskId, @Param("userId") Long userId);
+    Optional<TaskDto> findTaskDtoById(@Param("taskId") Long taskId, @Param("userId") Long userId);
+
+    @Query("""
+                SELECT new com.taskmanager.taskapp.task.dto.TaskDto(
+                    t.id, t.title, t.description, t.status, t.priority, t.type,
+                    t.createdAt, t.updatedAt, t.startDate, t.dueDate, tt.id
+                )
+                FROM Task t
+                LEFT JOIN t.taskTemplate tt
+                WHERE t.user.id = :userId AND t.status = 'ACTIVE'
+                ORDER BY t.priority DESC, t.dueDate ASC
+            """)
+    List<TaskDto> findActiveTasks(@Param("userId") Long userId);
+
+    @Query("""
+                SELECT new com.taskmanager.taskapp.task.dto.TaskDto(
+                    t.id, t.title, t.description, t.status, t.priority, t.type,
+                    t.createdAt, t.updatedAt, t.startDate, t.dueDate, tt.id
+                )
+                FROM Task t
+                LEFT JOIN t.taskTemplate tt
+                WHERE t.user.id = :userId AND t.status = 'ACTIVE'
+                AND t.dueDate < :today
+                ORDER BY t.priority DESC, t.dueDate ASC
+            """)
+    List<TaskDto> findOverdueTasks(@Param("userId") Long userId, @Param("today") LocalDateTime today);
+
+    // Find Month Range tasks (Added for your getTasksByMonth method)
+    @Query("""
+                SELECT new com.taskmanager.taskapp.task.dto.TaskDto(
+                    t.id, t.title, t.description, t.status, t.priority, t.type,
+                    t.createdAt, t.updatedAt, t.startDate, t.dueDate, tt.id
+                )
+                FROM Task t
+                LEFT JOIN t.taskTemplate tt
+                WHERE t.user.id = :userId
+                AND t.dueDate BETWEEN :start AND :end
+                ORDER BY
+                CASE t.status
+                    WHEN 'ACTIVE' THEN 1
+                    WHEN 'CANCELED' THEN 2
+                    WHEN 'COMPLETED' THEN 3
+                    ELSE 4
+                END ASC,
+                t.priority DESC,
+                t.dueDate ASC
+            """)
+    List<TaskDto> findByDateRange(@Param("userId") Long userId,
+            @Param("start") LocalDateTime start,
+            @Param("end") LocalDateTime end);
 
     // save() – to persist entities into the database
     // findById() – to find database record by its id

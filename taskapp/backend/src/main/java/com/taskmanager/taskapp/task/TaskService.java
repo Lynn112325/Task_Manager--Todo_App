@@ -1,5 +1,9 @@
 package com.taskmanager.taskapp.task;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.YearMonth;
 import java.util.List;
 import java.util.Optional;
 
@@ -48,6 +52,32 @@ public class TaskService {
         return existingTask;
     }
 
+    // Get active tasks where due date is before today
+    public List<TaskDto> getOverdueTasks() {
+        Long userId = myUserDetailsService.getCurrentUserId();
+
+        LocalDateTime startOfToday = LocalDate.now().atStartOfDay();
+        return taskRepository.findOverdueTasks(userId, startOfToday);
+    }
+
+    // Get all current active tasks (Upcoming)
+    public List<TaskDto> getActiveTasks() {
+        Long userId = myUserDetailsService.getCurrentUserId();
+        return taskRepository.findActiveTasks(userId);
+    }
+
+    // Get all tasks for a specific month (e.g., "2023-10")
+    public List<TaskDto> getTasksByMonth(String monthStr) {
+        Long userId = myUserDetailsService.getCurrentUserId();
+
+        // Parse "YYYY-MM" to get the first and last day of that month
+        YearMonth yearMonth = YearMonth.parse(monthStr);
+        LocalDateTime start = yearMonth.atDay(1).atStartOfDay(); // 2026-02-01 00:00:00
+        LocalDateTime end = yearMonth.atEndOfMonth().atTime(LocalTime.MAX); // 2026-02-28 23:59:59
+
+        return taskRepository.findByDateRange(userId, start, end);
+    }
+
     // get tasks for current user
     public List<TaskDto> getTasksForCurrentUser() {
         Long userId = myUserDetailsService.getCurrentUserId();
@@ -62,7 +92,7 @@ public class TaskService {
     public TaskDto getTaskById(Long taskId) {
         Long currentUserId = myUserDetailsService.getCurrentUserId();
 
-        TaskDto taskDto = taskRepository.findTaskDtoByIdAndUserId(taskId, currentUserId)
+        TaskDto taskDto = taskRepository.findTaskDtoById(taskId, currentUserId)
                 .orElseThrow(() -> new RuntimeException("Task not found or you don't have access"));
 
         return taskDto;

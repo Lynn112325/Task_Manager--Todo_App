@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.taskmanager.taskapp.TaskSchedule.recurringplan.RecurringPlanDto;
@@ -33,10 +34,37 @@ public class TaskController extends BaseController {
     private final RecurringPlanService recurringPlanService;
     private final HabitLogService habitLogService;
 
-    // get all tasks for the current user
+    /**
+     * General task query interface supporting status or date filtering.
+     * Matches frontend calls:
+     * 1. GET /api/tasks?status=active -> All Active
+     * 2. GET /api/tasks?status=active&overdue=true -> Only Active & Overdue
+     * 3. GET /api/tasks?date=yyyy-MM-dd -> Specific Date
+     */
     @GetMapping
-    public ResponseEntity<CommonResponse<?>> getAllTasks() {
+    public ResponseEntity<CommonResponse<?>> getTasks(
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) Boolean overdue) {
+
+        if ("active".equalsIgnoreCase(status)) {
+            // if want to get overdue tasks
+            if (Boolean.TRUE.equals(overdue)) {
+                return ok(taskService.getOverdueTasks());
+            }
+            // all active tasks
+            return ok(taskService.getActiveTasks());
+        }
         return ok(taskService.getTasksForCurrentUser());
+    }
+
+    /**
+     * month query
+     * Matches frontend call: GET /api/tasks/month?month=2023-10
+     */
+    @GetMapping("/month")
+    public ResponseEntity<CommonResponse<?>> getTasksByMonth(
+            @RequestParam String month) { // Format: YYYY-MM
+        return ok(taskService.getTasksByMonth(month));
     }
 
     @GetMapping("/{id}")

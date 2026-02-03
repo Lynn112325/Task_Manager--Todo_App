@@ -7,6 +7,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import com.taskmanager.taskapp.TaskSchedule.tasktemplate.TaskTemplate;
+import com.taskmanager.taskapp.enums.PlanStatus;
 import com.taskmanager.taskapp.enums.RecurrenceType;
 import com.taskmanager.taskapp.enums.Weekday;
 
@@ -26,7 +27,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import com.taskmanager.taskapp.enums.PlanStatus;
 
 @Entity
 @Table(name = "recurring_plans")
