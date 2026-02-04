@@ -27,14 +27,14 @@ export function useTasksData(selectedDate = null) {
     const overdueQuery = useQuery({
         queryKey: ["tasks", "overdue"],
         queryFn: () => axios.get(`${API_URL}?status=active&overdue=true`).then(res => res.data.data),
-        staleTime: 1000 * 60 * 2,
+        staleTime: 1000 * 60 * 1,
     });
 
     // 2. CURRENT MONTH: Always synced (used for Today & Upcoming views)
     const currentMonthQuery = useQuery({
         queryKey: ["tasks", "month", currentMonthStr],
         queryFn: () => axios.get(`${API_URL}/month?month=${currentMonthStr}`).then(res => res.data.data),
-        staleTime: 1000 * 60 * 1,
+        staleTime: 1000 * 60 * 2,
     });
 
     // 3. SELECTED MONTH: Only fetch if user looks at a different month
@@ -43,7 +43,7 @@ export function useTasksData(selectedDate = null) {
         queryKey: ["tasks", "month", selectedMonthStr],
         queryFn: () => axios.get(`${API_URL}/month?month=${selectedMonthStr}`).then(res => res.data.data),
         enabled: !!selectedDate && selectedMonthStr !== currentMonthStr,
-        staleTime: 1000 * 60 * 5,
+        staleTime: 1000 * 60 * 3,
     });
 
     // 4. NEXT MONTH: Prefetch next month only near the end of the current month
@@ -51,7 +51,7 @@ export function useTasksData(selectedDate = null) {
         queryKey: ["tasks", "month", nextMonthStr],
         queryFn: () => axios.get(`${API_URL}/month?month=${nextMonthStr}`).then(res => res.data.data),
         enabled: isEndOfMonth,
-        staleTime: 1000 * 60 * 10, // Low priority, longer cache
+        staleTime: 1000 * 60 * 5,
     });
 
     // --- Data Unification ---
@@ -63,11 +63,6 @@ export function useTasksData(selectedDate = null) {
         }
         return selectedMonthQuery.data ?? [];
     }, [selectedMonthStr, currentMonthStr, currentMonthQuery.data, selectedMonthQuery.data]);
-
-    const invalidateAllTasks = () => {
-        // Refresh all task-related queries
-        queryClient.invalidateQueries({ queryKey: ["tasks"] });
-    };
 
     // Combine loading/error states
     const isLoading = overdueQuery.isLoading || currentMonthQuery.isLoading || selectedMonthQuery.isLoading;
@@ -85,6 +80,5 @@ export function useTasksData(selectedDate = null) {
         isError,
         // isPrefetching: nextMonthQuery.isFetching,
 
-        refresh: invalidateAllTasks,
     };
 }
