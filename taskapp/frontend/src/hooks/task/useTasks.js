@@ -16,7 +16,6 @@ export function useTasks(selectedDate = null, type = "all") {
         isError,
         isPrefetching,
 
-        // refresh,
     } = useTasksData(selectedDate);
 
     // Actions
@@ -42,7 +41,5 @@ export function useTasks(selectedDate = null, type = "all") {
         // Methods for the UI
         ...actions,
 
-        // raw access
-        // refresh,
     };
 }

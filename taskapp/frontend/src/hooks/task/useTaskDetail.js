@@ -8,7 +8,7 @@ const API_URL = "/api/tasks";
 export function useTaskDetail(taskId) {
     // GET /api/tasks/{id}
     const basicQuery = useQuery({
-        queryKey: ["tasks", "item", taskId],
+        queryKey: ["tasks", taskId],
         queryFn: () => axios.get(`${API_URL}/${taskId}`).then(res => res.data.data),
         enabled: !!taskId,
     });
