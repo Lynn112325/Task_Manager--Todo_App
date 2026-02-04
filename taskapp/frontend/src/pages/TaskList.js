@@ -39,7 +39,7 @@ export default function TaskList() {
     isLoading,
     toggleTaskAction,
     error,
-    refresh
+    refreshAction
   } = useTasks(selectedDate, type);
 
   const handleDateChange = (date) => {
@@ -63,7 +63,7 @@ export default function TaskList() {
   }, [listToggle, upcomingTasks, overdueTasks, statusFilter]);
 
   const handleRefresh = () => {
-    if (!isLoading) refresh();
+    if (!isLoading) refreshAction();
   };
 
   const onStatusUpdate = React.useCallback(
@@ -122,7 +122,7 @@ export default function TaskList() {
               Completed
             </MenuItem>
             <MenuItem key="CANCELED" value="CANCELED">
-              Discarded
+              Canceled
             </MenuItem>
           </Select>
 

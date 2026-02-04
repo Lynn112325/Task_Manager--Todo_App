@@ -11,7 +11,26 @@ export function useTaskActions() {
     const queryClient = useQueryClient();
 
     const invalidateAllTasks = () => {
-        queryClient.invalidateQueries({ queryKey: ["tasks"] });
+        return queryClient.invalidateQueries({ queryKey: ["tasks"] });
+    };
+
+    /**
+     * Action to manually refresh all task data
+     */
+    const refreshAction = async () => {
+        try {
+            await invalidateAllTasks();
+            notifications.show("Tasks updated", {
+                severity: "success",
+                autoHideDuration: 2000,
+            });
+            return true;
+        } catch (error) {
+            notifications.show("Failed to refresh tasks", {
+                severity: "error",
+            });
+            return false;
+        }
     };
 
     const createTaskMutation = useMutation({
@@ -154,6 +173,7 @@ export function useTaskActions() {
         cancelTaskAction,
         createTaskAction,
         editTaskAction,
+        refreshAction
     };
 }
 
