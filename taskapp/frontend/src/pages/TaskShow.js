@@ -34,7 +34,7 @@ const STATUS_CONFIG = {
     icon: <CheckCircleIcon />,
   },
   CANCELED: {
-    label: "Discarded",
+    label: "Canceled",
     color: "error",
     icon: <CancelIcon />,
   }

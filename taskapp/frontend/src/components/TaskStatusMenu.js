@@ -3,14 +3,13 @@ import { ListItemIcon, ListItemText, Menu, MenuItem, Radio } from '@mui/material
 const STATUS_OPTIONS = [
     { value: 'ACTIVE', label: 'To Do' },
     { value: 'COMPLETED', label: 'Mark as Done' },
-    { value: 'CANCELED', label: 'Discard Task' },
+    { value: 'CANCELED', label: 'Mark as Canceled' },
 ];
 
 export default function TaskStatusMenu({ anchorEl, open, onClose, onChange, currentStatus }) {
 
     // skip the selected option
     const availableOptions = STATUS_OPTIONS.filter(option => option.value !== currentStatus);
-    // if canceled 移除所有操作按鈕（只保留「恢復」）
 
     return (
         <Menu
