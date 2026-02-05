@@ -1,5 +1,7 @@
+import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import {
+    Box,
     Checkbox,
     IconButton,
     ListItem,
@@ -11,31 +13,43 @@ import {
 import Tooltip from "@mui/material/Tooltip";
 import dayjs from "dayjs";
 import { useState } from "react";
-import PriorityChip from "./PriorityChip";
+import PriorityChip from "./Task/PriorityChip";
+import { TypeChip } from "./Task/TypeChip";
 import TaskStatusMenu from "./TaskStatusMenu";
 
-const getRelativeDay = (date) => {
-    const d = dayjs(date).startOf('day');
-    const now = dayjs().startOf('day');
-    const diff = now.diff(d, 'day');
+const getDueDateInfo = (dateString) => {
+    if (!dateString) return null;
+    const d = dayjs(dateString).startOf('day');
+    const today = dayjs().startOf('day');
+    const diff = d.diff(today, 'day');
 
-    if (diff === 0) return "Today";
-    if (diff === 1) return "1 day ago";
-    if (diff > 1) return `${diff} days ago`;
-    if (diff === -1) return "Tomorrow";
-    return `In ${Math.abs(diff)} days`;
+    let label = "";
+    let color = "text.secondary";
+
+    if (diff < 0) {
+        label = `${Math.abs(diff)} days ago`;
+        color = "error.main";
+        if (diff === -1) label = "Yesterday";
+    } else if (diff === 0) {
+        label = "Today";
+        color = "primary.main";
+    } else if (diff === 1) {
+        label = "Tomorrow";
+        color = "warning.main";
+    } else {
+        label = `In ${diff} days`;
+    }
+
+    return { label, color, rawDate: d };
 };
 
 export default function TaskItem({ task, onStatusUpdate, onRowView }) {
-    const dueDate = dayjs(task.dueDate);
-    const today = dayjs();
-    // const isOverdue = dueDate.isBefore(today, "day");
+    const { label: dateLabel, color: dateColor, rawDate } = getDueDateInfo(task.dueDate) || {};
     const taskStatus = task.status; // ACTIVE, COMPLETED, CANCELED
     const checked = taskStatus === "COMPLETED";
 
     const [menuPosition, setMenuPosition] = useState(null);
 
-    // 
     const handleContextMenu = (event) => {
         event.preventDefault(); // prevent
         setMenuPosition({
@@ -80,41 +94,58 @@ export default function TaskItem({ task, onStatusUpdate, onRowView }) {
                                     display: "flex",
                                     alignItems: "center",
                                     gap: 0.5,
+                                    minWidth: 0,
                                     flexWrap: "nowrap",
                                     overflow: "hidden",
                                     textOverflow: "ellipsis",
+                                    containerType: 'inline-size',
                                 }}
                             >
                                 {/* Description */}
                                 <Tooltip title={task.description || ""} placement="top">
-                                    <span
-                                        style={{
-                                            maxWidth: "55%",
+                                    <Box
+                                        component="span"
+                                        sx={{
                                             overflow: "hidden",
-                                            textOverflow: "ellipsis",
-                                            whiteSpace: "nowrap",
+                                            // textOverflow: "ellipsis",
+                                            // whiteSpace: "nowrap",
+                                            flexShrink: 1,
+                                            minWidth: 0,
+                                            textOverflow: "clip",
+                                            '@container (max-width: 340px)': {
+                                                display: 'none',
+                                            },
                                         }}
                                     >
                                         {task.description || " -- "}
-                                    </span>
+                                    </Box>
                                 </Tooltip>
-
                                 {/* Due Date */}
-                                {dueDate.isValid() && !dueDate.isSame(today, "day") && (
-                                    <span style={{ color: "inherit" }}>
-                                        {" • "}Due: {getRelativeDay(dueDate)}
-                                    </span>
+                                {dateLabel != "Today" && (
+                                    <Tooltip title={`Due: ${rawDate.format("YYYY-MM-DD")}`}>
+                                        <Box sx={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            color: dateColor,
+                                            fontSize: '0.75rem',
+                                            fontWeight: 500,
+                                            border: 1,
+                                            borderColor: dateColor,
+                                            borderRadius: 1,
+                                            px: 0.5,
+                                            py: 0.2,
+                                            "& > .MuiSvgIcon-root": { color: 'inherit' }
+                                        }}>
+                                            <AccessTimeIcon color="inherit" sx={{ fontSize: '0.85rem', mr: 0.5, color: dateColor }} />
+                                            {dateLabel}
+                                        </Box>
+                                    </Tooltip>
                                 )}
 
-                                {/* Task Target */}
-                                {/* {task.targetTitle && (
-                                <Chip
-                                    variant="outlined"
-                                    size="small"
-                                    label={task.targetTitle}
-                                    sx={{ flexShrink: 0 }}
-                                />
-                            )} */}
+                                {/* Task Type */}
+                                {task.type && (
+                                    <TypeChip type={task.type} />
+                                )}
 
                                 {/* Priority */}
                                 <PriorityChip priority={task.priority} />

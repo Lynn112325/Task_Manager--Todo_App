@@ -21,7 +21,7 @@ import {
     Typography
 } from '@mui/material';
 import { useMemo, useState } from 'react';
-import PriorityChip from '../components/PriorityChip';
+import PriorityChip from '../components/Task/PriorityChip';
 import { formatFrequency, getPlanPeriodLabel } from '../utils/planFormatters';
 import { PLAN_STATUS_CONFIG } from '../utils/planStatus';
 

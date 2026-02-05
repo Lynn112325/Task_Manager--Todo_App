@@ -14,7 +14,7 @@ import {
   useTheme
 } from "@mui/material";
 import dayjs from "dayjs";
-import PriorityChip from "./PriorityChip";
+import PriorityChip from "./Task/PriorityChip";
 import TaskTypeIcon from "./TaskTypeIcon";
 
 const DateDisplay = ({ icon, label, date, fallbackText, color = "text.secondary" }) => {
