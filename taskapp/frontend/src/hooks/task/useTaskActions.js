@@ -69,7 +69,7 @@ export function useTaskActions() {
 
         const messages = {
             COMPLETED: `Mark "${task.title}" as completed?`,
-            CANCELED: `Are you sure you want to discard "${task.title}"?`,
+            CANCELED: `Mark "${task.title} as canceled?`,
             ACTIVE: `Mark "${task.title}" as incomplete?`,
         };
 
@@ -170,7 +170,7 @@ export function useTaskActions() {
 
     return {
         toggleTaskAction,
-        cancelTaskAction,
+        // cancelTaskAction,
         createTaskAction,
         editTaskAction,
         refreshAction

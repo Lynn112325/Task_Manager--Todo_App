@@ -1,25 +1,58 @@
 import dayjs from "dayjs";
 import { useCallback, useMemo } from "react";
 
-export function useTaskSelectors(allData, type = "all") {
+const matchesAllFilters = (task, { status, type, searchTerm }) => {
+
+    const s = status?.toUpperCase() || 'ALL';
+    const taskStatus = task.status?.toUpperCase();
+    const matchesStatus = s === 'ALL' || taskStatus === s;
+
+    const t = type?.toLowerCase() || 'all';
+    const taskType = task.type?.toLowerCase() || 'none';
+    const matchesType = t === 'all' || taskType === t;
+
+    const matchesSearch = !searchTerm ||
+        task.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        task.description?.toLowerCase().includes(searchTerm.toLowerCase());
+
+    if (task.status === 'COMPLETED' || task.status === 'CANCELED') {
+        console.log(`Checking ${task.status} Task: ${task.title}, FilterStatus: ${status}, Result: ${matchesStatus}`);
+    }
+    return matchesStatus && matchesType && matchesSearch;
+};
+
+export function useTaskSelectors(dataSources, filters) {
     // Destructure data from useTasksData
     const {
         overdueTasks = [],
         currentMonthTasks = [],
         nextMonthTasks = [],
         displayMonthTasks = []
-    } = allData;
+    } = dataSources;
+
+    const {
+        status = 'ALL',
+        type = 'all',
+        search = ''
+    } = filters || {};
+
+    const filterConfig = useMemo(() => ({
+        status,
+        type,
+        searchTerm: search
+    }), [status, type, search]);
 
     /**
      * 1. Specific Date Selector
      * Uses displayMonthTasks because it adapts to the calendar view.
      */
     const getTasksByDate = useCallback((date) => {
-        const filtered = displayMonthTasks.filter(t =>
-            dayjs(t.dueDate).isSame(date, "day")
+        return displayMonthTasks.filter(t =>
+            dayjs(t.dueDate).isSame(date, "day") &&
+            matchesAllFilters(t, filterConfig)
+
         );
-        return type === "all" ? filtered : filtered.filter(t => t.type === type);
-    }, [displayMonthTasks, type]);
+    }, [displayMonthTasks, filterConfig]);
 
     /**
      * 2. Overdue Selector
@@ -27,9 +60,8 @@ export function useTaskSelectors(allData, type = "all") {
      * It's already filtered for status='ACTIVE' and sorted by the DB.
      */
     const overdue = useMemo(() => {
-        if (type === "all") return overdueTasks;
-        return overdueTasks.filter(t => t.type === type);
-    }, [overdueTasks, type]);
+        return overdueTasks.filter(t => matchesAllFilters(t, filterConfig));
+    }, [overdueTasks, filterConfig]);
 
     /**
      * 3. Upcoming Selector (Next 14 Days)
@@ -38,20 +70,14 @@ export function useTaskSelectors(allData, type = "all") {
     const upcoming = useMemo(() => {
         const today = dayjs().startOf("day");
         const horizon = today.add(14, "day").endOf("day");
-
         const combined = [...currentMonthTasks, ...nextMonthTasks];
 
         return combined.filter(t => {
             const d = dayjs(t.dueDate);
-            // const isActive = t.status === "ACTIVE";
             const isUpcomingDate = d.isAfter(today, "day") && d.isBefore(horizon);
-            const matchesType = type === "all" || t.type === type;
-
-            // return isActive && isUpcomingDate && matchesType;
-            return isUpcomingDate && matchesType;
-
+            return isUpcomingDate && matchesAllFilters(t, filterConfig);
         });
-    }, [currentMonthTasks, nextMonthTasks, type]);
+    }, [currentMonthTasks, nextMonthTasks, filterConfig]);
 
     return {
         getTasksByDate,

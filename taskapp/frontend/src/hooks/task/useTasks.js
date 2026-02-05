@@ -1,8 +1,9 @@
 import { useTaskActions } from "./useTaskActions";
+import { useTaskFilters } from "./useTaskFilters";
 import { useTasksData } from "./useTasksData";
 import { useTaskSelectors } from "./useTaskSelectors";
 
-export function useTasks(selectedDate = null, type = "all") {
+export function useTasks(selectedDate = null) {
     // Data
     const {
         // Raw Data Sources
@@ -21,13 +22,19 @@ export function useTasks(selectedDate = null, type = "all") {
     // Actions
     const actions = useTaskActions();
 
+    const filterProps = useTaskFilters();
+
     // Selectors
     const selectors = useTaskSelectors({
         overdueTasks,
         currentMonthTasks,
         nextMonthTasks,
         displayMonthTasks
-    }, type);
+    }, {
+        status: filterProps.filterStatus,
+        type: filterProps.filterType,
+        search: filterProps.searchTerm
+    });
 
     return {
         // Data for the UI
@@ -37,6 +44,8 @@ export function useTasks(selectedDate = null, type = "all") {
         isLoading,
         error: isError,
         // isPrefetching,
+
+        filterProps,
 
         // Methods for the UI
         ...actions,

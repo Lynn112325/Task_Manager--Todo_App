@@ -10,8 +10,6 @@ import {
   IconButton,
   List,
   ListSubheader,
-  MenuItem,
-  Select,
   Stack,
   Tooltip,
   Typography
@@ -21,16 +19,14 @@ import * as React from "react";
 import { useNavigate } from "react-router";
 import MuiDatePicker from "../components/MuiDatePicker";
 import PageContainer from "../components/PageContainer";
+import { TaskFilterPopover } from "../components/Task/TaskFilterPopover";
 import TaskListItems from "../components/TaskListItems";
-import TaskTypeSelector from "../components/TaskTypeSelector";
 import { useTasks } from "../hooks/task/useTasks";
-import { useType } from "../hooks/type/useType";
 
 export default function TaskList() {
   const [selectedDate, setSelectedDate] = React.useState(dayjs());
-  const [statusFilter, setStatusFilter] = React.useState("ACTIVE");
   const [listToggle, setListToggle] = React.useState("upcoming");
-  const { type, handleTypeChange } = useType();
+  const navigate = useNavigate();
 
   const {
     getTasksByDate,
@@ -39,28 +35,22 @@ export default function TaskList() {
     isLoading,
     toggleTaskAction,
     error,
+    filterProps,
     refreshAction
-  } = useTasks(selectedDate, type);
+  } = useTasks(selectedDate);
 
   const handleDateChange = (date) => {
     setSelectedDate(date);
   };
 
-  const navigate = useNavigate();
-
   const tasksByDate = React.useMemo(() => {
-    const rawTasks = getTasksByDate(selectedDate);
-    return rawTasks.filter(task => task.status === statusFilter);
-  }, [getTasksByDate, selectedDate, statusFilter, type]);
+    return getTasksByDate(selectedDate);
+  }, [getTasksByDate, selectedDate]);
 
-  const handleStatusChange = (event) => {
-    setStatusFilter(event.target.value);
-  };
 
   const sideListTasks = React.useMemo(() => {
-    const rawSideTasks = listToggle === "upcoming" ? upcomingTasks : overdueTasks;
-    return rawSideTasks.filter(task => task.status === statusFilter);
-  }, [listToggle, upcomingTasks, overdueTasks, statusFilter]);
+    return listToggle === "upcoming" ? upcomingTasks : overdueTasks;
+  }, [listToggle, upcomingTasks, overdueTasks]);
 
   const handleRefresh = () => {
     if (!isLoading) refreshAction();
@@ -106,38 +96,22 @@ export default function TaskList() {
             </div>
           </Tooltip>
 
-          <Select
-            name="status"
-            label="Status"
-            value={statusFilter}
-            displayEmpty
-            inputProps={{ "aria-label": "Status selector" }}
-            sx={{ flex: 1, minWidth: 150 }}
-            onChange={handleStatusChange}
-          >
-            <MenuItem key="ACTIVE" value="ACTIVE">
-              Ongoing
-            </MenuItem>
-            <MenuItem key="COMPLETED" value="COMPLETED">
-              Completed
-            </MenuItem>
-            <MenuItem key="CANCELED" value="CANCELED">
-              Canceled
-            </MenuItem>
-          </Select>
+          <TaskFilterPopover {...filterProps} />
 
-          <TaskTypeSelector
-            type={type}
-            handleTypeChange={handleTypeChange}
-          />
           <Button
             variant="contained"
             onClick={handleCreateClick}
-            startIcon={<AddIcon />}
+            sx={{
+              minWidth: { xs: '40px', sm: 'auto' },
+              px: { xs: 0, sm: 2 },
+            }}
           >
-            Create
+            <AddIcon sx={{ mr: { xs: 0, sm: 0.5 } }} />
+            <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>
+              Create
+            </Box>
           </Button>
-        </Stack>
+        </ Stack>
       }
     >
 
@@ -150,12 +124,13 @@ export default function TaskList() {
       >
 
         <Grid
-          size={{ xs: 12, md: 7 }}
+          size={{ xs: 12, sm: 12, md: 7 }}
           sx={{
             display: "flex",
             flexDirection: "column",
             height: "100%",
             order: { xs: 1, md: 1 },
+            mb: 2
           }}
         >
 
@@ -188,15 +163,15 @@ export default function TaskList() {
 
               <List
                 sx={{
-                  width: "100%",
+                  // width: "100%",
                   flexGrow: 1,
                   bgcolor: "background.paper",
-                  height: "100%",
+                  // height: "100%",
                 }}
                 component="nav"
                 aria-labelledby="DateTasks"
                 subheader={
-                  <ListSubheader component="div" id="DateTasks">
+                  <ListSubheader component="div" id="DateTasks" sx={{ bgcolor: "background.paper" }}>
 
                     <Typography variant="subtitle2">
 
@@ -219,12 +194,13 @@ export default function TaskList() {
           )}
         </Grid>
         <Grid
-          size={{ xs: 12, md: 5 }}
+          size={{ xs: 12, sm: 12, md: 5 }}
           sx={{
             display: "flex",
             flexDirection: "column",
             gap: 2,
             order: { xs: 2, md: 2 },
+            mb: 2
           }}
         >
           <Box
@@ -307,7 +283,6 @@ export default function TaskList() {
                         }
                         placement="top"
                       >
-
                         <IconButton
                           size="small"
                           onClick={(e) => {
