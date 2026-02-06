@@ -3,6 +3,7 @@ import RefreshIcon from "@mui/icons-material/Refresh";
 import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
 import {
   Alert,
+  Badge,
   Box,
   Button,
   CircularProgress,
@@ -46,7 +47,6 @@ export default function TaskList() {
   const tasksByDate = React.useMemo(() => {
     return getTasksByDate(selectedDate);
   }, [getTasksByDate, selectedDate]);
-
 
   const sideListTasks = React.useMemo(() => {
     return listToggle === "upcoming" ? upcomingTasks : overdueTasks;
@@ -128,7 +128,6 @@ export default function TaskList() {
           sx={{
             display: "flex",
             flexDirection: "column",
-            height: "100%",
             order: { xs: 1, md: 1 },
             mb: 2
           }}
@@ -160,26 +159,27 @@ export default function TaskList() {
                 boxShadow: 2,
               }}
             >
-
+              {/* rendering a list of tasks grouped by date */}
               <List
                 sx={{
-                  // width: "100%",
                   flexGrow: 1,
                   bgcolor: "background.paper",
-                  // height: "100%",
+                  pb: 2,
                 }}
                 component="nav"
                 aria-labelledby="DateTasks"
                 subheader={
                   <ListSubheader component="div" id="DateTasks" sx={{ bgcolor: "background.paper" }}>
-
-                    <Typography variant="subtitle2">
-
-                      {dayjs(selectedDate).isSame(dayjs(), "day")
-                        ? "Today "
-                        : ""}
-                      {dayjs(selectedDate).format("YYYY-MM-DD (dddd)")}
-                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1.5 }}>
+                      <Typography variant="subtitle2" sx={{ whiteSpace: 'nowrap' }}>
+                        {dayjs(selectedDate).isSame(dayjs(), "day") ? "Today • " : ""}
+                        {dayjs(selectedDate).format("YYYY-MM-DD (dddd)")}
+                      </Typography>
+                      <Box sx={{ flexGrow: 1 }} />
+                      <Typography sx={{ whiteSpace: 'nowrap' }}>
+                        {tasksByDate.length} task(s)
+                      </Typography>
+                    </Box>
                   </ListSubheader>
                 }
               >
@@ -189,6 +189,7 @@ export default function TaskList() {
                   onStatusUpdate={onStatusUpdate}
                   onRowView={handleRowView}
                 />
+
               </List>
             </Box>
           )}
@@ -253,10 +254,8 @@ export default function TaskList() {
 
                 <List
                   sx={{
-                    width: "100%",
                     flexGrow: 1,
                     bgcolor: "background.paper",
-                    height: "100%",
                   }}
                   component="nav"
                   aria-labelledby="Upcoming_Tasks"
@@ -283,19 +282,28 @@ export default function TaskList() {
                         }
                         placement="top"
                       >
-                        <IconButton
-                          size="small"
-                          onClick={(e) => {
-                            e.currentTarget.blur();
-                            requestAnimationFrame(() => {
-                              setListToggle((prev) =>
-                                prev === "upcoming" ? "overdue" : "upcoming"
-                              );
-                            });
-                          }}
-                        >
-                          <SwapHorizIcon fontSize="small" />
-                        </IconButton>
+                        <Badge
+                          color={listToggle === "upcoming" ? "error" : "primary"}
+                          badgeContent={listToggle === "upcoming" ? overdueTasks.length : upcomingTasks.length}
+                          sx={{
+                            "& .MuiBadge-badge": {
+                              boxShadow: 1,
+                            }
+                          }}>
+                          <IconButton
+                            size="small"
+                            onClick={(e) => {
+                              e.currentTarget.blur();
+                              requestAnimationFrame(() => {
+                                setListToggle((prev) =>
+                                  prev === "upcoming" ? "overdue" : "upcoming"
+                                );
+                              });
+                            }}
+                          >
+                            <SwapHorizIcon fontSize="small" />
+                          </IconButton>
+                        </Badge>
                       </Tooltip>
                     </ListSubheader>
                   }
@@ -310,7 +318,7 @@ export default function TaskList() {
             )}
           </Box>
         </Grid>
-      </Grid>
-    </PageContainer>
+      </Grid >
+    </PageContainer >
   );
 }

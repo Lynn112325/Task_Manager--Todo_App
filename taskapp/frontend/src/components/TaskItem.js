@@ -48,6 +48,8 @@ export default function TaskItem({ task, onStatusUpdate, onRowView }) {
     const taskStatus = task.status; // ACTIVE, COMPLETED, CANCELED
     const checked = taskStatus === "COMPLETED";
 
+    const isInactive = taskStatus === "COMPLETED" || taskStatus === "CANCELED";
+
     const [menuPosition, setMenuPosition] = useState(null);
 
     const handleContextMenu = (event) => {
@@ -89,8 +91,8 @@ export default function TaskItem({ task, onStatusUpdate, onRowView }) {
                                 variant="body2"
                                 noWrap
                                 sx={{
-                                    textDecoration: checked ? "line-through" : "none",
-                                    color: checked ? "text.disabled" : "text.secondary",
+                                    textDecoration: taskStatus === "COMPLETED" ? "line-through" : "none",
+                                    color: isInactive ? "text.disabled" : "text.primary",
                                     display: "flex",
                                     alignItems: "center",
                                     gap: 0.5,
@@ -107,8 +109,8 @@ export default function TaskItem({ task, onStatusUpdate, onRowView }) {
                                         component="span"
                                         sx={{
                                             overflow: "hidden",
-                                            // textOverflow: "ellipsis",
-                                            // whiteSpace: "nowrap",
+                                            textOverflow: "ellipsis",
+                                            whiteSpace: "nowrap",
                                             flexShrink: 1,
                                             minWidth: 0,
                                             textOverflow: "clip",
@@ -153,8 +155,8 @@ export default function TaskItem({ task, onStatusUpdate, onRowView }) {
                         }
                         primaryTypographyProps={{
                             sx: {
-                                textDecoration: checked ? "line-through" : "none",
-                                color: checked ? "text.disabled" : "text.primary",
+                                textDecoration: taskStatus === "COMPLETED" ? "line-through" : "none",
+                                color: isInactive ? "text.disabled" : "text.primary",
                             },
                         }}
                     />

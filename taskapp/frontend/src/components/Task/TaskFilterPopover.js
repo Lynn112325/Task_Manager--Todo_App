@@ -2,15 +2,18 @@ import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import {
+    Badge,
     Box,
     Button,
     Divider,
+    IconButton,
     ListItemIcon,
     ListItemText,
     MenuItem,
     MenuList,
     Popover,
     Stack,
+    Tooltip,
     Typography,
     alpha
 } from '@mui/material';
@@ -42,23 +45,22 @@ export const TaskFilterPopover = ({
 
     return (
         <>
-            <Button
-                variant={hasActiveFilters ? "contained" : "outlined"}
-                size="small"
-                startIcon={<FilterListIcon />}
-                onClick={handleClick}
-                sx={{
-                    borderRadius: '18px',
-                    textTransform: 'none',
-                    fontWeight: 600,
-                    color: hasActiveFilters ? 'white' : 'text.secondary',
-                    borderColor: 'divider',
-                    boxShadow: 'none',
-                    '&:hover': { boxShadow: 'none', borderColor: 'primary.main' }
-                }}
-            >
-                Filters {activeFilterCount > 0 && `(${activeFilterCount})`}
-            </Button>
+            <Tooltip title="Filters">
+                <Badge badgeContent={activeFilterCount} color="primary" invisible={activeFilterCount === 0}>
+                    <IconButton
+                        onClick={handleClick}
+                        color={hasActiveFilters ? "primary" : "default"}
+                        sx={{
+                            border: '1px solid',
+                            borderColor: 'divider',
+                            borderRadius: 1,
+                            padding: '7px'
+                        }}
+                    >
+                        <FilterListIcon fontSize="small" />
+                    </IconButton>
+                </Badge>
+            </Tooltip>
 
             <Popover
                 open={open}
