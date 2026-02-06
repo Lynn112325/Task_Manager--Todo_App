@@ -15,9 +15,6 @@ const matchesAllFilters = (task, { status, type, searchTerm }) => {
         task.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         task.description?.toLowerCase().includes(searchTerm.toLowerCase());
 
-    if (task.status === 'COMPLETED' || task.status === 'CANCELED') {
-        console.log(`Checking ${task.status} Task: ${task.title}, FilterStatus: ${status}, Result: ${matchesStatus}`);
-    }
     return matchesStatus && matchesType && matchesSearch;
 };
 
