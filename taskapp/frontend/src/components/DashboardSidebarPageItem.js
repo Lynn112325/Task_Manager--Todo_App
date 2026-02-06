@@ -1,6 +1,5 @@
-import * as React from 'react';
-import PropTypes from 'prop-types';
-
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import { Chip } from '@mui/material';
 import Avatar from '@mui/material/Avatar';
 import Box from '@mui/material/Box';
 import Collapse from '@mui/material/Collapse';
@@ -11,17 +10,18 @@ import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
-
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import PropTypes from 'prop-types';
+import * as React from 'react';
 import { Link } from 'react-router';
-import DashboardSidebarContext from '../context/DashboardSidebarContext';
 import { MINI_DRAWER_WIDTH } from '../constants';
+import DashboardSidebarContext from '../context/DashboardSidebarContext';
 
 function DashboardSidebarPageItem({
   id,
   title,
   icon,
   href,
+  count = null, // for display target num
   action,
   defaultExpanded = false,
   expanded = defaultExpanded,
@@ -78,7 +78,7 @@ function DashboardSidebarPageItem({
 
   const miniNestedNavigationSidebarContextValue = React.useMemo(() => {
     return {
-      onPageItemClick: onPageItemClick ?? (() => {}),
+      onPageItemClick: onPageItemClick ?? (() => { }),
       mini: false,
       fullyExpanded: true,
       fullyCollapsed: false,
@@ -92,13 +92,13 @@ function DashboardSidebarPageItem({
         disablePadding
         {...(nestedNavigation && mini
           ? {
-              onMouseEnter: () => {
-                setIsHovered(true);
-              },
-              onMouseLeave: () => {
-                setIsHovered(false);
-              },
-            }
+            onMouseEnter: () => {
+              setIsHovered(true);
+            },
+            onMouseLeave: () => {
+              setIsHovered(false);
+            },
+          }
           : {})}
         sx={{
           display: 'block',
@@ -115,21 +115,21 @@ function DashboardSidebarPageItem({
           }}
           {...(nestedNavigation && !mini
             ? {
-                onClick: handleClick,
-              }
+              onClick: handleClick,
+            }
             : {})}
           {...(!nestedNavigation
             ? {
-                LinkComponent,
-                ...(hasExternalHref
-                  ? {
-                      target: '_blank',
-                      rel: 'noopener noreferrer',
-                    }
-                  : {}),
-                to: href,
-                onClick: handleClick,
-              }
+              LinkComponent,
+              ...(hasExternalHref
+                ? {
+                  target: '_blank',
+                  rel: 'noopener noreferrer',
+                }
+                : {}),
+              to: href,
+              onClick: handleClick,
+            }
             : {})}
         >
           {icon || mini ? (
@@ -137,11 +137,11 @@ function DashboardSidebarPageItem({
               sx={
                 mini
                   ? {
-                      position: 'absolute',
-                      left: '50%',
-                      top: 'calc(50% - 6px)',
-                      transform: 'translate(-50%, -50%)',
-                    }
+                    position: 'absolute',
+                    left: '50%',
+                    top: 'calc(50% - 6px)',
+                    transform: 'translate(-50%, -50%)',
+                  }
                   : {}
               }
             >
@@ -154,19 +154,11 @@ function DashboardSidebarPageItem({
               >
                 {icon ?? null}
                 {!icon && mini ? (
-                  <Avatar
-                    sx={{
-                      fontSize: 10,
-                      height: 16,
-                      width: 16,
-                    }}
-                  >
-                    {title
-                      .split(' ')
-                      .slice(0, 2)
-                      .map((titleWord) => titleWord.charAt(0).toUpperCase())}
+                  <Avatar sx={{ fontSize: 10, height: 16, width: 16 }}>
+                    {title.split(' ').slice(0, 2).map((w) => w.charAt(0).toUpperCase())}
                   </Avatar>
                 ) : null}
+
               </ListItemIcon>
               {mini ? (
                 <Typography
@@ -199,10 +191,33 @@ function DashboardSidebarPageItem({
               }}
             />
           ) : null}
-          {action && !mini && fullyExpanded ? action : null}
-          {nestedNavigation ? (
-            <ExpandMoreIcon sx={nestedNavigationCollapseSx} />
-          ) : null}
+
+          {/* Meta Section */}
+          {!mini && (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              {count && (
+                <Chip
+                  label={count}
+                  size="small"
+                  variant="outlined"
+                  sx={{
+                    height: 20,
+                    minWidth: 20,
+                    fontSize: '0.70rem',
+                    bgcolor: 'action.hover',
+                    color: 'text.secondary',
+                    borderColor: 'divider',
+                    '& .MuiChip-label': { px: 0.8 },
+                    borderRadius: '6px',
+                  }}
+                />
+              )}
+              {action && !mini && fullyExpanded ? action : null}
+              {nestedNavigation ? (
+                <ExpandMoreIcon sx={nestedNavigationCollapseSx} />
+              ) : null}
+            </Box>
+          )}
         </ListItemButton>
         {nestedNavigation && mini ? (
           <Grow in={isHovered}>
@@ -236,6 +251,7 @@ function DashboardSidebarPageItem({
           {nestedNavigation}
         </Collapse>
       ) : null}
+
     </React.Fragment>
   );
 }

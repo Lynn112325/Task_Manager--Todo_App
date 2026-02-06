@@ -1,6 +1,5 @@
 import AssignmentIcon from "@mui/icons-material/Assignment";
 import BarChartIcon from "@mui/icons-material/BarChart";
-import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import DescriptionIcon from "@mui/icons-material/Description";
 import InboxIcon from '@mui/icons-material/Inbox';
@@ -56,6 +55,7 @@ function DashboardSidebar({
         title: config.label,
         icon: IconComponent ? <IconComponent /> : null,
         id: typeKey,
+        count: relatedTargets.length,
         href: `/targets/${typeKey}`,
         match: `/targets/${typeKey}`,
         subItems: relatedTargets.map(target => ({
@@ -72,8 +72,8 @@ function DashboardSidebar({
   const taskPages = [
     {
       id: "toDoTasks",
-      title: "To Do Tasks",
-      icon: <CalendarMonthIcon />,
+      title: "To do",
+      // icon: <CalendarMonthIcon />,
       href: "/tasks/todo",
       match: "/tasks/todo",
     },
@@ -133,16 +133,39 @@ function DashboardSidebar({
     [setExpanded]
   );
 
+  /* Set the expanded item ids based on the current pathname and target pages. */
+  React.useEffect(() => {
+    if (matchPath("/reports/*", pathname)) {
+      setExpandedItemIds(["reports"]);
+      return;
+    }
+
+    if (matchPath("/tasks/*", pathname)) {
+      setExpandedItemIds(["tasks"]);
+      return;
+    }
+
+    const activeTargetType = targetPages.find(page =>
+      matchPath(page.match, pathname) ||
+      (page.subItems && page.subItems.some(sub => matchPath(sub.match, pathname)))
+    );
+
+    if (activeTargetType) {
+      setExpandedItemIds([activeTargetType.id]);
+      return;
+    }
+
+    setExpandedItemIds([]);
+  }, [pathname, targetPages]);
+
   const handlePageItemClick = React.useCallback(
     (itemId, hasNestedNavigation) => {
       if (hasNestedNavigation && !mini) {
-        setExpandedItemIds((previousValue) =>
-          previousValue.includes(itemId)
-            ? previousValue.filter(
-              (previousValueItemId) => previousValueItemId !== itemId
-            )
-            : [...previousValue, itemId]
-        );
+        setExpandedItemIds((previousValue) => {
+          const isCurrentlyExpanded = previousValue.includes(itemId);
+
+          return isCurrentlyExpanded ? [] : [itemId];
+        });
       } else if (!isOverSmViewport && !hasNestedNavigation) {
         setExpanded(false);
       }
@@ -245,6 +268,7 @@ function DashboardSidebar({
                 title={page.title}
                 icon={page.icon}
                 href={page.href}
+                count={page.count}
                 selected={!!matchPath(page.match, pathname)}
                 expanded={expandedItemIds.includes(page.id)}
                 nestedNavigation={
@@ -470,6 +494,7 @@ DashboardSidebar.propTypes = {
     }
     return null;
   },
+  count: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   disableCollapsibleSidebar: PropTypes.bool,
   expanded: PropTypes.bool,
   setExpanded: PropTypes.func.isRequired,
