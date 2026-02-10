@@ -12,14 +12,13 @@ import com.taskmanager.taskapp.TaskSchedule.tasktemplate.TaskTemplate;
 @Repository
 public interface TaskScheduleRepository extends JpaRepository<TaskTemplate, Long> {
 
-    @Query("""
-        SELECT tt FROM TaskTemplate tt 
-        LEFT JOIN FETCH tt.recurringPlan 
-        WHERE tt.userId = :userId 
-        AND (:targetId IS NULL OR tt.target.id = :targetId) 
-        """)
-    List<TaskTemplate> findAllWithPlanByUserIdAndTargetId(
-        @Param("userId") Long userId, 
-        @Param("targetId") Long targetId
-    );
+        @Query("""
+                        SELECT tt FROM TaskTemplate tt
+                        LEFT JOIN FETCH tt.recurringPlan
+                        WHERE tt.user = :userId
+                        AND (:targetId IS NULL OR tt.target.id = :targetId)
+                        """)
+        List<TaskTemplate> findAllWithPlanByUserIdAndTargetId(
+                        @Param("userId") Long userId,
+                        @Param("targetId") Long targetId);
 }

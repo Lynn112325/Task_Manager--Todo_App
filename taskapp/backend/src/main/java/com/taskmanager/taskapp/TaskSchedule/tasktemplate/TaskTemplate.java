@@ -9,6 +9,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 import com.taskmanager.taskapp.TaskSchedule.recurringplan.RecurringPlan;
 import com.taskmanager.taskapp.target.Target;
 import com.taskmanager.taskapp.task.Task;
+import com.taskmanager.taskapp.user.User;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -44,8 +45,9 @@ public class TaskTemplate {
     @JoinColumn(name = "target_id", nullable = true)
     private Target target;
 
-    @Column(name = "user_id", nullable = false)
-    private Long userId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = true)
+    private User user;
 
     /**
      * mappedBy = "taskTemplate": map to RecurringPlan.taskTemplate

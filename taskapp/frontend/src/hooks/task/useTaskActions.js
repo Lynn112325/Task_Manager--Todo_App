@@ -77,19 +77,22 @@ export function useTaskActions() {
         if (!confirmed) return;
 
         try {
-            await updateTaskMutation.mutateAsync({
+            const updatedTask = await updateTaskMutation.mutateAsync({
                 id: task.id,
                 data: { status: targetStatus }
             });
 
-            notifications.show(`Task marked as ${targetStatus.toLowerCase()}`, {
-                severity: targetStatus === "COMPLETED" ? "success" : "info",
+            const msg = updatedTask.systemMessage;
+            notifications.show(msg, {
+                severity: 'success',
+                autoHideDuration: 3000,
             });
 
             return true;
         } catch (e) {
             notifications.show("Failed to update task", {
                 severity: "error",
+                autoHideDuration: 3000,
             });
             return false;
         }
@@ -97,6 +100,7 @@ export function useTaskActions() {
 
     /**
      * Logically cancels a task instead of deleting it from the database.
+     * not on use
      */
     const cancelTaskAction = async (task) => {
         if (!task?.id) {
@@ -118,11 +122,13 @@ export function useTaskActions() {
 
             notifications.show("Task has been canceled", {
                 severity: "info",
+                autoHideDuration: 3000,
             });
             return true;
         } catch (e) {
             notifications.show("Failed to cancel task", {
                 severity: "error",
+                autoHideDuration: 3000,
             });
             throw e;
         }
@@ -153,6 +159,7 @@ export function useTaskActions() {
                 id: taskData.id,
                 data: taskData
             });
+
             notifications.show('Task edited successfully.', {
                 severity: 'success',
                 autoHideDuration: 3000,

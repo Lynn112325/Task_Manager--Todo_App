@@ -8,6 +8,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import com.taskmanager.taskapp.TaskSchedule.tasktemplate.TaskTemplate;
+import com.taskmanager.taskapp.enums.TaskStatus;
 import com.taskmanager.taskapp.task.dto.TaskDto;
 
 public interface TaskRepository extends JpaRepository<Task, Long> {
@@ -17,7 +19,7 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     @Query("""
                 SELECT new com.taskmanager.taskapp.task.dto.TaskDto(
                     t.id, t.title, t.description, t.status, t.priority, t.type,
-                    t.createdAt, t.updatedAt, t.startDate, t.dueDate, tt.id
+                    t.createdAt, t.updatedAt, t.startDate, t.dueDate, tt.id, null
                 )
                 FROM Task t
                 LEFT JOIN t.taskTemplate tt
@@ -28,7 +30,7 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     @Query("""
                 SELECT new com.taskmanager.taskapp.task.dto.TaskDto(
                     t.id, t.title, t.description, t.status, t.priority, t.type,
-                    t.createdAt, t.updatedAt, t.startDate, t.dueDate, tt.id
+                    t.createdAt, t.updatedAt, t.startDate, t.dueDate, tt.id, null
                 )
                 FROM Task t
                 LEFT JOIN t.taskTemplate tt
@@ -40,7 +42,7 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     @Query("""
                 SELECT new com.taskmanager.taskapp.task.dto.TaskDto(
                     t.id, t.title, t.description, t.status, t.priority, t.type,
-                    t.createdAt, t.updatedAt, t.startDate, t.dueDate, tt.id
+                    t.createdAt, t.updatedAt, t.startDate, t.dueDate, tt.id, null
                 )
                 FROM Task t
                 LEFT JOIN t.taskTemplate tt
@@ -50,11 +52,18 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
             """)
     List<TaskDto> findOverdueTasks(@Param("userId") Long userId, @Param("today") LocalDateTime today);
 
+    @Query("""
+                SELECT t FROM Task t
+                WHERE t.status = 'ACTIVE'
+                AND t.dueDate < :today
+            """)
+    List<Task> findOverdueTasksForCleanup(@Param("today") LocalDateTime today);
+
     // Find Month Range tasks (Added for your getTasksByMonth method)
     @Query("""
                 SELECT new com.taskmanager.taskapp.task.dto.TaskDto(
                     t.id, t.title, t.description, t.status, t.priority, t.type,
-                    t.createdAt, t.updatedAt, t.startDate, t.dueDate, tt.id
+                    t.createdAt, t.updatedAt, t.startDate, t.dueDate, tt.id, null
                 )
                 FROM Task t
                 LEFT JOIN t.taskTemplate tt
@@ -73,6 +82,12 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     List<TaskDto> findByDateRange(@Param("userId") Long userId,
             @Param("start") LocalDateTime start,
             @Param("end") LocalDateTime end);
+
+    // Finds the next generated task so it can be deleted during Undo
+    Optional<Task> findFirstByTaskTemplateAndStatusAndDueDateOrderByCreatedAtDesc(
+            TaskTemplate taskTemplate,
+            TaskStatus status,
+            LocalDateTime dueDate);
 
     // save() – to persist entities into the database
     // findById() – to find database record by its id
