@@ -7,6 +7,7 @@ import org.hibernate.annotations.CreationTimestamp;
 
 import com.taskmanager.taskapp.TaskSchedule.tasktemplate.TaskTemplate;
 import com.taskmanager.taskapp.enums.HabitLogStatus;
+import com.taskmanager.taskapp.task.Task;
 import com.taskmanager.taskapp.user.User;
 
 import jakarta.persistence.Column;
@@ -19,6 +20,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import lombok.AllArgsConstructor;
@@ -27,8 +29,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "habit_logs", uniqueConstraints = @UniqueConstraint(columnNames = { "user_id", "task_template_id",
-        "log_date" }))
+@Table(name = "habit_logs", uniqueConstraints = @UniqueConstraint(columnNames = { "task_id" }))
 @Data
 @Builder
 @NoArgsConstructor
@@ -42,6 +43,10 @@ public class HabitLog {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
+
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "task_id", nullable = false)
+    private Task task;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "task_template_id", nullable = false)
