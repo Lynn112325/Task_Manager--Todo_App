@@ -54,8 +54,11 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
 
     @Query("""
                 SELECT t FROM Task t
+                JOIN t.taskTemplate tt
+                JOIN tt.recurringPlan rp
                 WHERE t.status = 'ACTIVE'
                 AND t.dueDate < :today
+                AND rp.recurrenceType != com.taskmanager.taskapp.enums.RecurrenceType.NONE
             """)
     List<Task> findOverdueTasksForCleanup(@Param("today") LocalDateTime today);
 

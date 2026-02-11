@@ -155,9 +155,13 @@ public class TaskService {
         if (oldStatus != TaskStatus.COMPLETED && newStatus == TaskStatus.COMPLETED) {
             message = handleTaskCompletion(existingTask);
         }
-        // Case B: Unchecked (COMPLETED -> ACTIVE/ONGOING)
+        // Case B: Unchecked (COMPLETED -> ONGOING/CANCELED)
         else if (oldStatus == TaskStatus.COMPLETED && newStatus != TaskStatus.COMPLETED) {
             message = handleTaskUndoCompletion(existingTask);
+        }
+        // Case C: Marked as CANCELED
+        else if (oldStatus != TaskStatus.CANCELED && newStatus == TaskStatus.CANCELED) {
+            message = handleTaskCanceled(existingTask);
         }
 
         // save the updated task to database and get the saved entity
@@ -222,37 +226,50 @@ public class TaskService {
         task.setUpdatedAt(LocalDateTime.now());
         taskRepository.save(task);
 
-        // 2. Process recurring logic with 'MISSED' status for yesterday.
-        processRecurringLogic(task, HabitLogStatus.MISSED, LocalDate.now().minusDays(1));
+        // 2. Process recurring logic with 'MISSED' status.
+        processRecurringLogic(task, HabitLogStatus.MISSED, task.getDueDate().toLocalDate());
+    }
+
+    @Transactional
+    public String handleTaskCanceled(Task task) {
+        // task already set to CANCELED before calling this method
+        // updateTask() method should save it
+
+        // Process recurring logic with 'CANCELED' status for the due date.
+        return processRecurringLogic(task, HabitLogStatus.CANCELED, task.getDueDate().toLocalDate());
     }
 
     /**
      * Shared logic to handle habit history and create the next scheduled task.
      */
     private String processRecurringLogic(Task task, HabitLogStatus status, LocalDate logDate) {
-        // Stop if the task is not part of a recurring plan template.
         if (task.getTaskTemplate() == null)
             return null;
 
         return recurringPlanRepository.findByTemplateId(task.getTaskTemplate().getId())
                 .map(plan -> {
-                    // 1. If this plan is a habit, save a log record.
+                    // 1. Save habit log if applicable
                     if (plan.getIsHabit()) {
                         saveHabitLog(task, status, logDate);
                     }
 
-                    // 2. Generate Next Task & Get Date
-                    LocalDateTime nextRun = generateNextRecurringTask(plan);
+                    // 2. Generate Next Task
+                    LocalDateTime nextRun = generateNextRecurringTask(plan, task.getDueDate());
 
-                    // 3. Build User Message
+                    // 3. Build Dynamic User Message
+                    String header = switch (status) {
+                        case DONE -> "Great job! 🎉";
+                        case CANCELED -> "Got it, task skipped.";
+                        case MISSED -> "Session missed.";
+                    };
+
                     if (nextRun != null) {
-                        // Create formatter for "yyyy-MM-dd(EEE)" e.g. 2026-02-09(MON)
-                        // Use Locale.ENGLISH to ensure it says (MON) instead of local language
                         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd(EEE)", Locale.ENGLISH);
                         String dateStr = nextRun.format(formatter).toUpperCase();
-                        return "Great job! Next session scheduled for " + dateStr;
+                        return String.format("%s Next session scheduled for %s", header, dateStr);
                     }
-                    return "Great job! Task completed.";
+
+                    return header + " Task completed.";
                 })
                 .orElse(null);
     }
@@ -272,13 +289,13 @@ public class TaskService {
     }
 
     @Transactional()
-    public LocalDateTime generateNextRecurringTask(RecurringPlan plan) {
+    public LocalDateTime generateNextRecurringTask(RecurringPlan plan, LocalDateTime baseDate) {
         TaskTemplate template = plan.getTaskTemplate();
         if (template == null || plan.getStatus() != PlanStatus.ACTIVE) {
             return null;
         }
 
-        LocalDateTime nextDueDate = recurringPlanservice.calculateNextDueDate(plan, LocalDateTime.now());
+        LocalDateTime nextDueDate = recurringPlanservice.calculateNextDueDate(plan, baseDate);
 
         // create new Task
         Task newTask = new Task();
