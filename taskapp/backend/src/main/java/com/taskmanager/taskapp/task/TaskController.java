@@ -115,7 +115,7 @@ public class TaskController extends BaseController {
     public ResponseEntity<CommonResponse<?>> deleteTask(@PathVariable("id") Long taskId) {
         taskService.deleteTask(taskId);
         return ok();
-        // 或 ok("deleted");
+        // or ok("deleted");
     }
 
 }

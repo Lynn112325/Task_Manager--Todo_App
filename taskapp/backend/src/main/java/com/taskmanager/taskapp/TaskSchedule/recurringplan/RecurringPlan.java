@@ -44,6 +44,10 @@ public class RecurringPlan {
     @JoinColumn(name = "task_template_id")
     private TaskTemplate taskTemplate;
 
+    // 你可以為 recurring_plans 增加一個 is_workflow (bit) 欄位：
+    // 如果 is_workflow = 0 (Hybrid)：執行「時間到就取消舊的」邏輯。
+    // 如果 is_workflow = 1 (Workflow)：忽略定時任務的取消邏輯，只在 COMPLETED 觸發時生成下一個。
+
     @Enumerated(EnumType.STRING)
     @Column(name = "recurrence_type", nullable = false, length = 20)
     private RecurrenceType recurrenceType;

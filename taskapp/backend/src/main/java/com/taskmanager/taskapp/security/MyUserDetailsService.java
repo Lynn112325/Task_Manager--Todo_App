@@ -1,6 +1,5 @@
 package com.taskmanager.taskapp.security;
 
-
 import org.springframework.context.annotation.Primary;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -24,12 +23,11 @@ public class MyUserDetailsService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         User user = userRepository.findByUsername(username)
-            .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
         return new MyUserDetails(user);
     }
 
-    
     // get current user ID from security context
     public Long getCurrentUserId() {
         MyUserDetails userDetails = (MyUserDetails) SecurityContextHolder
