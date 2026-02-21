@@ -1,162 +1,249 @@
 package com.taskmanager.taskapp;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-import org.junit.jupiter.api.AfterEach;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.taskmanager.taskapp.enums.PlanStatus;
 import com.taskmanager.taskapp.enums.TaskStatus;
-import com.taskmanager.taskapp.security.MyUserDetails;
-import com.taskmanager.taskapp.target.TargetRepository;
+import com.taskmanager.taskapp.habitlog.HabitLogRepository;
+import com.taskmanager.taskapp.security.MyUserDetailsService;
 import com.taskmanager.taskapp.task.Task;
 import com.taskmanager.taskapp.task.TaskRepository;
 import com.taskmanager.taskapp.task.TaskService;
 import com.taskmanager.taskapp.task.dto.TaskDto;
+import com.taskmanager.taskapp.taskschedule.recurringplan.RecurringPlan;
+import com.taskmanager.taskapp.taskschedule.recurringplan.RecurringPlanRepository;
+import com.taskmanager.taskapp.taskschedule.recurringplan.RecurringPlanService;
+import com.taskmanager.taskapp.taskschedule.tasktemplate.TaskTemplate;
 import com.taskmanager.taskapp.user.User;
 import com.taskmanager.taskapp.user.UserRepository;
 
+@ExtendWith(MockitoExtension.class)
 class TaskServiceTest {
 
     @Mock
     private TaskRepository taskRepository;
-
     @Mock
     private UserRepository userRepository;
-
     @Mock
-    private TargetRepository targetRepository;
-
+    private MyUserDetailsService myUserDetailsService;
     @Mock
-    private com.taskmanager.taskapp.security.MyUserDetailsService myUserDetailsService;
+    private RecurringPlanService recurringPlanService;
+    @Mock
+    private RecurringPlanRepository recurringPlanRepository;
+    @Mock
+    private HabitLogRepository habitLogRepository;
 
     @InjectMocks
     private TaskService taskService;
 
-    private Task task1;
-    private Task task2;
-    private User user;
+    private User testUser;
+    private Task testTask;
+    private TaskTemplate testTemplate;
+    private RecurringPlan testPlan;
+    private final Long USER_ID = 1L;
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.openMocks(this);
+        // Initialize test user
+        testUser = new User();
+        testUser.setId(USER_ID);
 
-        // mock user and security context
-        MyUserDetails userDetails = mock(MyUserDetails.class);
-        when(userDetails.getId()).thenReturn(1L);
+        // Initialize test template
+        testTemplate = new TaskTemplate();
+        testTemplate.setId(10L);
+        testTemplate.setTitle("Daily Workout");
+        testTemplate.setUser(testUser);
 
-        Authentication authentication = mock(Authentication.class);
-        when(authentication.getPrincipal()).thenReturn(userDetails);
+        // Initialize recurring plan
+        testPlan = new RecurringPlan();
+        testPlan.setId(100L);
+        testPlan.setTaskTemplate(testTemplate);
+        testPlan.setIsHabit(true);
+        testPlan.setStatus(PlanStatus.ACTIVE);
+        testPlan.setNextRunAt(LocalDateTime.now().plusDays(1));
 
-        SecurityContext securityContext = mock(SecurityContext.class);
-        when(securityContext.getAuthentication()).thenReturn(authentication);
-
-        SecurityContextHolder.setContext(securityContext);
-
-        user = new User();
-        user.setId(1L);
-        TaskStatus status = TaskStatus.ACTIVE;
-
-        task2 = new Task();
-        task2.setId(1L);
-        task2.setUser(user);
-        task2.setTitle("Test Task 2");
-        task2.setDescription("Description 2");
-        task2.setStatus(status);
-
-        task1 = new Task();
-        task1.setId(2L);
-        task1.setUser(user);
-        task1.setTitle("Test Task 1");
-        task1.setDescription("Description 1");
-        task1.setStatus(status);
+        // Initialize task
+        testTask = new Task();
+        testTask.setId(50L);
+        testTask.setUser(testUser);
+        testTask.setTitle("Go to the Gym");
+        testTask.setStatus(TaskStatus.ACTIVE);
+        testTask.setDueDate(LocalDateTime.now());
+        testTask.setTaskTemplate(testTemplate);
     }
 
-    @AfterEach
-    void tearDown() {
-        // stub MyUserDetailssService to return current user id and allow ownership
-        // checks
-        when(myUserDetailsService.getCurrentUserId()).thenReturn(1L);
-        // default do nothing for checkOwnership
-        // (if needed, tests can override to throw AccessDeniedException)
-        SecurityContextHolder.clearContext();
+    // --- Query Logic Tests ---
+
+    @Test
+    @DisplayName("Get Overdue Tasks: Should return a list of TaskDtos")
+    void getOverdueTasks_ShouldReturnDtoList() {
+        when(myUserDetailsService.getCurrentUserId()).thenReturn(USER_ID);
+        TaskDto overdueDto = new TaskDto(50L, "Overdue Task", null, null, null, null,
+                null, null, null, null, null,
+                null);
+        when(taskRepository.findOverdueTasks(eq(USER_ID), any(LocalDateTime.class)))
+                .thenReturn(List.of(overdueDto));
+
+        List<TaskDto> result = taskService.getOverdueTasks();
+
+        assertFalse(result.isEmpty(), "Result list should not be empty");
+        assertEquals("Overdue Task", result.get(0).title());
     }
 
     @Test
-    void testGetTasksForCurrentUser() {
-        when(taskRepository.findByUser_Id(anyLong())).thenReturn(List.of(task1, task2));
+    @DisplayName("Get Tasks by Month: Should parse date range correctly for repository query")
+    void getTasksByMonth_ShouldQueryCorrectRange() {
+        when(myUserDetailsService.getCurrentUserId()).thenReturn(USER_ID);
+        String monthStr = "2026-02";
 
-        List<TaskDto> tasks = taskService.getTasksForCurrentUser();
+        taskService.getTasksByMonth(monthStr);
 
-        assertEquals(2, tasks.size());
-        assertEquals("Test Task 1", tasks.get(0).title());
-        assertEquals("Test Task 2", tasks.get(1).title());
+        // Verify start of month is 2026-02-01 00:00:00
+        LocalDateTime expectedStart = LocalDate.of(2026, 2, 1).atStartOfDay();
+        verify(taskRepository).findByDateRange(eq(USER_ID), eq(expectedStart),
+                any(LocalDateTime.class));
+    }
+
+    // --- Create & Update Logic Tests ---
+
+    @Test
+    @DisplayName("Create Task: Should automatically associate the current user")
+    void createTask_ShouldSetCurrentUser() {
+        when(myUserDetailsService.getCurrentUserId()).thenReturn(USER_ID);
+        when(userRepository.findById(USER_ID)).thenReturn(Optional.of(testUser));
+        when(taskRepository.save(any(Task.class))).thenAnswer(i -> i.getArgument(0));
+
+        Task newTask = new Task();
+        newTask.setTitle("New Task");
+
+        TaskDto result = taskService.createTask(newTask);
+
+        assertNotNull(result);
+        verify(userRepository).findById(USER_ID);
+        assertEquals(testUser, newTask.getUser(), "Task user should match the current user");
     }
 
     @Test
-    void testCreateTask() {
-        when(userRepository.findById(anyLong())).thenReturn(Optional.of(user));
-        when(taskRepository.save(any(Task.class))).thenReturn(task1);
+    @DisplayName("Update Task: Transitioning to COMPLETED should triggerrecurring logicand habit logs")
 
-        TaskDto saved = taskService.createTask(task1);
+    void updateTask_StatusToCompleted_ShouldTriggerRecurring() {
+        // Arrange
+        TaskDto updates = new TaskDto(50L, null, null, TaskStatus.COMPLETED, null,
+                null, null, null, null, null, null,
+                null);
+        when(taskRepository.findById(50L)).thenReturn(Optional.of(testTask));
+        when(recurringPlanRepository.findByTemplateId(10L)).thenReturn(Optional.of(testPlan));
+        when(recurringPlanService.calculateNextDueDate(any(),
+                any())).thenReturn(LocalDateTime.now().plusDays(1));
+        when(taskRepository.save(any(Task.class))).thenAnswer(i -> i.getArgument(0));
 
-        assertNotNull(saved);
-        assertEquals(user.getId(), task1.getUser().getId());
+        // Act
+        TaskDto result = taskService.updateTask(50L, updates);
+
+        // Assert
+        assertEquals(TaskStatus.COMPLETED, result.status());
+        verify(habitLogRepository).save(any()); // Verify habit log was created
+        verify(recurringPlanRepository).save(testPlan); // Verify recurring plan schedule was updated
+        assertTrue(result.systemMessage().contains("Next session scheduled"));
     }
 
     @Test
-    void testDeleteTask() {
-        when(taskRepository.findById(anyLong())).thenReturn(Optional.of(task1));
+    @DisplayName("Update Task: Undo Completion should delete future tasks androll back plan schedule")
 
-        assertDoesNotThrow(() -> taskService.deleteTask(1L));
-        verify(taskRepository, times(1)).delete(task1);
+    void updateTask_UndoCompletion_ShouldCleanupFutureTask() {
+        // Arrange: Simulate reverting a COMPLETED task back to ACTIVE
+        testTask.setStatus(TaskStatus.COMPLETED);
+        TaskDto updates = new TaskDto(50L, null, null, TaskStatus.ACTIVE, null, null,
+                null, null, null, null, null,
+                null);
+
+        LocalDateTime futureRun = testPlan.getNextRunAt();
+        Task futureTask = new Task();
+        futureTask.setId(51L);
+
+        when(taskRepository.findById(50L)).thenReturn(Optional.of(testTask));
+        when(recurringPlanRepository.findByTemplateId(10L)).thenReturn(Optional.of(testPlan));
+
+        // Mock finding the future task generated during the previous completion
+        when(taskRepository.findFirstByTaskTemplateAndStatusAndDueDateOrderByCreatedAtDesc(
+                eq(testTemplate), eq(TaskStatus.ACTIVE), eq(futureRun)))
+                .thenReturn(Optional.of(futureTask));
+
+        when(taskRepository.save(any(Task.class))).thenAnswer(i -> i.getArgument(0));
+
+        // Act
+        TaskDto result = taskService.updateTask(50L, updates);
+
+        // Assert
+        verify(habitLogRepository).deleteByTaskId(50L); // Verify habit log was removed
+        verify(taskRepository).delete(futureTask); // Verify future task was deleted
+        assertEquals(testTask.getDueDate(), testPlan.getNextRunAt(),
+                "Plan schedule should roll back to current task due date");
+        assertTrue(result.systemMessage().contains("Completion undone"));
     }
 
-    // test getTaskById for task not existing
-    // @Test
-    // void testGetTaskById_NotFound() {
-    // when(taskRepository.findById(anyLong())).thenReturn(Optional.empty());
-
-    // RuntimeException ex = assertThrows(RuntimeException.class, () -> {
-    // taskService.getTaskDetailById(999L);
-    // });
-
-    // assertEquals("Task not found", ex.getMessage());
-    // }
-
-    // test access denied
     @Test
-    void testGetTaskById_AccessDenied() {
-        // create another user
-        User anotherUser = new User();
-        anotherUser.setId(2L);
+    @DisplayName("Update Task: Unauthorized user should trigger access denial")
+    void updateTask_NotOwner_ShouldThrowException() {
+        // Arrange: Task belongs to a different user
+        testTask.getUser().setId(999L);
+        TaskDto updates = new TaskDto(50L, "Unauthorized Update", null, null, null,
+                null, null, null, null, null, null,
+                null);
 
-        task1.setUser(anotherUser);
-        when(taskRepository.findById(anyLong())).thenReturn(Optional.of(task1));
+        when(taskRepository.findById(50L)).thenReturn(Optional.of(testTask));
 
-        // simulate access denied by throwing from the security helper
-        doThrow(new AccessDeniedException("Access denied")).when(myUserDetailsService).checkOwnership(anyLong());
+        // Mock ownership check failure
+        doThrow(new RuntimeException("Access Denied"))
+                .when(myUserDetailsService).checkOwnership(999L);
 
-        // assertThrows(AccessDeniedException.class, () ->
-        // taskService.getTaskDetailById(1L));
+        // Assert
+        Throwable exception = assertThrows(RuntimeException.class, () -> taskService.updateTask(50L, updates));
+        assertEquals("Access Denied", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("Recurring Logic: Should generate next task based on templateand update plan")
+
+    void generateNextRecurringTask_ShouldCreateCorrectTask() {
+        // Arrange
+        LocalDateTime lastDue = LocalDateTime.now();
+        LocalDateTime nextDue = lastDue.plusDays(7);
+        when(recurringPlanService.calculateNextDueDate(testPlan,
+                lastDue)).thenReturn(nextDue);
+
+        // Act
+        Task result = taskService.generateNextRecurringTask(testPlan, lastDue);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(testTemplate.getTitle(), result.getTitle());
+        assertEquals(nextDue, result.getDueDate());
+        assertEquals(testTemplate, result.getTaskTemplate());
+
+        verify(taskRepository).save(result);
+        verify(recurringPlanRepository).save(testPlan);
+        assertEquals(nextDue, testPlan.getNextRunAt(), "Plan's next run date should be updated");
     }
 }
