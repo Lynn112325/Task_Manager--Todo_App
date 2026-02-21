@@ -13,12 +13,13 @@ import jakarta.transaction.Transactional;
 
 @Repository
 public interface HabitLogRepository extends JpaRepository<HabitLog, Long> {
+
     List<HabitLog> findByUserId(Long userId);
 
     @Query("""
                 SELECT new com.taskmanager.taskapp.habitlog.HabitLogStatsDto(
                     SUM(CASE WHEN hl.status = 'DONE' THEN 1 ELSE 0 END),
-                    SUM(CASE WHEN hl.status = 'SKIPPED' THEN 1 ELSE 0 END),
+                    SUM(CASE WHEN hl.status = 'CANCELED' THEN 1 ELSE 0 END),
                     SUM(CASE WHEN hl.status = 'MISSED' THEN 1 ELSE 0 END)
                 )
                 FROM HabitLog hl
