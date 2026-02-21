@@ -1,5 +1,6 @@
 package com.taskmanager.taskapp.task;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -7,12 +8,36 @@ import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 
-import com.taskmanager.taskapp.TaskSchedule.tasktemplate.TaskTemplate;
 import com.taskmanager.taskapp.enums.TaskStatus;
 import com.taskmanager.taskapp.task.dto.TaskDto;
+import com.taskmanager.taskapp.taskschedule.tasktemplate.TaskTemplate;
 
+@Repository
 public interface TaskRepository extends JpaRepository<Task, Long> {
+
+    public interface DailyTaskStats {
+        long getTotal();
+
+        long getActive();
+
+        long getCompleted();
+
+        long getCanceled();
+    }
+
+    @Query("""
+            SELECT
+                COUNT(t) as total,
+                COALESCE(SUM(CASE WHEN t.status = 'ACTIVE' THEN 1 ELSE 0 END), 0) as active,
+                COALESCE(SUM(CASE WHEN t.status = 'COMPLETED' THEN 1 ELSE 0 END), 0) as completed,
+                COALESCE(SUM(CASE WHEN t.status = 'CANCELED' THEN 1 ELSE 0 END), 0) as canceled
+            FROM Task t
+            WHERE t.user.id = :userId
+                AND CAST(t.dueDate AS localdate) = :today
+            """)
+    DailyTaskStats getDailyStats(@Param("userId") Long userId, @Param("today") LocalDate today);
 
     List<Task> findByUser_Id(Long userId);
 
@@ -52,15 +77,18 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
             """)
     List<TaskDto> findOverdueTasks(@Param("userId") Long userId, @Param("today") LocalDateTime today);
 
+    // Find distinct IDs of users who have at least one overdue task
+    @Query("SELECT DISTINCT t.user.id FROM Task t WHERE t.status = 'ACTIVE' AND t.dueDate < :today")
+    List<Long> findUserIdsWithOverdueTasks(@Param("today") LocalDateTime today);
+
+    // Find overdue tasks for a specific user (used in cleanup processing)
     @Query("""
                 SELECT t FROM Task t
-                JOIN t.taskTemplate tt
-                JOIN tt.recurringPlan rp
-                WHERE t.status = 'ACTIVE'
+                WHERE t.user.id = :userId
+                AND t.status = 'ACTIVE'
                 AND t.dueDate < :today
-                AND rp.recurrenceType != com.taskmanager.taskapp.enums.RecurrenceType.NONE
             """)
-    List<Task> findOverdueTasksForCleanup(@Param("today") LocalDateTime today);
+    List<Task> findOverdueTasksForCleanup(@Param("userId") Long userId, @Param("today") LocalDateTime today);
 
     // Find Month Range tasks (Added for your getTasksByMonth method)
     @Query("""

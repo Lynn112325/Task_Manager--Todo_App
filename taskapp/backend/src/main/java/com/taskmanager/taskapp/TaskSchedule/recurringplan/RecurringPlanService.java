@@ -1,6 +1,8 @@
-package com.taskmanager.taskapp.TaskSchedule.recurringplan;
+package com.taskmanager.taskapp.taskschedule.recurringplan;
 
+import java.time.Clock;
 import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.TextStyle;
 import java.time.temporal.ChronoUnit;
@@ -32,6 +34,7 @@ public class RecurringPlanService {
         private final RecurringPlanRepository recurringPlanRepository;
         private final TargetRepository targetRepository;
         private final MyUserDetailsService myUserDetailsService;
+        private final Clock clock;
 
         // transform RecurringPlan to RecurringPlanDto
         public RecurringPlanDto toDto(RecurringPlan r) {
@@ -93,8 +96,6 @@ public class RecurringPlanService {
                                                 "These recurring plans do not belong to the current user"))
                                 .getUser().getId());
 
-                log.info("Current user ID: {}", myUserDetailsService.getCurrentUserId());
-
                 List<RecurringPlan> recurringPlans = recurringPlanRepository.findAllByTargetId(targetId)
                                 .stream()
                                 .toList();
@@ -106,41 +107,91 @@ public class RecurringPlanService {
         }
 
         public LocalDateTime calculateNextDueDate(RecurringPlan plan, LocalDateTime lastDueDate) {
-                // 1. Basic check: Do not generate if plan is paused or has no recurrence
+
+                // 1. Basic Validation: Skip if plan is paused or has no recurrence
                 if (plan.getStatus() == PlanStatus.PAUSED || plan.getRecurrenceType() == RecurrenceType.NONE) {
                         return null;
                 }
 
-                // 2. Determine the starting point
-                // Use recurrence_start if first time; otherwise, use the date of the last task
-                LocalDateTime baseDate = (lastDueDate == null) ? plan.getRecurrenceStart() : lastDueDate;
-                if (baseDate == null) {
-                        baseDate = LocalDateTime.now();
+                // Define "today" globally for this calculation
+                LocalDate today = LocalDate.now(clock);
+
+                // 2. Determine the starting point (baseDate)
+                LocalDateTime baseDate;
+                boolean allowBaseDate;
+
+                if (lastDueDate != null) {
+                        // SCENARIO A: Plan has run before. Start from last due date and must skip it
+                        // (false).
+                        baseDate = lastDueDate;
+                        allowBaseDate = false;
+                } else {
+                        // SCENARIO B: First run. Start from plan start date and can include it (true).
+                        baseDate = (plan.getRecurrenceStart() != null) ? plan.getRecurrenceStart()
+                                        : LocalDateTime.now(clock);
+                        allowBaseDate = true;
+
+                        if (baseDate == null) { // Defensive check
+                                baseDate = LocalDateTime.now(clock);
+                        }
                 }
 
                 LocalDateTime nextDate = null;
+                long interval = plan.getRecurrenceInterval();
 
-                // 3. Calculate based on recurrence type
+                // 3. Calculate based on Recurrence Type
                 switch (plan.getRecurrenceType()) {
-                        case DAILY:
-                                nextDate = baseDate.plusDays(plan.getRecurrenceInterval());
-                                break;
+                        case DAILY -> {
+                                // Simply add the interval to the base date
+                                nextDate = baseDate.plusDays(interval);
 
-                        case WEEKLY:
-                                nextDate = calculateWeeklyNextDate(plan, baseDate);
-                                break;
+                                // Catch-up logic: If the date is in the past, skip cycles until it reaches
+                                // today/future
+                                if (nextDate.toLocalDate().isBefore(today)) {
+                                        long daysBetween = ChronoUnit.DAYS.between(nextDate.toLocalDate(), today);
+                                        long skipCycles = (daysBetween + interval - 1) / interval;
+                                        nextDate = nextDate.plusDays(skipCycles * interval);
+                                }
+                        }
 
-                        case MONTHLY:
-                                nextDate = baseDate.plusMonths(plan.getRecurrenceInterval());
-                                break;
-                        default:
-                                break;
+                        case WEEKLY -> {
+                                // Use helper method for complex weekly rules
+                                nextDate = calculateWeeklyNextDate(plan, baseDate, allowBaseDate);
+
+                                // Catch-up logic: If nextDate is in the past, restart search from today
+                                // (inclusive)
+                                if (nextDate != null && nextDate.toLocalDate().isBefore(today)) {
+                                        nextDate = calculateWeeklyNextDate(plan, today.atStartOfDay(), true);
+                                }
+                        }
+
+                        case MONTHLY -> {
+                                // Use the original plan start as an "anchor" to keep the day of the month
+                                // consistent
+                                LocalDateTime anchor = plan.getRecurrenceStart();
+                                long monthsDiff = ChronoUnit.MONTHS.between(anchor.toLocalDate(), today);
+                                long cycles = monthsDiff / interval;
+                                nextDate = anchor.plusMonths(cycles * interval);
+
+                                // Boundary Protection: Ensure nextDate is after today AND after the baseDate
+                                if (nextDate.toLocalDate().isBefore(today) || !nextDate.isAfter(baseDate)) {
+                                        nextDate = nextDate.plusMonths(interval);
+                                }
+                        }
+
+                        case NONE -> {
+                                return null;
+                        }
+
+                        default -> throw new IllegalArgumentException(
+                                        "Unsupported recurrence type: " + plan.getRecurrenceType());
                 }
 
-                // 4. Boundary check: Do not exceed the plan's end date
+                // 4. End Date Validation
                 if (nextDate != null && plan.getRecurrenceEnd() != null) {
+                        // If the calculated date is past the plan's end date, the plan is finished
                         if (nextDate.isAfter(plan.getRecurrenceEnd())) {
-                                return null; // Stop cycle if next date is after end date
+                                return null;
                         }
                 }
 
@@ -148,43 +199,58 @@ public class RecurringPlanService {
         }
 
         /**
-         * Handle complex weekly logic (includes week intervals and specific weekdays)
+         * Handle complex weekly logic (specific days + week intervals)
+         * * @param allowBaseDate true: can return baseDate; false: must start searching
+         * from tomorrow
          */
-        private LocalDateTime calculateWeeklyNextDate(RecurringPlan plan, LocalDateTime baseDate) {
-                List<Weekday> allowedDaysEnum = plan.getRecurrenceDays();
-                int intervalWeeks = plan.getRecurrenceInterval(); // Example: 2 means every 2nd week
+        private LocalDateTime calculateWeeklyNextDate(RecurringPlan plan, LocalDateTime baseDate,
+                        boolean allowBaseDate) {
 
-                // If no specific weekdays are set, simply add the number of weeks
+                List<Weekday> allowedDaysEnum = plan.getRecurrenceDays();
+                int intervalWeeks = plan.getRecurrenceInterval();
+
+                // Step 1: If no specific weekdays (Mon-Sun) are selected, just jump by weeks
                 if (allowedDaysEnum == null || allowedDaysEnum.isEmpty()) {
-                        return baseDate.plusWeeks(intervalWeeks);
+                        return allowBaseDate ? baseDate : baseDate.plusWeeks(intervalWeeks);
                 }
 
                 Set<String> allowedDays = allowedDaysEnum.stream()
                                 .map(Enum::name)
                                 .collect(Collectors.toSet());
 
-                // Start searching from the day after the baseDate
-                LocalDateTime searchDate = baseDate.plusDays(1);
+                // Step 2: Determine search starting point
+                LocalDateTime currentSearchDate;
+                if (allowBaseDate) {
+                        // Start checking from today (e.g., first run or catch-up)
+                        currentSearchDate = baseDate.toLocalDate().atStartOfDay();
+                } else {
+                        // Start checking from tomorrow (e.g., normal next-occurrence calculation)
+                        currentSearchDate = baseDate.toLocalDate().plusDays(1).atStartOfDay();
+                }
 
-                // Limit search range to prevent infinite loops (max 10 cycles)
+                // Step 3: Loop through days to find the next valid date within the interval
+                // Safety limit: 7 days * interval * 10 to avoid infinite loops
                 for (int i = 0; i < 7 * intervalWeeks * 10; i++) {
-                        String currentDayName = searchDate.getDayOfWeek().getDisplayName(TextStyle.SHORT,
+
+                        String currentDayName = currentSearchDate.getDayOfWeek().getDisplayName(TextStyle.SHORT,
                                         Locale.ENGLISH);
 
                         if (allowedDays.contains(currentDayName)) {
-                                // Check week interval: (weeks between search date and start date) % interval ==
-                                // 0
+                                // Check if this week aligns with the recurrence interval (e.g., every 2nd week)
+                                // We compare the current search week to the original start week
                                 long weeksBetween = ChronoUnit.WEEKS.between(
                                                 plan.getRecurrenceStart().toLocalDate().with(
                                                                 TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)),
-                                                searchDate.toLocalDate().with(
+                                                currentSearchDate.toLocalDate().with(
                                                                 TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)));
 
+                                // If the week matches the interval (mod == 0), we found our date
                                 if (weeksBetween % intervalWeeks == 0) {
-                                        return searchDate;
+                                        return currentSearchDate;
                                 }
                         }
-                        searchDate = searchDate.plusDays(1);
+                        // Move to the next day and check again
+                        currentSearchDate = currentSearchDate.plusDays(1);
                 }
                 return null;
         }

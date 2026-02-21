@@ -12,10 +12,6 @@ import java.util.Optional;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.taskmanager.taskapp.TaskSchedule.recurringplan.RecurringPlan;
-import com.taskmanager.taskapp.TaskSchedule.recurringplan.RecurringPlanRepository;
-import com.taskmanager.taskapp.TaskSchedule.recurringplan.RecurringPlanService;
-import com.taskmanager.taskapp.TaskSchedule.tasktemplate.TaskTemplate;
 import com.taskmanager.taskapp.enums.HabitLogStatus;
 import com.taskmanager.taskapp.enums.PlanStatus;
 import com.taskmanager.taskapp.enums.TaskStatus;
@@ -23,6 +19,11 @@ import com.taskmanager.taskapp.habitlog.HabitLog;
 import com.taskmanager.taskapp.habitlog.HabitLogRepository;
 import com.taskmanager.taskapp.security.MyUserDetailsService;
 import com.taskmanager.taskapp.task.dto.TaskDto;
+import com.taskmanager.taskapp.task.dto.TaskProcessResult;
+import com.taskmanager.taskapp.taskschedule.recurringplan.RecurringPlan;
+import com.taskmanager.taskapp.taskschedule.recurringplan.RecurringPlanRepository;
+import com.taskmanager.taskapp.taskschedule.recurringplan.RecurringPlanService;
+import com.taskmanager.taskapp.taskschedule.tasktemplate.TaskTemplate;
 import com.taskmanager.taskapp.user.User;
 import com.taskmanager.taskapp.user.UserRepository;
 
@@ -35,7 +36,7 @@ public class TaskService {
     private final TaskRepository taskRepository;
     private final UserRepository userRepository;
     private final MyUserDetailsService myUserDetailsService;
-    private final RecurringPlanService recurringPlanservice;
+    private final RecurringPlanService recurringPlanService;
     private final RecurringPlanRepository recurringPlanRepository;
     private final HabitLogRepository habitLogRepository;
 
@@ -149,45 +150,63 @@ public class TaskService {
         existingTask = applyNonNullUpdates(updatedTask, existingTask);
         TaskStatus newStatus = existingTask.getStatus();
 
-        String message = "Task updated successfully.";
+        // message when no status change, just update other fields
+        TaskProcessResult taskProcessResult = new TaskProcessResult("Task updated successfully.");
 
-        // Case A: Marked as COMPLETED
-        if (oldStatus != TaskStatus.COMPLETED && newStatus == TaskStatus.COMPLETED) {
-            message = handleTaskCompletion(existingTask);
-        }
-        // Case B: Unchecked (COMPLETED -> ONGOING/CANCELED)
-        else if (oldStatus == TaskStatus.COMPLETED && newStatus != TaskStatus.COMPLETED) {
-            message = handleTaskUndoCompletion(existingTask);
-        }
-        // Case C: Marked as CANCELED
-        else if (oldStatus != TaskStatus.CANCELED && newStatus == TaskStatus.CANCELED) {
-            message = handleTaskCanceled(existingTask);
+        // 1. Handle Undo Logic first (if transitioning FROM Completed)
+        if (oldStatus == TaskStatus.COMPLETED && newStatus != TaskStatus.COMPLETED) {
+            // This cleans up the future task, habit log created by the completion and
+            // roll back the Plan's schedule
+            taskProcessResult = handleTaskUndoCompletion(existingTask);
         }
 
+        // 2. Handle New Status Logic (if transitioning TO Completed or Canceled)
+        if (newStatus == TaskStatus.COMPLETED) {
+            if (oldStatus != TaskStatus.COMPLETED) {
+                taskProcessResult = handleTaskCompletion(existingTask);
+            }
+        } else if (newStatus == TaskStatus.CANCELED) {
+            if (oldStatus != TaskStatus.CANCELED) {
+                taskProcessResult = handleTaskCanceled(existingTask);
+            }
+        }
         // save the updated task to database and get the saved entity
         Task savedTask = taskRepository.save(existingTask);
+
         // turn the saved entity as DTO and return it to the client
+        String message = (taskProcessResult != null) ? taskProcessResult.message() : null;
         return toDto(savedTask).withSystemMessage(message);
     }
 
     @Transactional
-    public String handleTaskCompletion(Task task) {
+    private TaskProcessResult handleTaskCompletion(Task task) {
+        // task already set to Completed before calling this method
+        // updateTask() method should save it
+        // task.setStatus(TaskStatus.COMPLETED);
+        // taskRepository.save(task);
+
         // Logic for task rewards or points can be added here.
+
+        if (task.getTaskTemplate() == null) {
+            return new TaskProcessResult(String.format("Task '%s' completed!", task.getTitle()));
+        }
 
         // Process recurring logic with 'DONE' status for today.
         return processRecurringLogic(task, HabitLogStatus.DONE, LocalDate.now());
     }
 
-    // Delete Habit Log (if have)
-    // Delete Future Task (if have)
-    // Roll back Plan (if have)
+    /**
+     * Reverts all side effects when a COMPLETED task is changed back to ACTIVE or
+     * CANCELED.
+     */
     @Transactional
-    public String handleTaskUndoCompletion(Task task) {
+    private TaskProcessResult handleTaskUndoCompletion(Task task) {
         if (task.getTaskTemplate() == null)
             return null;
 
         return recurringPlanRepository.findByTemplateId(task.getTaskTemplate().getId())
                 .map(plan -> {
+
                     // 1. Delete the Habit Log
                     habitLogRepository.deleteByTaskId(task.getId());
 
@@ -210,30 +229,36 @@ public class TaskService {
                     recurringPlanRepository.save(plan);
 
                     // 4. Return Message
+                    String message;
                     if (futureTaskDeleted) {
-                        return "Completion undone. The next scheduled task has been removed.";
+                        message = "Completion undone. The next scheduled task has been removed.";
                     } else {
-                        return "Completion undone.";
+                        message = "Completion undone.";
                     }
+                    return new TaskProcessResult(message);
                 })
                 .orElse(null);
     }
 
     @Transactional
-    public void handleTaskMissed(Task task) {
+    public TaskProcessResult handleTaskMissed(Task task) {
         // 1. Change the status of the old task to CANCELED.
         task.setStatus(TaskStatus.CANCELED);
         task.setUpdatedAt(LocalDateTime.now());
         taskRepository.save(task);
 
         // 2. Process recurring logic with 'MISSED' status.
-        processRecurringLogic(task, HabitLogStatus.MISSED, task.getDueDate().toLocalDate());
+        return processRecurringLogic(task, HabitLogStatus.MISSED, task.getDueDate().toLocalDate());
     }
 
     @Transactional
-    public String handleTaskCanceled(Task task) {
+    private TaskProcessResult handleTaskCanceled(Task task) {
         // task already set to CANCELED before calling this method
         // updateTask() method should save it
+
+        if (task.getTaskTemplate() == null) {
+            return new TaskProcessResult(String.format("Task '%s' has been canceled.", task.getTitle()));
+        }
 
         // Process recurring logic with 'CANCELED' status for the due date.
         return processRecurringLogic(task, HabitLogStatus.CANCELED, task.getDueDate().toLocalDate());
@@ -242,9 +267,15 @@ public class TaskService {
     /**
      * Shared logic to handle habit history and create the next scheduled task.
      */
-    private String processRecurringLogic(Task task, HabitLogStatus status, LocalDate logDate) {
-        if (task.getTaskTemplate() == null)
-            return null;
+    private TaskProcessResult processRecurringLogic(Task task, HabitLogStatus status, LocalDate logDate) {
+
+        if (task.getTaskTemplate() == null) {
+            if (status == HabitLogStatus.MISSED)
+                return new TaskProcessResult(
+                        String.format("Task '%s' updated, recurring plan associated.", task.getTitle()), null, task);
+            else
+                return new TaskProcessResult("Missing task without recurring plan.", null, task);
+        }
 
         return recurringPlanRepository.findByTemplateId(task.getTaskTemplate().getId())
                 .map(plan -> {
@@ -254,22 +285,25 @@ public class TaskService {
                     }
 
                     // 2. Generate Next Task
-                    LocalDateTime nextRun = generateNextRecurringTask(plan, task.getDueDate());
+                    Task newTask = generateNextRecurringTask(plan, task.getDueDate());
+                    LocalDateTime nextRun = (newTask != null) ? newTask.getDueDate() : null;
 
                     // 3. Build Dynamic User Message
                     String header = switch (status) {
-                        case DONE -> "Great job! 🎉";
-                        case CANCELED -> "Got it, task skipped.";
-                        case MISSED -> "Session missed.";
+                        case DONE -> String.format("Great job! '%s' is completed.", task.getTitle());
+                        case CANCELED -> String.format("Got it, '%s' was canceled.", task.getTitle());
+                        case MISSED -> String.format("Missed Task '%s' will not send back messages.", task.getTitle());
                     };
 
+                    String finalMessage;
                     if (nextRun != null) {
                         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd(EEE)", Locale.ENGLISH);
                         String dateStr = nextRun.format(formatter).toUpperCase();
-                        return String.format("%s Next session scheduled for %s", header, dateStr);
+                        finalMessage = String.format("%s Next session scheduled for %s.", header, dateStr);
+                    } else {
+                        finalMessage = header + " Task completed.";
                     }
-
-                    return header + " Task completed.";
+                    return new TaskProcessResult(finalMessage, newTask, task);
                 })
                 .orElse(null);
     }
@@ -289,13 +323,14 @@ public class TaskService {
     }
 
     @Transactional()
-    public LocalDateTime generateNextRecurringTask(RecurringPlan plan, LocalDateTime baseDate) {
+    public Task generateNextRecurringTask(RecurringPlan plan, LocalDateTime lastDueDate) {
+
         TaskTemplate template = plan.getTaskTemplate();
         if (template == null || plan.getStatus() != PlanStatus.ACTIVE) {
             return null;
         }
 
-        LocalDateTime nextDueDate = recurringPlanservice.calculateNextDueDate(plan, baseDate);
+        LocalDateTime nextDueDate = recurringPlanService.calculateNextDueDate(plan, lastDueDate);
 
         // create new Task
         Task newTask = new Task();
@@ -323,7 +358,7 @@ public class TaskService {
         plan.setNextRunAt(nextDueDate);
         recurringPlanRepository.save(plan);
 
-        return nextDueDate;
+        return newTask;
     }
 
     // delete Task
