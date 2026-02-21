@@ -1,7 +1,13 @@
 # ignore build files
 *.class
 
-target/
+taskapp/backend/target/
+target/classes/
+target/maven-status/
+target/*.jar
+target/*.lst
+pom.properties
+
 build/
 bin/
 .settings/
@@ -16,6 +22,8 @@ bin/
 *.txt
 *.gz
 *.lst
+*.xml
+*.iml
 
 # testing
 /coverage
