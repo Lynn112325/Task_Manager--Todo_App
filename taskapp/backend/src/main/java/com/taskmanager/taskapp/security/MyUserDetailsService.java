@@ -28,6 +28,12 @@ public class MyUserDetailsService implements UserDetailsService {
         return new MyUserDetails(user);
     }
 
+    public User loadUserById(Long id) throws UsernameNotFoundException {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        return user;
+    }
+
     // get current user ID from security context
     public Long getCurrentUserId() {
         MyUserDetails userDetails = (MyUserDetails) SecurityContextHolder
