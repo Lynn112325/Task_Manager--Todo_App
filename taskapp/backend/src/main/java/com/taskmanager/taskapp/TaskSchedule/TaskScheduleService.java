@@ -1,4 +1,4 @@
-package com.taskmanager.taskapp.TaskSchedule;
+package com.taskmanager.taskapp.taskschedule;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -6,11 +6,11 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.taskmanager.taskapp.TaskSchedule.recurringplan.RecurringPlanDto;
-import com.taskmanager.taskapp.TaskSchedule.recurringplan.RecurringPlanService;
-import com.taskmanager.taskapp.TaskSchedule.tasktemplate.TaskTemplate;
-import com.taskmanager.taskapp.TaskSchedule.tasktemplate.TaskTemplateDto;
-import com.taskmanager.taskapp.TaskSchedule.tasktemplate.TaskTemplateService;
+import com.taskmanager.taskapp.taskschedule.recurringplan.RecurringPlanDto;
+import com.taskmanager.taskapp.taskschedule.recurringplan.RecurringPlanService;
+import com.taskmanager.taskapp.taskschedule.tasktemplate.TaskTemplate;
+import com.taskmanager.taskapp.taskschedule.tasktemplate.TaskTemplateDto;
+import com.taskmanager.taskapp.taskschedule.tasktemplate.TaskTemplateService;
 
 import lombok.RequiredArgsConstructor;
 

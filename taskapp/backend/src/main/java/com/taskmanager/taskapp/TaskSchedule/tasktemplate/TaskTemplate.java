@@ -1,4 +1,4 @@
-package com.taskmanager.taskapp.TaskSchedule.tasktemplate;
+package com.taskmanager.taskapp.taskschedule.tasktemplate;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -6,9 +6,9 @@ import java.util.List;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
-import com.taskmanager.taskapp.TaskSchedule.recurringplan.RecurringPlan;
 import com.taskmanager.taskapp.target.Target;
 import com.taskmanager.taskapp.task.Task;
+import com.taskmanager.taskapp.taskschedule.recurringplan.RecurringPlan;
 import com.taskmanager.taskapp.user.User;
 
 import jakarta.persistence.CascadeType;
@@ -19,6 +19,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
@@ -62,11 +63,12 @@ public class TaskTemplate {
     @Column(nullable = false)
     private String title;
 
-    @Column(columnDefinition = "TEXT")
+    @Lob
     private String description;
 
-    @Column(nullable = false, columnDefinition = "INT DEFAULT 0")
-    private int priority;
+    @Builder.Default
+    @Column(nullable = false)
+    private int priority = 0;
 
     @CreationTimestamp
     private LocalDateTime createdAt;

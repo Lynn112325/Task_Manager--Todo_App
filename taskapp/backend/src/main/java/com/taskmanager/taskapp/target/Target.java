@@ -6,8 +6,8 @@ import java.util.List;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
-import com.taskmanager.taskapp.TaskSchedule.tasktemplate.TaskTemplate;
 import com.taskmanager.taskapp.enums.Type;
+import com.taskmanager.taskapp.taskschedule.tasktemplate.TaskTemplate;
 import com.taskmanager.taskapp.user.User;
 
 import jakarta.persistence.CascadeType;

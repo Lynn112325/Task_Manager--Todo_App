@@ -1,4 +1,4 @@
-package com.taskmanager.taskapp.TaskSchedule.recurringplan;
+package com.taskmanager.taskapp.taskschedule.recurringplan;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;

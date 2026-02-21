@@ -1,4 +1,4 @@
-package com.taskmanager.taskapp.TaskSchedule;
+package com.taskmanager.taskapp.taskschedule;
 
 import java.util.List;
 
@@ -7,7 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import com.taskmanager.taskapp.TaskSchedule.tasktemplate.TaskTemplate;
+import com.taskmanager.taskapp.taskschedule.tasktemplate.TaskTemplate;
 
 @Repository
 public interface TaskScheduleRepository extends JpaRepository<TaskTemplate, Long> {

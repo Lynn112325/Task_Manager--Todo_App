@@ -1,4 +1,4 @@
-package com.taskmanager.taskapp.TaskSchedule;
+package com.taskmanager.taskapp.taskschedule;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;

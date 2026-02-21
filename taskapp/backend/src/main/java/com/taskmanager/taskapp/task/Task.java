@@ -5,9 +5,9 @@ import java.time.LocalDateTime;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
-import com.taskmanager.taskapp.TaskSchedule.tasktemplate.TaskTemplate;
 import com.taskmanager.taskapp.enums.TaskStatus;
 import com.taskmanager.taskapp.enums.Type;
+import com.taskmanager.taskapp.taskschedule.tasktemplate.TaskTemplate;
 import com.taskmanager.taskapp.user.User;
 
 import jakarta.persistence.Column;
@@ -19,6 +19,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -49,21 +50,19 @@ public class Task {
     @Column(nullable = false, length = 255)
     private String title;
 
-    @Column(columnDefinition = "TEXT")
+    @Lob
     private String description;
 
     private LocalDateTime startDate;
     private LocalDateTime dueDate;
 
-    @Column(nullable = false, columnDefinition = "INT DEFAULT 0")
-    private int priority;
+    @Builder.Default
+    @Column(nullable = false)
+    private int priority = 0;
 
     @Enumerated(EnumType.STRING)
     @Column(length = 20)
     private Type type;
-
-    // @Column(name = "is_completed", columnDefinition = "BOOLEAN DEFAULT FALSE", nullable = false)
-    // private Boolean isCompleted;
 
     @Builder.Default
     @Enumerated(EnumType.STRING)

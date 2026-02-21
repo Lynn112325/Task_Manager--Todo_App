@@ -1,4 +1,4 @@
-package com.taskmanager.taskapp.TaskSchedule.tasktemplate;
+package com.taskmanager.taskapp.taskschedule.tasktemplate;
 
 import java.util.List;
 

@@ -5,9 +5,9 @@ import java.time.LocalDateTime;
 
 import org.hibernate.annotations.CreationTimestamp;
 
-import com.taskmanager.taskapp.TaskSchedule.tasktemplate.TaskTemplate;
 import com.taskmanager.taskapp.enums.HabitLogStatus;
 import com.taskmanager.taskapp.task.Task;
+import com.taskmanager.taskapp.taskschedule.tasktemplate.TaskTemplate;
 import com.taskmanager.taskapp.user.User;
 
 import jakarta.persistence.Column;

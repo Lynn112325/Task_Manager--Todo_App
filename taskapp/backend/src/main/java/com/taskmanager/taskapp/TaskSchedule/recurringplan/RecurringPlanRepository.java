@@ -1,4 +1,4 @@
-package com.taskmanager.taskapp.TaskSchedule.recurringplan;
+package com.taskmanager.taskapp.taskschedule.recurringplan;
 
 import java.util.List;
 import java.util.Optional;
