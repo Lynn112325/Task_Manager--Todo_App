@@ -88,6 +88,7 @@ class DailyBatchSchedulerIntegrationTest {
         verify(notificationService, atLeastOnce()).create(
                 any(User.class),
                 anyString(),
+                any(),
                 anyString(),
                 anyString());
     }

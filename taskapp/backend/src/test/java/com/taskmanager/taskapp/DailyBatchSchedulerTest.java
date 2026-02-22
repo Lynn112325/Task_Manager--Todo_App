@@ -129,7 +129,7 @@ class DailyBatchSchedulerTest {
 
         // Assert: Verify each service was interacted with correctly
         verify(taskService, times(1)).handleTaskMissed(testTask);
-        verify(notificationService, times(1)).create(any(), anyString(), anyString(), anyString());
+        verify(notificationService, times(1)).create(any(), anyString(), any(), anyString(), anyString());
         verify(objectMapper, atLeastOnce()).writeValueAsString(any(DailyBriefingDto.class));
     }
 
@@ -149,7 +149,7 @@ class DailyBatchSchedulerTest {
 
         // Assert: Interaction should stop at the user ID check
         verify(myUserDetailsService, never()).loadUserById(anyLong());
-        verify(notificationService, never()).create(any(), anyString(), anyString(), anyString());
+        verify(notificationService, never()).create(any(), anyString(), any(), anyString(), anyString());
     }
 
     /**
@@ -196,7 +196,7 @@ class DailyBatchSchedulerTest {
         scheduler.runDailyMorningRoutine();
 
         // Assert: Notification should never be created if JSON fails
-        verify(notificationService, never()).create(any(), anyString(), anyString(), anyString());
+        verify(notificationService, never()).create(any(), anyString(), any(), anyString(), anyString());
     }
 
     /**

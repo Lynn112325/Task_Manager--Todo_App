@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.taskmanager.taskapp.enums.NotificationType;
 import com.taskmanager.taskapp.notification.NotificationService;
 import com.taskmanager.taskapp.scheduler.dto.DailyBriefingDto;
 import com.taskmanager.taskapp.scheduler.dto.MissedTaskDetail;
@@ -37,7 +38,7 @@ public class DailyBatchScheduler {
     private final ObjectMapper objectMapper;
     private final MyUserDetailsService myUserDetailsService;
 
-    @Value("${app.timezone:UTC}")
+    @Value("${app.timezone:Asia/Hong_Kong}")
     private String appTimezone;
 
     /**
@@ -47,7 +48,8 @@ public class DailyBatchScheduler {
      * run according to time zones. How can tasks be executed for users in different
      * time zones at 3 AM in their respective locations?
      */
-    @Scheduled(cron = "0 0 3 * * *")
+    // @Scheduled(cron = "0 0 3 * * *")
+    @Scheduled(cron = "0 * * * * *") // For testing: runs every minute
     @Transactional
     public void runDailyMorningRoutine() {
         log.info("Starting daily morning routine...");
@@ -58,10 +60,12 @@ public class DailyBatchScheduler {
         // --- Phase A: Task Cleanup ---
         // Identify overdue tasks, cancel them, and group results by user
         List<Long> userIds = taskRepository.findUserIdsWithOverdueTasks(todayDate.atStartOfDay());
+        log.info("Found {} users with overdue tasks to process.", userIds.size());
 
         for (Long userId : userIds) {
             try {
                 // Process each user in a separate transaction
+                log.info("Processing morning routine for user ID: {}", userId);
                 processSingleUserRoutine(userId, todayDate);
             } catch (Exception e) {
                 log.error("Failed to process morning routine for user ID: {}", userId, e);
@@ -79,7 +83,9 @@ public class DailyBatchScheduler {
         LocalDateTime startOfToday = todayDate.atStartOfDay();
         User user = myUserDetailsService.loadUserById(userId);
         List<Task> overdueTasks = taskRepository.findOverdueTasksForCleanup(userId, startOfToday);
-
+        log.info("User ID {} has {} overdue tasks to process.", userId, overdueTasks.size());
+        log.debug("Overdue Task IDs for user ID {}: {}", userId,
+                overdueTasks.stream().map(Task::getId).toList());
         List<TaskProcessResult> results = overdueTasks.stream()
                 .map(taskService::handleTaskMissed)
                 .toList();
@@ -128,6 +134,7 @@ public class DailyBatchScheduler {
             notificationService.create(
                     user,
                     "🌅 Your Daily Report",
+                    NotificationType.DAILY_BRIEFING,
                     jsonContent,
                     "/dashboard/today");
 

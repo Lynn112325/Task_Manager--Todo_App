@@ -7,6 +7,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.taskmanager.taskapp.enums.NotificationType;
 import com.taskmanager.taskapp.user.User;
 
 import lombok.RequiredArgsConstructor;
@@ -23,10 +24,11 @@ public class NotificationService {
      * Can be called by Schedulers or other internal services.
      */
     @Transactional
-    public void create(User user, String title, String content, String redirectUrl) {
+    public void create(User user, String title, NotificationType type, String content, String redirectUrl) {
         Notification notification = Notification.builder()
                 .user(user)
                 .title(title)
+                .type(type)
                 .content(content)
                 .redirectUrl(redirectUrl)
                 .read(false)
