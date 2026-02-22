@@ -78,13 +78,14 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     List<TaskDto> findOverdueTasks(@Param("userId") Long userId, @Param("today") LocalDateTime today);
 
     // Find distinct IDs of users who have at least one overdue task
-    @Query("SELECT DISTINCT t.user.id FROM Task t WHERE t.status = 'ACTIVE' AND t.dueDate < :today")
+    @Query("SELECT DISTINCT t.user.id FROM Task t WHERE t.taskTemplate IS NOT NULL AND t.status = 'ACTIVE' AND t.dueDate < :today")
     List<Long> findUserIdsWithOverdueTasks(@Param("today") LocalDateTime today);
 
     // Find overdue tasks for a specific user (used in cleanup processing)
     @Query("""
                 SELECT t FROM Task t
-                WHERE t.user.id = :userId
+                WHERE t.taskTemplate IS NOT NULL
+                AND t.user.id = :userId
                 AND t.status = 'ACTIVE'
                 AND t.dueDate < :today
             """)

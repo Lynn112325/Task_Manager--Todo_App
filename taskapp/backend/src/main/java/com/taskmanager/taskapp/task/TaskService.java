@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.taskmanager.taskapp.enums.HabitLogStatus;
 import com.taskmanager.taskapp.enums.PlanStatus;
+import com.taskmanager.taskapp.enums.RecurrenceType;
 import com.taskmanager.taskapp.enums.TaskStatus;
 import com.taskmanager.taskapp.habitlog.HabitLog;
 import com.taskmanager.taskapp.habitlog.HabitLogRepository;
@@ -213,14 +214,11 @@ public class TaskService {
                     // 2. Find and delete the "Future Task"
                     // We search for the task that was generate for the next cycle.
                     // Its dueDate should match what the Plan currently thinks is the "Next Run".
-                    boolean futureTaskDeleted = false;
                     var futureTaskOpt = taskRepository.findFirstByTaskTemplateAndStatusAndDueDateOrderByCreatedAtDesc(
                             task.getTaskTemplate(), TaskStatus.ACTIVE, plan.getNextRunAt());
 
-                    if (futureTaskOpt.isPresent()) {
-                        taskRepository.delete(futureTaskOpt.get());
-                        futureTaskDeleted = true;
-                    }
+                    futureTaskOpt.ifPresent(taskRepository::delete);
+                    boolean futureTaskDeleted = futureTaskOpt.isPresent();
 
                     // 3. Roll back the Plan's schedule
                     // The plan should now point back to the current task's due date
@@ -270,11 +268,13 @@ public class TaskService {
     private TaskProcessResult processRecurringLogic(Task task, HabitLogStatus status, LocalDate logDate) {
 
         if (task.getTaskTemplate() == null) {
-            if (status == HabitLogStatus.MISSED)
-                return new TaskProcessResult(
-                        String.format("Task '%s' updated, recurring plan associated.", task.getTitle()), null, task);
-            else
-                return new TaskProcessResult("Missing task without recurring plan.", null, task);
+            String simpleMessage = switch (status) {
+                case DONE -> String.format("Task '%s' completed!", task.getTitle());
+                case CANCELED -> String.format("Task '%s' has been canceled.", task.getTitle());
+                case MISSED -> String.format("Task '%s' was missed.", task.getTitle());
+                default -> "Task updated.";
+            };
+            return new TaskProcessResult(simpleMessage, null, task);
         }
 
         return recurringPlanRepository.findByTemplateId(task.getTaskTemplate().getId())
@@ -326,7 +326,8 @@ public class TaskService {
     public Task generateNextRecurringTask(RecurringPlan plan, LocalDateTime lastDueDate) {
 
         TaskTemplate template = plan.getTaskTemplate();
-        if (template == null || plan.getStatus() != PlanStatus.ACTIVE) {
+        if (template == null || plan.getStatus() != PlanStatus.ACTIVE
+                || plan.getRecurrenceType() == RecurrenceType.NONE) {
             return null;
         }
 
@@ -339,14 +340,11 @@ public class TaskService {
         newTask.setPriority(template.getPriority());
         newTask.setUser(template.getUser());
         newTask.setTaskTemplate(template);
+        newTask.setType(template.getTarget() != null ? template.getTarget().getType() : null);
 
         // set
         newTask.setStatus(TaskStatus.ACTIVE);
         newTask.setDueDate(nextDueDate);
-
-        if (template.getTarget() != null) {
-            newTask.setType(template.getTarget().getType());
-        }
 
         newTask.setCreatedAt(LocalDateTime.now());
         newTask.setUpdatedAt(LocalDateTime.now());
