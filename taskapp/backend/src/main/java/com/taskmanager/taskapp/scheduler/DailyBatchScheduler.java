@@ -13,13 +13,13 @@ import org.springframework.transaction.annotation.Transactional;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.taskmanager.taskapp.enums.NotificationType;
+import com.taskmanager.taskapp.notification.NotificationRepository;
 import com.taskmanager.taskapp.notification.NotificationService;
 import com.taskmanager.taskapp.scheduler.dto.DailyBriefingDto;
 import com.taskmanager.taskapp.scheduler.dto.MissedTaskDetail;
 import com.taskmanager.taskapp.security.MyUserDetailsService;
 import com.taskmanager.taskapp.task.Task;
 import com.taskmanager.taskapp.task.TaskRepository;
-import com.taskmanager.taskapp.task.TaskRepository.DailyTaskStats;
 import com.taskmanager.taskapp.task.TaskService;
 import com.taskmanager.taskapp.task.dto.TaskProcessResult;
 import com.taskmanager.taskapp.user.User;
@@ -35,6 +35,7 @@ public class DailyBatchScheduler {
     private final TaskRepository taskRepository;
     private final TaskService taskService;
     private final NotificationService notificationService;
+    private final NotificationRepository notificationRepository;
     private final ObjectMapper objectMapper;
     private final MyUserDetailsService myUserDetailsService;
 
@@ -71,6 +72,15 @@ public class DailyBatchScheduler {
                 log.error("Failed to process morning routine for user ID: {}", userId, e);
             }
         }
+        // --- Phase B: Database Maintenance ---
+        try {
+            log.info("Starting database maintenance: cleaning up old notifications...");
+            int cleanedCount = notificationService.deleteOldNotifications(30);
+            log.info("Maintenance completed. {} records removed.", cleanedCount);
+        } catch (Exception e) {
+            log.error("Failed to clean up old notifications", e);
+        }
+
         log.info("Daily morning routine completed.");
     }
 
@@ -80,11 +90,19 @@ public class DailyBatchScheduler {
      * @return A map grouping the processing results by User.
      */
     private void processSingleUserRoutine(Long userId, LocalDate todayDate) {
+
+        if (notificationRepository.existsByUserIdAndTypeAndDate(userId, NotificationType.DAILY_BRIEFING,
+                todayDate)) {
+            log.warn("User {} already processed for {}. Skipping.", userId, todayDate);
+            return;
+        }
         LocalDateTime startOfToday = todayDate.atStartOfDay();
+
         User user = myUserDetailsService.loadUserById(userId);
+
         List<Task> overdueTasks = taskRepository.findOverdueTasksForCleanup(userId, startOfToday);
         log.info("User ID {} has {} overdue tasks to process.", userId, overdueTasks.size());
-        log.debug("Overdue Task IDs for user ID {}: {}", userId,
+        log.info("Overdue Task IDs for user ID {}: {}", userId,
                 overdueTasks.stream().map(Task::getId).toList());
         List<TaskProcessResult> results = overdueTasks.stream()
                 .map(taskService::handleTaskMissed)
@@ -104,7 +122,7 @@ public class DailyBatchScheduler {
                 : missedTasks.stream()
                         .map(result -> {
                             boolean isRecurring = result.newTask() != null;
-                            Task task = isRecurring ? result.newTask() : result.oldTask();
+                            Task task = result.oldTask();
 
                             return new MissedTaskDetail(
                                     task.getId(),
@@ -115,16 +133,12 @@ public class DailyBatchScheduler {
                         })
                         .toList();
 
-        // 2. Get the stats
-        DailyTaskStats stats = taskRepository.getDailyStats(user.getId(), todayDate);
-
         // 3. Assemble the main Briefing DTO
         DailyBriefingDto briefing = new DailyBriefingDto(
                 todayDate.toString(),
                 todayDate.getDayOfWeek().name(),
                 missedTaskDetails,
-                stats,
-                "/dashboard/today");
+                "/dashboard");
 
         try {
             // 4. Convert DTO to JSON String
@@ -136,42 +150,11 @@ public class DailyBatchScheduler {
                     "🌅 Your Daily Report",
                     NotificationType.DAILY_BRIEFING,
                     jsonContent,
-                    "/dashboard/today");
+                    "/tasks/todo");
 
         } catch (JsonProcessingException e) {
             throw new RuntimeException("Failed to serialize daily briefing", e);
         }
     }
-}
 
-/**
- * example of the JSON payload sent to the frontend for the daily briefing
- * notification:
- * {
- * "date": "2026-02-20",
- * "dayOfWeek": "FRIDAY",
- * "missedTasks": [
- * {
- * "id": 50,
- * "title": "Go to the Gym",
- * "isRecurring": true,
- * "nextRunDate": "2026-02-21",
- * "taskLink": "/tasks/50"
- * },
- * {
- * "id": 62,
- * "title": "Fix the Sink",
- * "isRecurring": false,
- * "nextRunDate": null,
- * "taskLink": "/tasks/62"
- * }
- * ],
- * "stats": {
- * "total": 10,
- * "active": 7,
- * "completed": 2,
- * "canceled": 1
- * },
- * "actionLink": "/dashboard/today"
- * }
- */
+}

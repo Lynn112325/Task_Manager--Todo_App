@@ -1,5 +1,6 @@
 package com.taskmanager.taskapp.notification;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
@@ -11,13 +12,26 @@ import com.taskmanager.taskapp.enums.NotificationType;
 import com.taskmanager.taskapp.user.User;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
+@Slf4j
 public class NotificationService {
 
     private final NotificationRepository notificationRepository;
+
+    private NotificationDto toDto(Notification notification) {
+        return new NotificationDto(
+                notification.getId(),
+                notification.getTitle(),
+                notification.getType().name(),
+                notification.isRead(),
+                notification.getRedirectUrl(),
+                notification.getCreatedAt(),
+                notification.getContent());
+    }
 
     /**
      * Creates a new notification.
@@ -41,8 +55,9 @@ public class NotificationService {
     /**
      * Retrieves a paginated list of notifications for a specific user.
      */
-    public Page<Notification> getUserNotifications(User user, Pageable pageable) {
-        return notificationRepository.findByUserOrderByCreatedAtDesc(user, pageable);
+    public Page<NotificationDto> getUserNotifications(User user, Pageable pageable) {
+        Page<Notification> notifications = notificationRepository.findByUserOrderByCreatedAtDesc(user, pageable);
+        return notifications.map(this::toDto);
     }
 
     /**
@@ -76,7 +91,12 @@ public class NotificationService {
      * days).
      */
     @Transactional
-    public void deleteOldNotifications(int daysAgo) {
-        // Implementation for cleaning up historical data
+    public int deleteOldNotifications(int daysAgo) {
+        LocalDateTime threshold = LocalDateTime.now().minusDays(daysAgo);
+        int deletedCount = notificationRepository.deleteNotificationsOlderThan(threshold);
+        // log.info("Cleanup: Deleted {} notifications older than {}.", deletedCount,
+        // threshold);
+        return deletedCount;
     }
+
 }
