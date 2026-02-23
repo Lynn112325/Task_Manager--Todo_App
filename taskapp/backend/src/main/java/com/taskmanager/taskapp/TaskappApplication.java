@@ -13,7 +13,7 @@ import jakarta.annotation.PostConstruct;
 public class TaskappApplication {
     @PostConstruct
     public void init() {
-        TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
+        TimeZone.setDefault(TimeZone.getTimeZone("Asia/Hong_Kong"));
     }
 
     public static void main(String[] args) {
