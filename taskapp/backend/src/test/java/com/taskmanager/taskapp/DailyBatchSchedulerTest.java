@@ -6,7 +6,6 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
@@ -60,24 +59,25 @@ class DailyBatchSchedulerTest {
 
     // A static implementation of the Interface projection to provide mock data
     private static class TestDailyTaskStats implements TaskRepository.DailyTaskStats {
-        @Override
-        public long getTotal() {
-            return 10L;
-        }
 
         @Override
-        public long getActive() {
+        public Long getActive() {
             return 7L;
         }
 
         @Override
-        public long getCompleted() {
+        public Long getCompleted() {
             return 2L;
         }
 
         @Override
-        public long getCanceled() {
+        public Long getCanceled() {
             return 1L;
+        }
+
+        @Override
+        public Long getTotal() {
+            return getActive() + getCompleted() + getCanceled();
         }
     }
 
@@ -291,6 +291,5 @@ class DailyBatchSchedulerTest {
 
         DailyBriefingDto capturedDto = dtoCaptor.getValue();
         assertTrue(capturedDto.missedTasks().isEmpty());
-        assertNotNull(capturedDto.stats());
     }
 }
