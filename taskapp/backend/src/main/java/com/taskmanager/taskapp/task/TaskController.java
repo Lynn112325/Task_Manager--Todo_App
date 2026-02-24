@@ -1,6 +1,9 @@
 package com.taskmanager.taskapp.task;
 
+import java.time.LocalDate;
+
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -15,6 +18,7 @@ import com.taskmanager.taskapp.api.BaseController;
 import com.taskmanager.taskapp.api.CommonResponse;
 import com.taskmanager.taskapp.habitlog.HabitLogService;
 import com.taskmanager.taskapp.habitlog.HabitLogStatsDto;
+import com.taskmanager.taskapp.security.MyUserDetails;
 import com.taskmanager.taskapp.target.TargetDto;
 import com.taskmanager.taskapp.target.TargetService;
 import com.taskmanager.taskapp.task.dto.TaskDetailDto;
@@ -116,6 +120,13 @@ public class TaskController extends BaseController {
         taskService.deleteTask(taskId);
         return ok();
         // or ok("deleted");
+    }
+
+    @GetMapping("/stats/daily")
+    public ResponseEntity<CommonResponse<?>> getDailyStats(
+            @AuthenticationPrincipal MyUserDetails userDetails,
+            @RequestParam LocalDate date) {
+        return ok(taskService.getDailyStats(userDetails.getUser(), date));
     }
 
 }

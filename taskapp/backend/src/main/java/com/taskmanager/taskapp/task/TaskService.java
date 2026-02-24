@@ -19,6 +19,7 @@ import com.taskmanager.taskapp.enums.TaskStatus;
 import com.taskmanager.taskapp.habitlog.HabitLog;
 import com.taskmanager.taskapp.habitlog.HabitLogRepository;
 import com.taskmanager.taskapp.security.MyUserDetailsService;
+import com.taskmanager.taskapp.task.TaskRepository.DailyTaskStats;
 import com.taskmanager.taskapp.task.dto.TaskDto;
 import com.taskmanager.taskapp.task.dto.TaskProcessResult;
 import com.taskmanager.taskapp.taskschedule.recurringplan.RecurringPlan;
@@ -238,14 +239,26 @@ public class TaskService {
                 .orElse(null);
     }
 
+    /**
+     * Handles tasks that were not completed by their due date.
+     * This is triggered by the Daily Batch Scheduler to clean up overdue tasks
+     * and maintain consistency for recurring schedules.
+     * * @param task The overdue task to be processed
+     * 
+     * @return TaskProcessResult containing the status of the operation
+     */
     @Transactional
     public TaskProcessResult handleTaskMissed(Task task) {
-        // 1. Change the status of the old task to CANCELED.
-        task.setStatus(TaskStatus.CANCELED);
-        task.setUpdatedAt(LocalDateTime.now());
-        taskRepository.save(task);
+        // 1. Mark the current overdue instance as CANCELED
+        // Only tasks associated with a template (recurring) are automatically canceled
+        // to make way for the next generated instance.
+        if (task.getTaskTemplate() != null) {
+            task.setStatus(TaskStatus.CANCELED);
+            task.setUpdatedAt(LocalDateTime.now());
+            taskRepository.save(task);
+        }
 
-        // 2. Process recurring logic with 'MISSED' status.
+        // 2. Trigger recurring logic with 'MISSED' status
         return processRecurringLogic(task, HabitLogStatus.MISSED, task.getDueDate().toLocalDate());
     }
 
@@ -369,6 +382,13 @@ public class TaskService {
         myUserDetailsService.checkOwnership(task.getUser().getId());
         // delete the task
         taskRepository.delete(task);
+    }
+
+    @Transactional(readOnly = true)
+    public DailyTaskStats getDailyStats(User user, LocalDate date) {
+        // Get the stats for the specified date (e.g., today)
+        DailyTaskStats stats = taskRepository.getDailyStats(user.getId(), date);
+        return stats;
     }
 
 }

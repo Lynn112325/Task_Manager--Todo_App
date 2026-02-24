@@ -18,24 +18,41 @@ import com.taskmanager.taskapp.taskschedule.tasktemplate.TaskTemplate;
 public interface TaskRepository extends JpaRepository<Task, Long> {
 
     public interface DailyTaskStats {
-        long getTotal();
 
-        long getActive();
+        Long getActive();
 
-        long getCompleted();
+        Long getCompleted();
 
-        long getCanceled();
+        Long getCanceled();
+
+        default Long getTotal() {
+            return (getActive() != null ? getActive() : 0L) +
+                    (getCompleted() != null ? getCompleted() : 0L) +
+                    (getCanceled() != null ? getCanceled() : 0L);
+        }
     }
 
+    /**
+     * Fetch daily statistics.
+     */
     @Query("""
             SELECT
-                COUNT(t) as total,
-                COALESCE(SUM(CASE WHEN t.status = 'ACTIVE' THEN 1 ELSE 0 END), 0) as active,
-                COALESCE(SUM(CASE WHEN t.status = 'COMPLETED' THEN 1 ELSE 0 END), 0) as completed,
-                COALESCE(SUM(CASE WHEN t.status = 'CANCELED' THEN 1 ELSE 0 END), 0) as canceled
+                COALESCE(SUM(CASE WHEN t.status = 'ACTIVE'
+                    AND FUNCTION('DATE', t.dueDate) = :today THEN 1 ELSE 0 END), 0) as active,
+                COALESCE(SUM(CASE WHEN t.status = 'COMPLETED'
+                    AND FUNCTION('DATE', t.updatedAt) = :today THEN 1 ELSE 0 END), 0) as completed,
+                COALESCE(SUM(CASE WHEN t.status = 'CANCELED'
+                    AND FUNCTION('DATE', t.updatedAt) = :today
+                    AND h.id IS NULL THEN 1 ELSE 0 END), 0) as canceled
             FROM Task t
+            LEFT JOIN HabitLog h ON h.task.id = t.id
+                AND h.status = 'MISSED'
             WHERE t.user.id = :userId
-                AND CAST(t.dueDate AS localdate) = :today
+            AND (
+                FUNCTION('DATE', t.dueDate) = :today
+                OR
+                FUNCTION('DATE', t.updatedAt) = :today
+            )
             """)
     DailyTaskStats getDailyStats(@Param("userId") Long userId, @Param("today") LocalDate today);
 
@@ -78,14 +95,13 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     List<TaskDto> findOverdueTasks(@Param("userId") Long userId, @Param("today") LocalDateTime today);
 
     // Find distinct IDs of users who have at least one overdue task
-    @Query("SELECT DISTINCT t.user.id FROM Task t WHERE t.taskTemplate IS NOT NULL AND t.status = 'ACTIVE' AND t.dueDate < :today")
+    @Query("SELECT DISTINCT t.user.id FROM Task t WHERE t.status = 'ACTIVE' AND t.dueDate < :today")
     List<Long> findUserIdsWithOverdueTasks(@Param("today") LocalDateTime today);
 
     // Find overdue tasks for a specific user (used in cleanup processing)
     @Query("""
                 SELECT t FROM Task t
-                WHERE t.taskTemplate IS NOT NULL
-                AND t.user.id = :userId
+                WHERE t.user.id = :userId
                 AND t.status = 'ACTIVE'
                 AND t.dueDate < :today
             """)
