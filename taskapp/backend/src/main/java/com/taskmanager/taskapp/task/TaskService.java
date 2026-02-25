@@ -71,6 +71,10 @@ public class TaskService {
         return existingTask;
     }
 
+    public List<Long> findActiveIdsIn(User user, List<Long> ids) {
+        return taskRepository.findActiveIdsByUserIdAndIdIn(user.getId(), ids);
+    }
+
     // Get active tasks where due date is before today
     @Transactional(readOnly = true)
     public List<TaskDto> getOverdueTasks() {

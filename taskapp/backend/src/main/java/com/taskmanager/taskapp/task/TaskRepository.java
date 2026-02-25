@@ -32,6 +32,9 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
         }
     }
 
+    @Query("SELECT t.id FROM Task t WHERE t.user.id = :userId AND t.id IN :ids AND t.status = 'ACTIVE'")
+    List<Long> findActiveIdsByUserIdAndIdIn(@Param("userId") Long userId, @Param("ids") List<Long> ids);
+
     /**
      * Fetch daily statistics.
      */

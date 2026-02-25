@@ -1,6 +1,7 @@
 package com.taskmanager.taskapp.task;
 
 import java.time.LocalDate;
+import java.util.List;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -127,6 +128,13 @@ public class TaskController extends BaseController {
             @AuthenticationPrincipal MyUserDetails userDetails,
             @RequestParam LocalDate date) {
         return ok(taskService.getDailyStats(userDetails.getUser(), date));
+    }
+
+    @GetMapping("/active-check")
+    public ResponseEntity<CommonResponse<?>> checkActiveTasks(@AuthenticationPrincipal MyUserDetails userDetails,
+            @RequestParam List<Long> ids) {
+        List<Long> stillActiveIds = taskService.findActiveIdsIn(userDetails.getUser(), ids);
+        return ok(stillActiveIds);
     }
 
 }
