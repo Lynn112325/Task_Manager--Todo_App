@@ -172,7 +172,7 @@ export default function TaskList() {
                   <ListSubheader component="div" id="DateTasks" sx={{ bgcolor: "background.paper" }}>
                     <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1.5 }}>
                       <Typography variant="subtitle2" sx={{ whiteSpace: 'nowrap' }}>
-                        {dayjs(selectedDate).isSame(dayjs(), "day") ? "Today • " : ""}
+                        {dayjs(selectedDate).isSame(dayjs(), "day") ? "Today - " : ""}
                         {dayjs(selectedDate).format("YYYY-MM-DD (dddd)")}
                       </Typography>
                       <Box sx={{ flexGrow: 1 }} />
