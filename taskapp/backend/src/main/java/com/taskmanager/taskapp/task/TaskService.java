@@ -71,7 +71,11 @@ public class TaskService {
         return existingTask;
     }
 
+    @Transactional(readOnly = true)
     public List<Long> findActiveIdsIn(User user, List<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return List.of();
+        }
         return taskRepository.findActiveIdsByUserIdAndIdIn(user.getId(), ids);
     }
 
