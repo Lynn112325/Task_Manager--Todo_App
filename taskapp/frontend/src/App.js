@@ -11,6 +11,7 @@ import DashboardLayout from "./components/DashboardLayout";
 import { useAuth, UserProvider } from "./context/UserContext";
 import DialogsProvider from "./hooks/useDialogs/DialogsProvider";
 import NotificationsProvider from "./hooks/useNotifications/NotificationsProvider";
+import Dashboard from "./pages/Dashboard";
 import LoginPage from "./pages/LoginPage";
 import NotFoundPage from "./pages/NotFoundPage";
 import SignUpPage from "./pages/SignUpPage";
@@ -74,6 +75,14 @@ const router = createHashRouter([
     ),
     children: [
       {
+        path: "*",
+        element: <Dashboard />,
+      },
+      {
+        path: "/dashboard",
+        element: <Dashboard />,
+      },
+      {
         path: "/tasks/todo",
         element: <TaskList />,
       },
@@ -92,12 +101,7 @@ const router = createHashRouter([
       {
         path: 'targets/:targetId',
         element: <TargetDetail />,
-      },
-      // Fallback route for the example routes in dashboard sidebar items
-      {
-        path: "*",
-        element: <TaskList />,
-      },
+      }
     ],
   },
 ]);
