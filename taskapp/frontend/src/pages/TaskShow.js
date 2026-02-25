@@ -16,6 +16,7 @@ import Tooltip from "@mui/material/Tooltip";
 import { Grid } from "@mui/system";
 import * as React from "react";
 import { useNavigate, useParams } from "react-router";
+import { useLocation } from "react-router-dom";
 import HabitStatsCard from "../components/HabitStatsCard.js";
 import PageContainer from "../components/PageContainer";
 import RecurringPlanCard from "../components/RecurringPlanCard.js";
@@ -43,6 +44,7 @@ const STATUS_CONFIG = {
 export default function TaskShow() {
   const { taskId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const {
     detail: taskData,
@@ -77,9 +79,12 @@ export default function TaskShow() {
   //   }
   // }, [taskData, cancelTaskAction, navigate]);
 
+  const fromPath = location.state?.from || "/tasks/todo";
+  const fromTitle = location.state?.fromTitle || "Tasks";
+
   const handleBack = React.useCallback(() => {
-    navigate("/tasks/todo");
-  }, [navigate]);
+    navigate(fromPath);
+  }, [navigate, fromPath]);
 
   const renderShow = React.useMemo(() => {
     if (!taskData && isLoading) {
@@ -170,11 +175,15 @@ export default function TaskShow() {
   }, [isLoading, error, task, handleBack, handleTaskEdit /*, handleTaskDelete*/]);
 
   const pageTitle = `Task ${taskId}`;
+  const breadcrumbs = [
+    { title: fromTitle, path: fromPath },
+    { title: pageTitle }
+  ];
 
   return (
     <PageContainer
       title={pageTitle}
-      breadcrumbs={[{ title: "Tasks", path: "/tasks/todo" }, { title: pageTitle }]}
+      breadcrumbs={breadcrumbs}
       actions={
         <Stack direction="row" alignItems="center" spacing={1}>
 
