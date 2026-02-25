@@ -117,14 +117,14 @@ export default function SignIn(props) {
             );
 
             if (res.data.status === "ok") {
-                navigate("/tasks/todo");
+                navigate("/dashboard");
                 // Fetching user details to update global context
                 const userData = await fetchUser();
 
                 if (userData) {
                     // 3. Navigate only after Context is updated
                     // English: Ensure ProtectedRoute sees the user before navigating
-                    navigate("/tasks/todo");
+                    navigate("/dashboard", { replace: true });
                 }
             }
         } catch (error) {
