@@ -5,7 +5,6 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,47 +38,65 @@ public class DailyBatchScheduler {
     private final ObjectMapper objectMapper;
     private final MyUserDetailsService myUserDetailsService;
 
-    @Value("${app.timezone:Asia/Hong_Kong}")
-    private String appTimezone;
-
     /**
      * Main Entry Point: Runs daily at 03:00 AM.
      * Handles cleanup of old tasks and prepares daily summaries.
      * If users are located around the world, this Scheduler needs to be modified to
      * run according to time zones. How can tasks be executed for users in different
-     * time zones at 3 AM in their respective locations?
+     * time zones at 3 AM in their respective locations
      */
-    // @Scheduled(cron = "0 0 3 * * *")
+    // @Scheduled(cron = "0 0 * * * *")
     @Scheduled(cron = "0 * * * * *") // For testing: runs every minute
     @Transactional
     public void runDailyMorningRoutine() {
         log.info("Starting daily morning routine...");
+        // log.info("Checking for timezones currently at 03:00 AM...");
 
-        // 1. Set current time anchor
-        LocalDate todayDate = LocalDate.now(ZoneId.of(appTimezone));
+        List<String> activeTimezones = ZoneId.getAvailableZoneIds().stream()
+                .filter(id -> LocalDateTime.now(ZoneId.of(id)).getHour() == 3)
+                .toList();
 
-        // 2. Fetch all user IDs (consider pagination for large user bases)
-        List<Long> allUserIds = myUserDetailsService.findAllUserIds().stream().toList();
+        if (activeTimezones.isEmpty())
+            return;
 
-        for (Long userId : allUserIds) {
+        // 1. Fetch user IDs in active time zones (consider pagination for large user
+        // bases)
+        List<Long> userIds = myUserDetailsService.findUserIdsByTimezones(activeTimezones);
+        log.info("Processing {} users in timezones: {}", userIds.size(), activeTimezones);
+
+        for (Long userId : userIds) {
             try {
                 // Process each user in a separate transaction
+                User user = myUserDetailsService.loadUserById(userId);
+                LocalDate userLocalToday = LocalDate.now(ZoneId.of(user.getTimezone()));
+
                 log.info("Processing morning routine for user ID: {}", userId);
-                processSingleUserRoutine(userId, todayDate);
+                processSingleUserRoutine(userId, userLocalToday);
             } catch (Exception e) {
                 log.error("Failed to process morning routine for user ID: {}", userId, e);
             }
         }
-        // 3. Database Maintenance
-        try {
-            log.info("Starting database maintenance: cleaning up old notifications...");
-            int cleanedCount = notificationService.deleteOldNotifications(30);
-            log.info("Maintenance completed. {} records removed.", cleanedCount);
-        } catch (Exception e) {
-            log.error("Failed to clean up old notifications", e);
-        }
-
         log.info("Daily morning routine completed.");
+    }
+
+    /**
+     * Performs system-wide maintenance tasks.
+     * Runs daily at 04:00 AM (server time).
+     * Currently handles purging of old notification data to maintain database
+     * performance.
+     */
+    @Scheduled(cron = "0 0 4 * * *")
+    @Transactional
+    public void performSystemMaintenance() {
+        log.info("Starting scheduled system maintenance...");
+        try {
+            // Retention policy: Remove notifications older than 30 days
+            int cleanedCount = notificationService.deleteOldNotifications(30);
+            log.info("System maintenance completed. {} old notifications removed.", cleanedCount);
+        } catch (Exception e) {
+            // Log as critical error since maintenance failure could lead to data bloat
+            log.error("Critical error during system maintenance", e);
+        }
     }
 
     /**
@@ -105,7 +122,7 @@ public class DailyBatchScheduler {
         log.info("User ID {} has {} overdue tasks to process.", userId, overdueTasks.size());
         log.info("Overdue Task IDs for user ID {}: {}", userId,
                 overdueTasks.stream().map(Task::getId).toList());
-                
+
         List<TaskProcessResult> results = overdueTasks.stream()
                 .map(taskService::handleTaskMissed)
                 .toList();

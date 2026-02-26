@@ -1,4 +1,5 @@
 package com.taskmanager.taskapp.user;
+
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -40,6 +41,10 @@ public class User {
 
     @Column(nullable = false, unique = true, length = 255)
     private String email;
+
+    @Builder.Default
+    @Column(nullable = false, length = 100)
+    private String timezone = "Asia/Hong_Kong"; // Default timezone
 
     @Column(nullable = false, length = 255)
     private String password;

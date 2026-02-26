@@ -34,6 +34,10 @@ public class MyUserDetailsService implements UserDetailsService {
         return userRepository.findAllUserIds();
     }
 
+    public List<Long> findUserIdsByTimezones(List<String> timezones) {
+        return userRepository.findUserIdsByTimezones(timezones);
+    }
+
     public User loadUserById(Long id) throws UsernameNotFoundException {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
