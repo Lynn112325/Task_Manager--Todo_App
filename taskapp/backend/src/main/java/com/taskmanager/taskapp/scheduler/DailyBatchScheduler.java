@@ -58,12 +58,10 @@ public class DailyBatchScheduler {
         // 1. Set current time anchor
         LocalDate todayDate = LocalDate.now(ZoneId.of(appTimezone));
 
-        // --- Phase A: Task Cleanup ---
-        // Identify overdue tasks, cancel them, and group results by user
-        List<Long> userIds = taskRepository.findUserIdsWithOverdueTasks(todayDate.atStartOfDay());
-        log.info("Found {} users with overdue tasks to process.", userIds.size());
+        // 2. Fetch all user IDs (consider pagination for large user bases)
+        List<Long> allUserIds = myUserDetailsService.findAllUserIds().stream().toList();
 
-        for (Long userId : userIds) {
+        for (Long userId : allUserIds) {
             try {
                 // Process each user in a separate transaction
                 log.info("Processing morning routine for user ID: {}", userId);
@@ -72,7 +70,7 @@ public class DailyBatchScheduler {
                 log.error("Failed to process morning routine for user ID: {}", userId, e);
             }
         }
-        // --- Phase B: Database Maintenance ---
+        // 3. Database Maintenance
         try {
             log.info("Starting database maintenance: cleaning up old notifications...");
             int cleanedCount = notificationService.deleteOldNotifications(30);
@@ -91,11 +89,14 @@ public class DailyBatchScheduler {
      */
     private void processSingleUserRoutine(Long userId, LocalDate todayDate) {
 
+        // if the user has already received a briefing today, skip processing to avoid
+        // duplicates
         if (notificationRepository.existsByUserIdAndTypeAndDate(userId, NotificationType.DAILY_BRIEFING,
                 todayDate)) {
             log.warn("User {} already processed for {}. Skipping.", userId, todayDate);
             return;
         }
+
         LocalDateTime startOfToday = todayDate.atStartOfDay();
 
         User user = myUserDetailsService.loadUserById(userId);
@@ -104,6 +105,7 @@ public class DailyBatchScheduler {
         log.info("User ID {} has {} overdue tasks to process.", userId, overdueTasks.size());
         log.info("Overdue Task IDs for user ID {}: {}", userId,
                 overdueTasks.stream().map(Task::getId).toList());
+                
         List<TaskProcessResult> results = overdueTasks.stream()
                 .map(taskService::handleTaskMissed)
                 .toList();

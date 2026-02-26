@@ -1,5 +1,7 @@
 package com.taskmanager.taskapp.security;
 
+import java.util.List;
+
 import org.springframework.context.annotation.Primary;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -26,6 +28,10 @@ public class MyUserDetailsService implements UserDetailsService {
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
         return new MyUserDetails(user);
+    }
+
+    public List<Long> findAllUserIds() {
+        return userRepository.findAllUserIds();
     }
 
     public User loadUserById(Long id) throws UsernameNotFoundException {
