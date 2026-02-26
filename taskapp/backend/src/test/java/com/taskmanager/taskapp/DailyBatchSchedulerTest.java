@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -113,8 +114,6 @@ class DailyBatchSchedulerTest {
     @DisplayName("Complete Flow Test: Find overdue users -> process tasks -> send notification")
     void testRunDailyMorningRoutine_Success() throws JsonProcessingException {
         // Arrange: Mock the chain of calls for a successful run
-        when(taskRepository.findUserIdsWithOverdueTasks(any(LocalDateTime.class)))
-                .thenReturn(List.of(1L));
         when(myUserDetailsService.loadUserById(1L)).thenReturn(testUser);
         when(taskRepository.findOverdueTasksForCleanup(eq(1L), any(LocalDateTime.class)))
                 .thenReturn(List.of(testTask));
@@ -141,9 +140,8 @@ class DailyBatchSchedulerTest {
     @DisplayName("No users found: Should not execute processing logic")
     void testRunDailyMorningRoutine_NoUsers() {
         // Arrange
-        when(taskRepository.findUserIdsWithOverdueTasks(any(LocalDateTime.class)))
+        when(myUserDetailsService.findUserIdsByTimezones(anyList()))
                 .thenReturn(List.of());
-
         // Act
         scheduler.runDailyMorningRoutine();
 
@@ -160,8 +158,8 @@ class DailyBatchSchedulerTest {
     @DisplayName("Single user failure: Should not affect other users (Loop continues)")
     void testRunDailyMorningRoutine_SingleUserFailure() {
         // Arrange
-        when(taskRepository.findUserIdsWithOverdueTasks(any(LocalDateTime.class)))
-                .thenReturn(List.of(1L, 2L));
+        when(myUserDetailsService.findUserIdsByTimezones(anyList()))
+                .thenReturn(List.of());
 
         // First user fails
         when(myUserDetailsService.loadUserById(1L)).thenThrow(new RuntimeException("DB Error"));
@@ -189,7 +187,8 @@ class DailyBatchSchedulerTest {
         // Arrange
         when(objectMapper.writeValueAsString(any())).thenThrow(new JsonProcessingException("Error") {
         });
-        when(taskRepository.findUserIdsWithOverdueTasks(any(LocalDateTime.class))).thenReturn(List.of(1L));
+        when(myUserDetailsService.findUserIdsByTimezones(anyList()))
+                .thenReturn(List.of());
         when(myUserDetailsService.loadUserById(1L)).thenReturn(testUser);
 
         // Act
@@ -206,7 +205,8 @@ class DailyBatchSchedulerTest {
     @DisplayName("One-time task: Ensure isRecurring is false and nextRunDate is null")
     void testSendDailyBriefing_NonRecurringTask() throws JsonProcessingException {
         // Arrange
-        when(taskRepository.findUserIdsWithOverdueTasks(any(LocalDateTime.class))).thenReturn(List.of(1L));
+        when(myUserDetailsService.findUserIdsByTimezones(anyList()))
+                .thenReturn(List.of());
         when(myUserDetailsService.loadUserById(1L)).thenReturn(testUser);
         when(taskRepository.findOverdueTasksForCleanup(eq(1L), any(LocalDateTime.class))).thenReturn(List.of(testTask));
 
@@ -243,7 +243,8 @@ class DailyBatchSchedulerTest {
         newTask.setTitle("Test Task (Next)");
         newTask.setDueDate(LocalDateTime.now().plusDays(1));
 
-        when(taskRepository.findUserIdsWithOverdueTasks(any(LocalDateTime.class))).thenReturn(List.of(1L));
+        when(myUserDetailsService.findUserIdsByTimezones(anyList()))
+                .thenReturn(List.of());
         when(myUserDetailsService.loadUserById(1L)).thenReturn(testUser);
         when(taskRepository.findOverdueTasksForCleanup(eq(1L), any(LocalDateTime.class))).thenReturn(List.of(testTask));
 
@@ -275,7 +276,8 @@ class DailyBatchSchedulerTest {
     @DisplayName("Empty overdue tasks: Should send briefing with empty array but valid stats")
     void testSendDailyBriefing_EmptyOverdueTasks() throws JsonProcessingException {
         // Arrange
-        when(taskRepository.findUserIdsWithOverdueTasks(any(LocalDateTime.class))).thenReturn(List.of(1L));
+        when(myUserDetailsService.findUserIdsByTimezones(anyList()))
+                .thenReturn(List.of());
         when(myUserDetailsService.loadUserById(1L)).thenReturn(testUser);
         when(taskRepository.findOverdueTasksForCleanup(eq(1L), any(LocalDateTime.class))).thenReturn(List.of());
         when(taskRepository.getDailyStats(eq(1L), any(LocalDate.class))).thenReturn(new TestDailyTaskStats());
