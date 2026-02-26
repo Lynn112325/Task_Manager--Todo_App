@@ -15,7 +15,7 @@ public interface TaskScheduleRepository extends JpaRepository<TaskTemplate, Long
         @Query("""
                         SELECT tt FROM TaskTemplate tt
                         LEFT JOIN FETCH tt.recurringPlan
-                        WHERE tt.user = :userId
+                        WHERE tt.user.id = :userId
                         AND (:targetId IS NULL OR tt.target.id = :targetId)
                         """)
         List<TaskTemplate> findAllWithPlanByUserIdAndTargetId(
