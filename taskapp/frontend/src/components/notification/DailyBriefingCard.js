@@ -239,7 +239,7 @@ const DailyBriefingCard = ({ notification, statsSummary }) => {
                     </>
                 ) : (
                     <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic', fontWeight: 300 }}>
-                        All caught up for yesterday. Great job!
+                        All caught up for yesterday. Great job! 🌟
                     </Typography>
                 )}
             </CardContent>
