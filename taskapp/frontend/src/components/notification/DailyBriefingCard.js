@@ -123,24 +123,24 @@ const DailyBriefingCard = ({ notification, statsSummary }) => {
                 </Box>
 
                 <Divider sx={{ my: 2, borderStyle: 'dashed' }} />
+                <Typography variant="subtitle2" fontWeight="600" color="text.primary">
+                    Yesterday's Recap
+                </Typography>
+                <Typography
+                    variant="caption"
+                    sx={{
+                        color: 'text.secondary',
+                        fontWeight: 300,
+                        letterSpacing: '0.02rem',
+                        textTransform: 'lowercase',
+                        display: 'block',
+                        mb: 1.5
+                    }}>
+                    completed: {yesterdayStats.completed} • canceled: {yesterdayStats.canceled} • missed: {yesterdayStats.missed}
+                </Typography>
 
                 {sortedMissedTasks.length > 0 ? (
                     <>
-                        <Typography variant="subtitle2" fontWeight="600" color="text.primary">
-                            Yesterday's Recap
-                        </Typography>
-                        <Typography
-                            variant="caption"
-                            sx={{
-                                color: 'text.secondary',
-                                fontWeight: 300,
-                                letterSpacing: '0.02rem',
-                                textTransform: 'lowercase',
-                                display: 'block',
-                                mb: 1.5
-                            }}>
-                            completed: {yesterdayStats.completed} • canceled: {yesterdayStats.canceled} • missed: {yesterdayStats.missed}
-                        </Typography>
 
                         <Box sx={{
                             maxHeight: 180,
@@ -238,9 +238,29 @@ const DailyBriefingCard = ({ notification, statsSummary }) => {
                         </Box>
                     </>
                 ) : (
-                    <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic', fontWeight: 300 }}>
-                        All caught up for yesterday. Great job! 🌟
-                    </Typography>
+                    <Box
+                        display="flex"
+                        flexDirection="column"
+                        alignItems="center"
+                        justifyContent="center"
+                        sx={{
+                            py: 4,
+                            width: '100%',
+                            bgcolor: 'background.paper',
+                        }}
+                    >
+                        <Typography
+                            variant="body1"
+                            color="text.disabled"
+                            sx={{
+                                fontStyle: 'italic',
+                                textAlign: 'center',
+                                letterSpacing: '0.02rem'
+                            }}
+                        >
+                            All caught up for yesterday. Great job! 🌟
+                        </Typography>
+                    </Box>
                 )}
             </CardContent>
         </Card>
