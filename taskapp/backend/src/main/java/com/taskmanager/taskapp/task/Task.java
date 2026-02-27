@@ -53,6 +53,10 @@ public class Task {
     @Lob
     private String description;
 
+    @Builder.Default
+    @Column(name = "is_manual", nullable = false)
+    private boolean isManual = true;
+
     private LocalDateTime startDate;
     private LocalDateTime dueDate;
 

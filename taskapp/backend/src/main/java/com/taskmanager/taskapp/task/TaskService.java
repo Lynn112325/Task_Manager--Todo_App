@@ -362,6 +362,7 @@ public class TaskService {
         newTask.setUser(template.getUser());
         newTask.setTaskTemplate(template);
         newTask.setType(template.getTarget() != null ? template.getTarget().getType() : null);
+        newTask.setManual(false);
 
         // set
         newTask.setStatus(TaskStatus.ACTIVE);
