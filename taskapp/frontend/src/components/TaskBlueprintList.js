@@ -24,7 +24,7 @@ import {
 } from '@mui/material';
 import { useState } from 'react';
 import TaskBlueprintCard from '../components/TaskBlueprintCard';
-import { useTaskSchedules } from '../hooks/TaskSchedules/useTaskSchedules';
+import { useTaskSchedules } from '../hooks/task_schedules/useTaskSchedules';
 
 export default function TaskBlueprintList({ taskSchedules: initialData, handleEdit, handleDelete, handleToggle }) {
 
@@ -53,7 +53,6 @@ export default function TaskBlueprintList({ taskSchedules: initialData, handleEd
     const handleFilterClose = () => {
         setFilterAnchorEl(null);
     }
-
 
     return (
         <Grid>

@@ -19,7 +19,7 @@ import { TargetHeaderActions, TargetHeaderActionsSkeleton, TargetHeaderContent, 
 import TaskBlueprintList from '../components/TaskBlueprintList';
 import { useWeeklyMetrics } from '../hooks/metrics/useMetrics';
 import { useTarget } from '../hooks/target/useTarget';
-import { useTaskSchedules } from '../hooks/TaskSchedules/useTaskSchedules';
+import { useTaskSchedules } from '../hooks/task_schedules/useTaskSchedules';
 
 export default function TargetDetail() {
     const { targetId } = useParams();
