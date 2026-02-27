@@ -1,84 +1,155 @@
-// package com.taskmanager.taskapp.target.Metrics;
+package com.taskmanager.taskapp.target.Metrics;
 
-// import java.time.DayOfWeek;
-// import java.time.LocalDateTime;
-// import java.time.LocalTime;
-// import java.time.temporal.ChronoUnit;
+import java.time.DayOfWeek;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.temporal.TemporalAdjusters;
+import java.util.Map;
 
-// import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Service;
 
-// import com.taskmanager.taskapp.task.TaskRepository;
-// import com.taskmanager.taskapp.user.User;
+import lombok.RequiredArgsConstructor;
 
-// import lombok.RequiredArgsConstructor;
+/**
+ * Service responsible for calculating user activity metrics and progress
+ * insights.
+ */
+@Service
+@RequiredArgsConstructor
+public class MetricsService {
 
-// @Service
-// @RequiredArgsConstructor
-// public class MetricsService {
+    private final MetricsRepository metricsRepository;
 
-// private final TaskRepository taskRepository;
+    public enum TimeGrain {
+        WEEKLY, MONTHLY
+    }
 
-// public MetricsDto calculateWeeklyMetrics(User user) {
-// // 1. Get basic counts from repository
-// // 從資料庫獲取基礎數據
-// int expected = taskRepository.countExpectedTasksThisWeek(user.getId());
-// int completed = taskRepository.countCompletedTasksThisWeek(user.getId());
-// int extra = taskRepository.countExtraTasksThisWeek(user.getId());
+    /**
+     * Calculates and aggregates metrics for a specific user and target.
+     *
+     * @param userId   The ID of the user.
+     * @param targetId The ID of the specific target (can be null for global
+     *                 metrics).
+     * @param grain    The timeframe (WEEKLY or MONTHLY).
+     * @return A MetricsDto containing calculated statistics and insights.
+     */
+    public MetricsDto getMetrics(Long userId, Long targetId, TimeGrain grain) {
+        // 1. Calculate time range based on the selected grain
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime start;
+        LocalDateTime end;
 
-// // 2. Calculate completion rate (Handle division by zero)
-// // 計算達成率（處理除以零的情況）
-// double completionRate = expected > 0 ? (double) completed / expected : 0;
+        if (grain == TimeGrain.WEEKLY) {
+            // Set start to Monday 00:00:00 and end to Sunday 23:59:59
+            start = now.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)).with(LocalTime.MIN);
+            end = start.plusDays(7).minusNanos(1);
+        } else {
+            // Set start to first day of month and end to last day of month
+            start = now.with(TemporalAdjusters.firstDayOfMonth()).with(LocalTime.MIN);
+            end = now.with(TemporalAdjusters.lastDayOfMonth()).with(LocalTime.MAX);
+        }
 
-// // 3. Check if goal is met
-// // 判斷目標是否達成
-// boolean goalMet = completed >= expected && expected > 0;
+        // 2. Fetch raw data from the repository
+        Map<String, Object> counts = metricsRepository.getTaskCounts(userId, targetId, start, end);
+        int totalExpected = ((Number) counts.getOrDefault("total", 0)).intValue();
+        int completed = ((Number) counts.getOrDefault("completed", 0)).intValue();
+        int extraCompleted = ((Number) counts.getOrDefault("extra", 0)).intValue();
 
-// // 4. Calculate week progress percentage
-// // 計算本週時間流逝百分比 (目前時間點 / 一週總秒數)
-// double weekProgress = calculateWeekProgress();
+        int activeBlueprints = metricsRepository.countActiveBlueprints(userId, targetId);
+        int xp = metricsRepository.sumExperiencePoints(userId, targetId, start, end).orElse(0);
 
-// // 5. Generate a simple insight message
-// // 產生簡單的系統建議訊息
-// String insight = generateInsight(completionRate, weekProgress, goalMet);
+        // 3. Calculate completion ratios and progress
+        double completionRate = totalExpected == 0 ? 0 : (double) completed / totalExpected;
+        boolean goalMet = totalExpected > 0 && completed >= totalExpected;
 
-// return new MetricsDto(
-// expected,
-// completed,
-// extra,
-// completionRate,
-// // user.getCurrentStreak(),
-// goalMet,
-// taskRepository.countActiveBlueprints(user.getId()),
-// weekProgress,
-// // user.getTotalXP(),
-// insight);
-// }
+        // Calculate how much of the current period has elapsed (e.g., it's Wednesday,
+        // so 3/7 of the week is over)
+        double progressPercentage = calculateProgress(grain, now);
 
-// private double calculateWeekProgress() {
-// LocalDateTime now = LocalDateTime.now();
-// // Get the start of the week (Monday 00:00)
-// // 獲取本週開始時間（週一 00:00）
-// LocalDateTime startOfWeek = now.with(DayOfWeek.MONDAY).with(LocalTime.MIN);
+        // 4. Calculate Streaks
+        // Calculate the streak from previous periods and add 1 if the current period's
+        // goal is met
+        int pastStreak = calculateCurrentStreak(userId, targetId, grain, start);
+        int currentStreak = goalMet ? pastStreak + 1 : pastStreak;
 
-// // Total seconds in a week (7 days)
-// // 一週總秒數 (7天)
-// long totalSecondsInWeek = 7 * 24 * 60 * 60;
+        return new MetricsDto(
+                totalExpected,
+                completed,
+                extraCompleted,
+                completionRate,
+                currentStreak,
+                goalMet,
+                activeBlueprints,
+                progressPercentage,
+                xp,
+                generateInsight(completionRate, progressPercentage));
+    }
 
-// // Seconds passed since Monday
-// // 從週一到現在經過的秒數
-// long secondsPassed = ChronoUnit.SECONDS.between(startOfWeek, now);
+    /**
+     * Calculates the percentage of the current timeframe that has passed.
+     */
+    private double calculateProgress(TimeGrain grain, LocalDateTime now) {
+        if (grain == TimeGrain.WEEKLY) {
+            return (double) now.getDayOfWeek().getValue() / 7.0;
+        } else {
+            double dayOfMonth = now.getDayOfMonth();
+            double totalDays = now.toLocalDate().lengthOfMonth();
+            return dayOfMonth / totalDays;
+        }
+    }
 
-// return (double) secondsPassed / totalSecondsInWeek;
-// }
+    /**
+     * Recursively checks previous periods to determine the current consecutive
+     * success streak.
+     * * @param currentStart The start date of the current active period.
+     * 
+     * @return The number of consecutive previous periods where the goal was met.
+     */
+    private int calculateCurrentStreak(Long userId, Long targetId, TimeGrain grain, LocalDateTime currentStart) {
+        int streak = 0;
+        LocalDateTime checkStart = currentStart;
 
-// private String generateInsight(double rate, double progress, boolean goalMet)
-// {
-// if (goalMet)
-// return "Weekly goal achieved! Champion! 🏆";
-// if (rate > progress)
-// return "You're ahead of schedule! 🚀";
-// if (rate > 0)
-// return "Keep going, you're doing great! 💪";
-// return "Start your first task to build momentum! ✨";
-// }
-// }
+        // Limit lookback depth to prevent performance degradation (e.g., 52 weeks or 12
+        // months)
+        int maxLookback = (grain == TimeGrain.WEEKLY) ? 52 : 12;
+
+        for (int i = 0; i < maxLookback; i++) {
+            // Move back exactly one period (one week or one month)
+            LocalDateTime prevEnd = checkStart.minusNanos(1);
+            if (grain == TimeGrain.WEEKLY) {
+                checkStart = checkStart.minusWeeks(1);
+            } else {
+                checkStart = checkStart.minusMonths(1);
+            }
+
+            // Verify if the goal was achieved in this specific historical period
+            Integer result = metricsRepository.isGoalMetInPeriod(userId, targetId, checkStart, prevEnd);
+            boolean met = result != null && result == 1;
+
+            if (met) {
+                streak++;
+            } else {
+                // Streak is broken as soon as a single period goal is not met
+                break;
+            }
+        }
+        return streak;
+    }
+
+    /**
+     * Generates a dynamic motivational message based on performance vs. time
+     * elapsed.
+     */
+    private String generateInsight(double rate, double progress) {
+        // High performance: Completion rate significantly exceeds time progress
+        if (rate >= progress + 0.1)
+            return "You're smashing it! Ahead of schedule. 🔥";
+
+        // Underperformance: Completion rate is significantly behind time progress
+        if (rate < progress - 0.2)
+            return "A bit behind. You can catch up! 💪";
+
+        // Neutral/Steady performance
+        return "Steady as she goes. Keep the momentum!";
+    }
+}
