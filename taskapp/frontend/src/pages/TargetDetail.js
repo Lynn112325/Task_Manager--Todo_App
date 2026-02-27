@@ -1,9 +1,9 @@
 import {
     Assessment as AssessmentIcon,
     ErrorOutline as ErrorIcon,
-    LocalFireDepartment as StreakIcon
+    LocalFireDepartment as StreakIcon,
+    TipsAndUpdatesOutlined as TipsAndUpdatesOutlinedIcon
 } from '@mui/icons-material';
-import TipsAndUpdatesOutlinedIcon from '@mui/icons-material/TipsAndUpdatesOutlined';
 import {
     Alert,
     Box,
@@ -12,10 +12,10 @@ import {
     Skeleton,
     Stack, Typography
 } from '@mui/material';
-import dayjs from 'dayjs';
 import * as React from "react";
 import { useParams } from "react-router";
-import { TargetHeader, TargetHeaderSkeleton } from '../components/TargetHeader';
+import PageContainer from "../components/PageContainer";
+import { TargetHeaderActions, TargetHeaderActionsSkeleton, TargetHeaderContent, TargetHeaderContentSkeleton } from '../components/TargetHeader';
 import TaskBlueprintList from '../components/TaskBlueprintList';
 import { useWeeklyMetrics } from '../hooks/metrics/useMetrics';
 import { useTarget } from '../hooks/target/useTarget';
@@ -63,13 +63,19 @@ export default function TargetDetail() {
     }
 
     return (
-        <Box sx={{ p: 3, width: '100%', flexGrow: 1 }}>
-            {/* --- SECTION A: HEADER --- */}
-            {isTargetLoading ? (
-                <TargetHeaderSkeleton />
-            ) : (
-                <TargetHeader target={target} formatDateCustom={(d) => dayjs(d).format("YYYY/MM/DD (ddd)")} />
-            )}
+        <PageContainer
+            title={
+                isTargetLoading ?
+                    <TargetHeaderContentSkeleton /> :
+                    <TargetHeaderContent target={target} />
+            }
+            // breadcrumbs={[{ title: target.title }]}
+            actions={
+                isTargetLoading ?
+                    <TargetHeaderActionsSkeleton /> :
+                    <TargetHeaderActions target={target} />
+            }
+        >
 
             <Divider sx={{ mb: 4 }} />
 
@@ -209,6 +215,6 @@ export default function TargetDetail() {
                     )}
                 </Grid>
             </Grid>
-        </Box>
+        </PageContainer >
     );
 }
