@@ -1,5 +1,4 @@
 import {
-    Delete as DeleteIcon,
     Edit as EditIcon,
     EventRepeat as EventRepeatIcon,
     MoreVert as MoreVertIcon,
@@ -186,10 +185,10 @@ export default function TaskBlueprintCard({ data, onEdit, onDelete, onToggleActi
                     </MenuItem>
                 )}
 
-                <Divider sx={{ my: 0.5 }} />
+                {/* <Divider sx={{ my: 0.5 }} /> */}
 
                 {/* 4. Delete Item */}
-                <MenuItem dense onClick={() => handleAction('delete')} sx={{ minHeight: '28px', py: 0.5, color: 'error.main' }}>
+                {/* <MenuItem dense onClick={() => handleAction('delete')} sx={{ minHeight: '28px', py: 0.5, color: 'error.main' }}>
                     <ListItemIcon sx={{ minWidth: '26px !important' }}>
                         <DeleteIcon sx={{ fontSize: '0.9rem', color: 'error.main' }} />
                     </ListItemIcon>
@@ -197,7 +196,7 @@ export default function TaskBlueprintCard({ data, onEdit, onDelete, onToggleActi
                         primary="Delete"
                         slotProps={{ primary: { sx: { fontSize: '0.75rem' } } }}
                     />
-                </MenuItem>
+                </MenuItem> */}
             </Menu>
         </Card>
     );
