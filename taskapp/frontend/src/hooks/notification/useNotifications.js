@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import axios from 'axios';
+import axios from "../../axiosConfig";
 
 const useNotifications = (page = 0, size = 10) => {
     const queryClient = useQueryClient();
