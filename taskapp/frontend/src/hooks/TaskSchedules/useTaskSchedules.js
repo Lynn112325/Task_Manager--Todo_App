@@ -16,7 +16,7 @@ export function useTaskSchedules(queryOptions = {}, enabled) {
         isLoading: isFetching,
         error,
         refresh
-    } = useTaskScheduleData({ targetId, enabled: enabled });
+    } = useTaskScheduleData({ targetId, enabled });
 
     // Use fetched data if available, otherwise fall back to initialData or empty array
     const sourceData = fetchedData.length > 0 ? fetchedData : (initialData || []);

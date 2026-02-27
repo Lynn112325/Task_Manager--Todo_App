@@ -42,7 +42,7 @@ export default function TaskBlueprintList({ taskSchedules: initialData, handleEd
         hasActiveFilters,
         // Actions
         handleClearFilters
-    } = useTaskSchedules({ initialData });
+    } = useTaskSchedules({ initialData }, false); // Query disabled; only filters the provided initialData
 
     const [filterAnchorEl, setFilterAnchorEl] = useState(null);
     const isFilterOpen = Boolean(filterAnchorEl);
