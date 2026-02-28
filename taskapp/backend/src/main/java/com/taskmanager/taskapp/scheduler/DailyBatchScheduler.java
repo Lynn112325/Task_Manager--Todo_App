@@ -61,8 +61,16 @@ public class DailyBatchScheduler {
 
         // 1. Fetch user IDs in active time zones (consider pagination for large user
         // bases)
-        List<Long> userIds = myUserDetailsService.findUserIdsByTimezones(activeTimezones);
-        log.info("Processing {} users in timezones: {}", userIds.size(), activeTimezones);
+        // List<Long> userIds =
+        // myUserDetailsService.findUserIdsByTimezones(activeTimezones)
+        // .stream()
+        // .distinct()
+        // .toList();
+        // log.info("Processing {} users in timezones: {}", userIds.size(),
+        // activeTimezones);
+
+        //
+        List<Long> userIds = myUserDetailsService.findAllUserIds();
 
         for (Long userId : userIds) {
             try {
