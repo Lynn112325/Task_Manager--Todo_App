@@ -1,14 +1,13 @@
 'use client';
-import * as React from 'react';
-import PropTypes from 'prop-types';
-import { styled } from '@mui/material/styles';
+import NavigateNextRoundedIcon from '@mui/icons-material/NavigateNextRounded';
 import Box from '@mui/material/Box';
 import Breadcrumbs, { breadcrumbsClasses } from '@mui/material/Breadcrumbs';
 import Container from '@mui/material/Container';
 import MuiLink from '@mui/material/Link';
 import Stack from '@mui/material/Stack';
+import { styled } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
-import NavigateNextRoundedIcon from '@mui/icons-material/NavigateNextRounded';
+import PropTypes from 'prop-types';
 import { Link } from 'react-router';
 
 // list the components that will be used in the header
@@ -53,25 +52,25 @@ function PageContainer(props) {
           >
             {breadcrumbs
               ? breadcrumbs.map((breadcrumb, index) => {
-                  return breadcrumb.path ? (
-                    <MuiLink
-                      key={index}
-                      component={Link}
-                      underline="hover"
-                      color="inherit"
-                      to={breadcrumb.path}
-                    >
-                      {breadcrumb.title}
-                    </MuiLink>
-                  ) : (
-                    <Typography
-                      key={index}
-                      sx={{ color: 'text.primary', fontWeight: 600 }}
-                    >
-                      {breadcrumb.title}
-                    </Typography>
-                  );
-                })
+                return breadcrumb.path ? (
+                  <MuiLink
+                    key={index}
+                    component={Link}
+                    underline="hover"
+                    color="inherit"
+                    to={breadcrumb.path}
+                  >
+                    {breadcrumb.title}
+                  </MuiLink>
+                ) : (
+                  <Typography
+                    key={index}
+                    sx={{ color: 'text.primary', fontWeight: 600 }}
+                  >
+                    {breadcrumb.title}
+                  </Typography>
+                );
+              })
               : null}
           </PageHeaderBreadcrumbs>
           <PageContentHeader>
@@ -96,7 +95,7 @@ PageContainer.propTypes = {
     }),
   ),
   children: PropTypes.node,
-  title: PropTypes.string,
+  title: PropTypes.object,
 };
 
 export default PageContainer;
