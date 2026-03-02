@@ -53,7 +53,7 @@ export default function TaskBlueprintCard({ data, onEdit, onDelete, onToggleActi
     const periodLabel = useMemo(() =>
         getPlanPeriodLabel(recurringPlan, status),
         [recurringPlan, status]);
-    const frequencyLabel = formatFrequency(recurringPlan);
+    const frequencyLabel = formatFrequency(recurringPlan.recurrenceType, recurringPlan.recurrenceInterval, recurringPlan.recurrenceDays, recurringPlan.recurrenceStart);
 
     return (
         <Card

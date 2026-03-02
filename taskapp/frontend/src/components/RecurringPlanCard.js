@@ -90,7 +90,7 @@ export default function RecurringPlanCard({ recurringPlan, targetTitle = "" }) {
                                     Frequency
                                 </Typography>
 
-                                <Tooltip title={formatFrequency(plan)} arrow>
+                                <Tooltip title={formatFrequency(plan.recurrenceType, plan.recurrenceInterval, plan.recurrenceDays, plan.recurrenceStart)} arrow>
                                     <Typography
                                         variant="body2"
                                         fontWeight={700}
@@ -104,7 +104,7 @@ export default function RecurringPlanCard({ recurringPlan, targetTitle = "" }) {
                                             overflow: 'hidden'
                                         }}
                                     >
-                                        {formatFrequency(plan)}
+                                        {formatFrequency(plan.recurrenceType, plan.recurrenceInterval, plan.recurrenceDays, plan.recurrenceStart)}
                                     </Typography>
                                 </Tooltip>
                             </Box>
