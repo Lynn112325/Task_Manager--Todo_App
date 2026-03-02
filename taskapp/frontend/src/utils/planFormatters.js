@@ -5,28 +5,71 @@ export const formatDateCustom = (dateStr) => {
     return dayjs(dateStr).format("YYYY/MM/DD (ddd)");
 };
 
-export const formatFrequency = (plan) => {
-    if (!plan) return "Not Scheduled";
-    const t = plan.recurrenceType;
-    if (t === "DAILY") return "Every day";
+/**
+ * 取得數字的序數後綴 (1st, 2nd, 3rd, 4th...)
+ */
+const getOrdinal = (n) => {
+    const s = ["th", "st", "nd", "rd"];
+    const v = n % 100;
+    return n + (s[(v - 20) % 10] || s[v] || s[0]);
+};
 
-    if (t === "NONE") return "NONE";
+/**
+ * Formats the recurrence frequency into a human-readable English string.
+ *
+ * @param {string} recurrenceType - The type of recurrence (e.g., 'DAILY', 'WEEKLY', 'MONTHLY', 'NONE').
+ * @param {number} [recurrenceInterval=1] - The interval between recurrences (e.g., 2 for "every 2 weeks").
+ * @param {string[]} [recurrenceDays=[]] - Array of day abbreviations for weekly recurrence (e.g., ['Mon', 'Tue']).
+ * @param {string|null} [recurrenceStart=null] - The start date in ISO format, used for determining the day of the month for monthly recurrence.
+ * @returns {string} A formatted human-readable string (e.g., "Every 2 months on the 15th") or an empty string if NONE.
+ */
+export const formatFrequency = (recurrenceType, recurrenceInterval = 1, recurrenceDays = [], recurrenceStart = null) => {
+    if (!recurrenceType || recurrenceType === "NONE") return "";
 
-    const interval = plan.recurrenceInterval === 1 ? "" : plan.recurrenceInterval;
-    const base = t === "WEEKLY" ? "week"
-        : t === "MONTHLY" ? "month"
-            : t === "YEARLY" ? "year"
-                : t?.toLowerCase();
+    const intervalStr = recurrenceInterval > 1 ? `${recurrenceInterval} ` : "";
 
-    let weekDays = "";
-    if (plan.recurrenceDays && plan.recurrenceDays.length > 0) {
-        weekDays = " on " + plan.recurrenceDays
-            .map(d => d.substring(0, 3).charAt(0) + d.substring(1, 3).toLowerCase())
-            .join(", ");
+    // Helper function to get ordinal suffix (1st, 2nd, 3rd, 4th...)
+    const getOrdinal = (n) => {
+        const s = ["th", "st", "nd", "rd"],
+            v = n % 100;
+        return n + (s[(v - 20) % 10] || s[v] || s[0]);
+    };
+
+    // 1. DAILY
+    if (recurrenceType === "DAILY") {
+        return recurrenceInterval === 1 ? "Every day" : `Every ${recurrenceInterval} days`;
     }
 
-    const s = plan.recurrenceInterval > 1 ? "s" : "";
-    return `Every ${interval} ${base}${s}${weekDays}`;
+    // 2. WEEKLY
+    if (recurrenceType === "WEEKLY") {
+        const unit = recurrenceInterval > 1 ? "weeks" : "week";
+        let days = "";
+        if (recurrenceDays?.length > 0) {
+            days = " on " + recurrenceDays
+                .map(d => d.charAt(0).toUpperCase() + d.substring(1, 3).toLowerCase())
+                .join(", ");
+        }
+        return `Every ${intervalStr}${unit}${days}`;
+    }
+
+    // 3. MONTHLY (Uses RecurrenceStart to determine the day)
+    if (recurrenceType === "MONTHLY") {
+        const unit = recurrenceInterval > 1 ? "months" : "month";
+        let dayDetail = "";
+
+        if (recurrenceStart) {
+            const dateObj = new Date(recurrenceStart);
+            if (!isNaN(dateObj.getTime())) {
+                const day = dateObj.getDate();
+                dayDetail = ` on the ${getOrdinal(day)}`;
+            }
+        }
+
+        return `Every ${intervalStr}${unit}${dayDetail}`;
+    }
+
+    // Fallback for other types
+    return `Every ${intervalStr}${recurrenceType.toLowerCase()}`;
 };
 
 /**
