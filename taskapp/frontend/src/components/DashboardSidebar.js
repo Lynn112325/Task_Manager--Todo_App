@@ -133,30 +133,41 @@ function DashboardSidebar({
     [setExpanded]
   );
 
-  /* Set the expanded item ids based on the current pathname and target pages. */
+  /**
+   * Synchronizes the expanded state of the sidebar menu based on the current URL pathname.
+   * Handles top-level routes (reports, tasks) and dynamic target-type pages.
+   * @param {string} pathname - The current window location pathname from the router.
+   * @param {Array} targetPages - Configuration array for target-specific sidebar items.
+   */
   React.useEffect(() => {
+    let newIds = [];
+
+    // 1. Check for top-level static routes
     if (matchPath("/reports/*", pathname)) {
-      setExpandedItemIds(["reports"]);
-      return;
+      newIds = ["reports"];
+    } else if (matchPath("/tasks/*", pathname)) {
+      newIds = ["tasks"];
+    } else {
+      // 2. Search for matching target types or their sub-items
+      const activeTargetType = targetPages.find(page =>
+        matchPath(page.match, pathname) ||
+        (page.subItems && page.subItems.some(sub => matchPath(sub.match, pathname)))
+      );
+
+      if (activeTargetType) {
+        newIds = [activeTargetType.id];
+      }
     }
 
-    if (matchPath("/tasks/*", pathname)) {
-      setExpandedItemIds(["tasks"]);
-      return;
-    }
+    /**
+     * Only update the state if the calculated IDs have actually changed.
+     */
+    setExpandedItemIds(prev => {
+      if (JSON.stringify(prev) === JSON.stringify(newIds)) return prev;
+      return newIds;
+    });
 
-    const activeTargetType = targetPages.find(page =>
-      matchPath(page.match, pathname) ||
-      (page.subItems && page.subItems.some(sub => matchPath(sub.match, pathname)))
-    );
-
-    if (activeTargetType) {
-      setExpandedItemIds([activeTargetType.id]);
-      return;
-    }
-
-    setExpandedItemIds([]);
-  }, [pathname, targetPages]);
+  }, [pathname, JSON.stringify(targetPages)]);
 
   const handlePageItemClick = React.useCallback(
     (itemId, hasNestedNavigation) => {
