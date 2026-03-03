@@ -149,17 +149,18 @@ export function useTaskScheduleData({ targetId, enabled = true } = {}) {
      * @param {Object} schedule - The schedule object to toggle.
      */
     const toggleStatusAction = async (schedule) => {
-        if (!schedule?.id) return;
-        const nextStatus = schedule.status === 'ACTIVE' ? 'PAUSED' : 'ACTIVE';
+        const { taskTemplate, recurringPlan } = schedule;
+        if (!taskTemplate?.id) return;
+        const nextStatus = recurringPlan.status === 'PAUSED' ? 'ACTIVE' : 'PAUSED';
 
         const confirmed = await dialogs.confirm(
             nextStatus === 'PAUSED'
-                ? `Pause "${schedule.title}"? New tasks will stop generating.`
-                : `Resume "${schedule.title}"?`
+                ? `Pause "${taskTemplate.title}"? New tasks will stop generating.`
+                : `Resume "${taskTemplate.title}"?`
         );
 
         if (confirmed) {
-            return updateStatusMutation.mutateAsync({ id: schedule.id, status: nextStatus });
+            return updateStatusMutation.mutateAsync({ id: taskTemplate?.id, status: nextStatus });
         }
     };
 
@@ -168,9 +169,10 @@ export function useTaskScheduleData({ targetId, enabled = true } = {}) {
      * @param {Object} schedule - The schedule object to delete.
      */
     const deleteAction = async (schedule) => {
-        const confirmed = await dialogs.confirm(`Delete "${schedule.title}"? This cannot be undone.`);
+        const { taskTemplate } = schedule;
+        const confirmed = await dialogs.confirm(`Delete "${taskTemplate.title}"? This cannot be undone.`);
         if (confirmed) {
-            return deleteMutation.mutateAsync(schedule.id);
+            return deleteMutation.mutateAsync(taskTemplate.id);
         }
     };
 
