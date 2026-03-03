@@ -114,7 +114,7 @@ public class RecurringPlanService {
          * Returns null if the plan is finished, paused, or a task already exists for
          * the next date.
          */
-        public LocalDateTime calculateNextDueDate(RecurringPlan plan, LocalDateTime lastDueDate) {
+        public LocalDateTime calculateNextDueDate(RecurringPlan plan) {
 
                 // 1. Basic Validation: Skip if plan is paused or has no recurrence
                 if (plan.getStatus() == PlanStatus.PAUSED || plan.getRecurrenceType() == RecurrenceType.NONE) {
@@ -135,7 +135,7 @@ public class RecurringPlanService {
                 boolean allowBaseDate;
 
                 // 1. Determine Calculation Origin
-                if (lastDueDate != null) {
+                if (plan.getNextRunAt() != null) {
                         /*
                          * * SCENARIO A: The plan has historical runs.
                          * We use the later of lastDueDate or startPoint to prevent issues if the
@@ -143,7 +143,7 @@ public class RecurringPlanService {
                          * We set allowBaseDate = false because we usually want the occurrence *after*
                          * the last one.
                          */
-                        baseDate = lastDueDate.isBefore(startPoint) ? startPoint : lastDueDate;
+                        baseDate = plan.getNextRunAt().isBefore(startPoint) ? startPoint : plan.getNextRunAt();
                         allowBaseDate = false;
                 } else {
                         /*
