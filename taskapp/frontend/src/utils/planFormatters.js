@@ -6,15 +6,6 @@ export const formatDateCustom = (dateStr) => {
 };
 
 /**
- * 取得數字的序數後綴 (1st, 2nd, 3rd, 4th...)
- */
-const getOrdinal = (n) => {
-    const s = ["th", "st", "nd", "rd"];
-    const v = n % 100;
-    return n + (s[(v - 20) % 10] || s[v] || s[0]);
-};
-
-/**
  * Formats the recurrence frequency into a human-readable English string.
  *
  * @param {string} recurrenceType - The type of recurrence (e.g., 'DAILY', 'WEEKLY', 'MONTHLY', 'NONE').
