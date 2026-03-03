@@ -22,11 +22,13 @@ import {
     Tooltip,
     Typography
 } from '@mui/material';
+import * as React from "react";
 import { useState } from 'react';
 import TaskBlueprintCard from '../components/TaskBlueprintCard';
+import { TaskScheduleFormDialog } from '../components/task_schedule/TaskScheduleFormDialog';
 import { useTaskSchedules } from '../hooks/task_schedules/useTaskSchedules';
 
-export default function TaskBlueprintList({ taskSchedules: initialData, handleEdit, handleDelete, handleToggle }) {
+export default function TaskBlueprintList({ taskSchedules: initialData, targetId }) {
 
     const {
         taskSchedules: filteredSchedules,
@@ -41,8 +43,27 @@ export default function TaskBlueprintList({ taskSchedules: initialData, handleEd
         activeFilterCount,
         hasActiveFilters,
         // Actions
-        handleClearFilters
+        handleClearFilters,
+        // DB Actions
+        toggleStatusAction,
+        saveAction,
+        isUpdating
     } = useTaskSchedules({ initialData }, false); // Query disabled; only filters the provided initialData
+
+
+    // Dialog State
+    const [editDialogOpen, setEditDialogOpen] = React.useState(false);
+    const [selectedSchedule, setSelectedSchedule] = React.useState(null);
+
+    const handleEditClick = (schedule) => {
+        setSelectedSchedule(schedule);
+        setEditDialogOpen(true);
+    };
+
+    const handleSave = async (id, data) => {
+        const success = await saveAction(id, data);
+        if (success) setEditDialogOpen(false);
+    };
 
     const [filterAnchorEl, setFilterAnchorEl] = useState(null);
     const isFilterOpen = Boolean(filterAnchorEl);
@@ -195,13 +216,13 @@ export default function TaskBlueprintList({ taskSchedules: initialData, handleEd
                     }
                 }}
             >
-                {filteredSchedules.map((item) => (
+                {filteredSchedules.map((schedule) => (
                     <TaskBlueprintCard
-                        key={item.taskTemplate.id}
-                        data={item}
-                        onEdit={handleEdit}
-                        onDelete={handleDelete}
-                        onToggleActive={handleToggle}
+                        key={schedule.taskTemplate.id}
+                        data={schedule}
+                        onEdit={handleEditClick}
+                        // handleDelete={() => { }}
+                        handleToggle={toggleStatusAction}
                     />
                 ))}
 
@@ -218,6 +239,15 @@ export default function TaskBlueprintList({ taskSchedules: initialData, handleEd
                     </Box>
                 )}
             </Box>
+            {/* The Hidden Dialog */}
+            <TaskScheduleFormDialog
+                open={editDialogOpen}
+                onClose={() => setEditDialogOpen(false)}
+                schedule={selectedSchedule}
+                onSave={(id, payload) => handleSave(id, payload)}
+                isUpdating={isUpdating}
+                targetId={targetId}
+            />
         </Grid >
     );
 }

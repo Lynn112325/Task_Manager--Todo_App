@@ -4,18 +4,25 @@ import {
     LocalFireDepartment as StreakIcon,
     TipsAndUpdatesOutlined as TipsAndUpdatesOutlinedIcon
 } from '@mui/icons-material';
+import AddIcon from '@mui/icons-material/Add';
+import EditIcon from '@mui/icons-material/Edit';
 import {
     Alert,
     Box,
     Button,
-    Card, CardContent, Divider, Grid, LinearProgress,
+    Card, CardContent, Divider, Grid,
+    IconButton,
+    LinearProgress,
     Skeleton,
-    Stack, Typography
+    Stack,
+    Tooltip,
+    Typography
 } from '@mui/material';
 import * as React from "react";
 import { useParams } from "react-router";
 import PageContainer from "../components/PageContainer";
-import { TargetHeaderActions, TargetHeaderActionsSkeleton, TargetHeaderContent, TargetHeaderContentSkeleton } from '../components/TargetHeader';
+import { TargetHeaderContent, TargetHeaderContentSkeleton } from '../components/TargetHeader';
+import { TaskScheduleFormDialog } from '../components/task_schedule/TaskScheduleFormDialog';
 import TaskBlueprintList from '../components/TaskBlueprintList';
 import { useWeeklyMetrics } from '../hooks/metrics/useMetrics';
 import { useTarget } from '../hooks/target/useTarget';
@@ -27,13 +34,28 @@ export default function TargetDetail() {
     // 1. Data Fetching: Added 'enabled' check to prevent unnecessary requests if targetId is missing
     const { getTargetById, isLoading: isTargetLoading } = useTarget();
 
+    // Dialog State
+    const [createDialogOpen, setCreateDialogOpen] = React.useState(false);
+
+    const handleCreateClick = () => {
+        setCreateDialogOpen(true);
+    };
+
+    const handleSave = async (id, data) => {
+        // create plan
+        const success = await saveAction(id, data);
+        if (success) setCreateDialogOpen(false);
+    };
     const isEnabled = !!targetId;
     const {
         taskSchedules,
         isLoading: isTaskSchedulesLoading,
         isError: isSchedulesError,
         refetch: refetchSchedules,
-        activeFilterCount
+        activeFilterCount,
+        // DB Action
+        saveAction,
+        isUpdating
     } = useTaskSchedules({ targetId }, isEnabled);
 
     const {
@@ -53,7 +75,7 @@ export default function TargetDetail() {
         return (
             <Box sx={{ p: 3, textAlign: 'center' }}>
                 <Alert severity="error" icon={<ErrorIcon />} sx={{ mb: 2 }}>
-                    Failed to load dashboard data. Please check your connection.
+                    Failed to load data. Please check your connection.
                 </Alert>
                 <Button variant="outlined" onClick={() => { refetchMetrics(); refetchSchedules(); }}>
                     Retry Loading
@@ -72,8 +94,30 @@ export default function TargetDetail() {
             // breadcrumbs={[{ title: target.title }]}
             actions={
                 isTargetLoading ?
-                    <TargetHeaderActionsSkeleton /> :
-                    <TargetHeaderActions target={target} />
+                    <Stack direction="row" spacing={1} justifyContent="flex-end">
+                        <Skeleton variant="rounded" width={120} height={34} />
+                        <Skeleton variant="circular" width={34} height={34} />
+                    </Stack> :
+                    <Stack
+                        direction="row"
+                        spacing={1}
+                        justifyContent={{ xs: 'flex-start', md: 'flex-end' }}
+                        sx={{ m: 1 }}
+                    >
+                        <Button
+                            startIcon={<AddIcon />}
+                            variant="contained"
+                            size="small"
+                            onClick={handleCreateClick}
+                        >
+                            Add Blueprint
+                        </Button>
+                        <Tooltip title="Edit">
+                            <IconButton size="small">
+                                <EditIcon fontSize="small" />
+                            </IconButton>
+                        </Tooltip>
+                    </Stack>
             }
         >
 
@@ -208,12 +252,20 @@ export default function TargetDetail() {
                     ) : (
                         <TaskBlueprintList
                             taskSchedules={taskSchedules}
-                            handleEdit={() => { }}
-                            handleDelete={() => { }}
-                            handleToggle={() => { }}
+                            targetId={targetId}
                         />
                     )}
                 </Grid>
+
+                {/* The Hidden Dialog */}
+                <TaskScheduleFormDialog
+                    open={createDialogOpen}
+                    onClose={() => setCreateDialogOpen(false)}
+                    schedule={null}
+                    onSave={(id, payload) => handleSave(id, payload)}
+                    isUpdating={isUpdating}
+                    targetId={targetId}
+                />
             </Grid>
         </PageContainer >
     );
