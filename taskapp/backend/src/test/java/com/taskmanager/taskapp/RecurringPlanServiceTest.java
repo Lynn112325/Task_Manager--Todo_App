@@ -77,7 +77,7 @@ class RecurringPlanServiceTest {
         plan.setRecurrenceStart(DEFAULT_NOW);
 
         // lastDueDate = null means it's the first time running
-        LocalDateTime nextDate = service.calculateNextDueDate(plan, null);
+        LocalDateTime nextDate = service.calculateNextDueDate(plan);
 
         assertNotNull(nextDate);
         assertEquals(DEFAULT_NOW.toLocalDate(), nextDate.toLocalDate());
@@ -95,9 +95,9 @@ class RecurringPlanServiceTest {
         plan.setRecurrenceStart(DEFAULT_NOW.minusWeeks(1));
 
         // Task was already completed today
-        LocalDateTime lastRun = DEFAULT_NOW;
+        plan.setNextRunAt(DEFAULT_NOW);
 
-        LocalDateTime nextDate = service.calculateNextDueDate(plan, lastRun);
+        LocalDateTime nextDate = service.calculateNextDueDate(plan);
 
         assertNotNull(nextDate);
         // Should skip today and find next Friday (2026-02-20)
@@ -120,10 +120,10 @@ class RecurringPlanServiceTest {
         plan.setRecurrenceStart(baseStart);
 
         // Last run was also long ago
-        LocalDateTime lastRun = baseStart.plusWeeks(1);
+        plan.setNextRunAt(baseStart.plusWeeks(1));
 
         // Act (Today is Feb 13, Friday)
-        LocalDateTime nextDate = service.calculateNextDueDate(plan, lastRun);
+        LocalDateTime nextDate = service.calculateNextDueDate(plan);
 
         assertNotNull(nextDate);
         // The first Monday after Today (Feb 13) is Feb 16
@@ -148,10 +148,10 @@ class RecurringPlanServiceTest {
         plan.setRecurrenceStart(baseMonday);
 
         // Last run: 8 weeks ago (Aligned with interval)
-        LocalDateTime lastRun = baseMonday.plusWeeks(2);
+        plan.setNextRunAt(baseMonday.plusWeeks(2));
 
         // Act
-        LocalDateTime nextDate = service.calculateNextDueDate(plan, lastRun);
+        LocalDateTime nextDate = service.calculateNextDueDate(plan);
 
         assertNotNull(nextDate);
 
@@ -180,7 +180,7 @@ class RecurringPlanServiceTest {
         RecurringPlan plan = createWeeklyPlan(1, List.of(Weekday.Thu));
         plan.setRecurrenceStart(endOf2025.minusWeeks(1));
 
-        LocalDateTime nextDate = service.calculateNextDueDate(plan, null);
+        LocalDateTime nextDate = service.calculateNextDueDate(plan);
 
         assertNotNull(nextDate);
         assertEquals(LocalDate.of(2026, 1, 1), nextDate.toLocalDate());
@@ -200,9 +200,9 @@ class RecurringPlanServiceTest {
         plan.setRecurrenceStart(DEFAULT_NOW.minusWeeks(4));
 
         // Last run was 2 weeks ago
-        LocalDateTime lastRun = DEFAULT_NOW.minusWeeks(2);
+        plan.setNextRunAt(DEFAULT_NOW.minusWeeks(2));
 
-        LocalDateTime nextDate = service.calculateNextDueDate(plan, lastRun);
+        LocalDateTime nextDate = service.calculateNextDueDate(plan);
 
         // Expect: 2 weeks after last run is Today
         assertNotNull(nextDate);
@@ -216,7 +216,7 @@ class RecurringPlanServiceTest {
         RecurringPlan plan = createDailyPlan(NOW, 1); // Starts today, interval 1
 
         // Act: lastDueDate is NULL (First run)
-        LocalDateTime result = service.calculateNextDueDate(plan, null);
+        LocalDateTime result = service.calculateNextDueDate(plan);
 
         // Assert: For Daily, if allowBaseDate is true, it adds interval to baseDate
         // baseDate = NOW, nextDate = NOW + 1 day = March 4
@@ -227,11 +227,11 @@ class RecurringPlanServiceTest {
     @DisplayName("Scenario A: Historical run should find the NEXT occurrence after lastDueDate")
     void testHistoricalRun_CalculatesAfterLastDueDate() {
         // Arrange
-        LocalDateTime lastRun = NOW.minusDays(1); // Ran yesterday
         RecurringPlan plan = createDailyPlan(NOW.minusDays(5), 1); // Plan started 5 days ago
+        plan.setNextRunAt(NOW.minusDays(1)); // Ran yesterday
 
         // Act
-        LocalDateTime result = service.calculateNextDueDate(plan, lastRun);
+        LocalDateTime result = service.calculateNextDueDate(plan);
 
         // Assert: baseDate = lastRun, allowBaseDate = false.
         // nextDate = lastRun + 1 day = TODAY (March 3)
@@ -242,13 +242,13 @@ class RecurringPlanServiceTest {
     @DisplayName("Scenario A: Start date moved forward should override old lastDueDate")
     void testHistoricalRun_StartDateMovedForward() {
         // Arrange
-        LocalDateTime oldLastRun = LocalDateTime.of(2026, 1, 1, 10, 0);
         LocalDateTime newStartPoint = NOW.plusDays(10); // Start moved far into future
 
         RecurringPlan plan = createDailyPlan(newStartPoint, 1);
+        plan.setNextRunAt(LocalDateTime.of(2026, 1, 1, 10, 0));
 
         // Act
-        LocalDateTime result = service.calculateNextDueDate(plan, oldLastRun);
+        LocalDateTime result = service.calculateNextDueDate(plan);
 
         // Assert: baseDate should be newStartPoint because oldLastRun is before
         // startPoint
@@ -260,8 +260,8 @@ class RecurringPlanServiceTest {
     @DisplayName("Duplication Check: Should return null if task already exists for calculated date")
     void testDuplicateTaskCheck_ReturnsNull() {
         // Arrange
-        LocalDateTime lastRun = NOW.minusDays(1);
         RecurringPlan plan = createDailyPlan(NOW.minusDays(5), 1);
+        plan.setNextRunAt(NOW.minusDays(1));
         LocalDateTime expectedNextDate = NOW; // March 3
 
         // Mock: The repository finds that a task already exists for March 3
@@ -269,7 +269,7 @@ class RecurringPlanServiceTest {
                 .thenReturn(true);
 
         // Act
-        LocalDateTime result = service.calculateNextDueDate(plan, lastRun);
+        LocalDateTime result = service.calculateNextDueDate(plan);
 
         // Assert
         assertNull(result, "Should return null because task already exists");
