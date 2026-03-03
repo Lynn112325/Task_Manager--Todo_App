@@ -28,7 +28,7 @@ public class TaskTemplateService {
                 taskTemplate.getPriority(),
                 taskTemplate.getCreatedAt(),
                 taskTemplate.getUpdatedAt(),
-                taskTemplate.getTarget().getTitle());
+                taskTemplate.getTarget().getId());
     }
 
     // get task template by targetId and check owner
