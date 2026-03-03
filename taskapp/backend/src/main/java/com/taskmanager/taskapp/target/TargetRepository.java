@@ -30,4 +30,6 @@ public interface TargetRepository extends JpaRepository<Target, Long> {
             WHERE tt.id = :taskTemplateId
             """)
     Optional<TargetDto> findDtoByTemplateId(@Param("taskTemplateId") Long taskTemplateId);
+
+    
 }

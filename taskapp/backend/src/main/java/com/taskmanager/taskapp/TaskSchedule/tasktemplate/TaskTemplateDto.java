@@ -3,12 +3,12 @@ package com.taskmanager.taskapp.taskschedule.tasktemplate;
 import java.time.LocalDateTime;
 
 public record TaskTemplateDto(
-        Long id,
-        String title,
-        String description,
-        int priority,
-        LocalDateTime createdAt,
-        LocalDateTime updatedAt,
+                Long id,
+                String title,
+                String description,
+                int priority,
+                LocalDateTime createdAt,
+                LocalDateTime updatedAt,
 
-        String targetTitle) {
+                Long targetId) {
 }
