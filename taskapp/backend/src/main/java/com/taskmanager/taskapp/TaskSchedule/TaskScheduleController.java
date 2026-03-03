@@ -1,8 +1,11 @@
 package com.taskmanager.taskapp.taskschedule;
 
+import java.util.Map;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -39,9 +42,19 @@ public class TaskScheduleController extends BaseController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> editSchedule(
+    public ResponseEntity<CommonResponse<?>> editSchedule(
             @AuthenticationPrincipal MyUserDetails userDetails, @PathVariable Long id,
             @RequestBody TaskScheduleDto dto) {
         return ok(taskScheduleService.save(userDetails.getUser(), dto, id));
+    }
+
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<CommonResponse<?>> updateStatus(
+            @AuthenticationPrincipal MyUserDetails userDetails,
+            @PathVariable Long id,
+            @RequestBody Map<String, String> body) {
+
+        String status = body.get("status");
+        return ok(taskScheduleService.updateStatus(userDetails.getUser(), id, status));
     }
 }

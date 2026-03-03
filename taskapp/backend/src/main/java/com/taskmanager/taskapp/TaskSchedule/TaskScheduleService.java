@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -43,6 +44,24 @@ public class TaskScheduleService {
     }
 
     @Transactional
+    public Map<String, Object> updateStatus(User user, Long id, String newStatus) {
+        RecurringPlan plan = recurringPlanRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Schedule not found with id: " + id));
+
+        if (!plan.getTaskTemplate().getUser().getId().equals(user.getId())) {
+            throw new AccessDeniedException("You do not have permission to update this schedule");
+        }
+
+        plan.setStatus(PlanStatus.valueOf(newStatus));
+        recurringPlanRepository.save(plan);
+
+        return Map.of(
+                "id", plan.getId(),
+                "status", newStatus,
+                "systemMessage", "Status updated to " + newStatus);
+    }
+
+    @Transactional
     public Map<String, Object> save(User user, TaskScheduleDto dto, Long existingId) {
         RecurringPlan plan;
         TaskTemplate template;
@@ -77,8 +96,8 @@ public class TaskScheduleService {
         plan.setRecurrenceEnd(planDto.recurrenceEnd());
         plan.setIsHabit(planDto.isHabit());
 
-        if (planDto.displayStatus() != null) {
-            plan.setStatus(PlanStatus.valueOf(planDto.displayStatus().toUpperCase()));
+        if (planDto.status() != null) {
+            plan.setStatus(planDto.status());
         }
 
         if (plan.getTaskTemplate() == null) {

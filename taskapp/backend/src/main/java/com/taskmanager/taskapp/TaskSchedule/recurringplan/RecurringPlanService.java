@@ -45,6 +45,7 @@ public class RecurringPlanService {
                                 r.getRecurrenceDays(),
                                 r.getRecurrenceStart(),
                                 r.getRecurrenceEnd(),
+                                r.getStatus(),
                                 RecurringPlanDto.computeDisplayStatus(r.getStatus(), r.getRecurrenceType(),
                                                 r.getRecurrenceStart(),
                                                 r.getRecurrenceEnd()),

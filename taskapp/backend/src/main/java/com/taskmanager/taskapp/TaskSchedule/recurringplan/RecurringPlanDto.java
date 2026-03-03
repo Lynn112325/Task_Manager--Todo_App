@@ -15,6 +15,7 @@ public record RecurringPlanDto(
                 List<Weekday> recurrenceDays,
                 LocalDateTime recurrenceStart,
                 LocalDateTime recurrenceEnd,
+                PlanStatus status,
                 String displayStatus,
                 Boolean isHabit,
                 LocalDateTime nextRunAt,
