@@ -1,12 +1,7 @@
-import AddIcon from '@mui/icons-material/Add';
-import EditIcon from '@mui/icons-material/Edit';
 import {
-    Button,
     Chip,
-    IconButton,
     Skeleton,
     Stack,
-    Tooltip,
     Typography
 } from '@mui/material';
 
@@ -34,32 +29,6 @@ export const TargetHeaderContent = ({ target }) => {
     );
 };
 
-// --- Part 2: Actions (Buttons, Icons) ---
-export const TargetHeaderActions = ({ target }) => {
-    if (!target) return null;
-    return (
-        <Stack
-            direction="row"
-            spacing={1}
-            justifyContent={{ xs: 'flex-start', md: 'flex-end' }}
-            sx={{ m: 1 }}
-        >
-            <Button
-                startIcon={<AddIcon />}
-                variant="contained"
-                size="small"
-            >
-                Add Template
-            </Button>
-            <Tooltip title="Edit">
-                <IconButton size="small">
-                    <EditIcon fontSize="small" />
-                </IconButton>
-            </Tooltip>
-        </Stack>
-    );
-};
-
 // --- Skeletons for Loading State ---
 export const TargetHeaderContentSkeleton = () => (
     <Stack spacing={1}>
@@ -69,12 +38,5 @@ export const TargetHeaderContentSkeleton = () => (
         </Stack>
         <Skeleton variant="text" width="80%" />
         <Skeleton variant="text" width="40%" />
-    </Stack>
-);
-
-export const TargetHeaderActionsSkeleton = () => (
-    <Stack direction="row" spacing={1} justifyContent="flex-end">
-        <Skeleton variant="rounded" width={120} height={34} />
-        <Skeleton variant="circular" width={34} height={34} />
     </Stack>
 );
