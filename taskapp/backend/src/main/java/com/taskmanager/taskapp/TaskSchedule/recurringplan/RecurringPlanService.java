@@ -114,27 +114,50 @@ public class RecurringPlanService {
                         return null;
                 }
 
-                // Define "today" globally for this calculation
                 LocalDate today = LocalDate.now(clock);
+                // Define "today" as the start of the current day for date-based comparisons
+                LocalDateTime todayStart = today.atStartOfDay();
 
-                // 2. Determine the starting point (baseDate)
+                // Determine the theoretical anchor: Use the plan's start date, or default to
+                // today
+                LocalDateTime startPoint = (plan.getRecurrenceStart() != null)
+                                ? plan.getRecurrenceStart()
+                                : todayStart;
+
                 LocalDateTime baseDate;
                 boolean allowBaseDate;
 
+                // 1. Determine Calculation Origin
                 if (lastDueDate != null) {
-                        // SCENARIO A: Plan has run before. Start from last due date and must skip it
-                        // (false).
-                        baseDate = lastDueDate;
+                        /*
+                         * * SCENARIO A: The plan has historical runs.
+                         * We use the later of lastDueDate or startPoint to prevent issues if the
+                         * start date was moved forward into the future.
+                         * We set allowBaseDate = false because we usually want the occurrence *after*
+                         * the last one.
+                         */
+                        baseDate = lastDueDate.isBefore(startPoint) ? startPoint : lastDueDate;
                         allowBaseDate = false;
                 } else {
-                        // SCENARIO B: First run. Start from plan start date and can include it (true).
-                        baseDate = (plan.getRecurrenceStart() != null) ? plan.getRecurrenceStart()
-                                        : LocalDateTime.now(clock);
+                        /*
+                         * * SCENARIO B: This is the plan's first execution.
+                         * Use the defined start date or current time. allowBaseDate = true ensures
+                         * we check if the start date itself is a valid occurrence.
+                         */
+                        baseDate = startPoint;
                         allowBaseDate = true;
+                }
 
-                        if (baseDate == null) { // Defensive check
-                                baseDate = LocalDateTime.now(clock);
-                        }
+                // 2. Forward-Looking Guard (Catch-up / Resume Logic)
+                /*
+                 * * If the calculated baseDate is in the past (e.g., the plan was paused for a
+                 * long time),
+                 * we force the calculation to start from today. This prevents the system from
+                 * trying to generate old "backlog" tasks and ensures the next task is relevant.
+                 */
+                if (baseDate.isBefore(todayStart)) {
+                        baseDate = todayStart;
+                        allowBaseDate = true; // We allow today to be a valid due date
                 }
 
                 LocalDateTime nextDate = null;
