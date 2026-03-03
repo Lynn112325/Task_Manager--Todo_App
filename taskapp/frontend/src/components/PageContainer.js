@@ -95,7 +95,10 @@ PageContainer.propTypes = {
     }),
   ),
   children: PropTypes.node,
-  title: PropTypes.object,
+  title: PropTypes.oneOfType([
+    PropTypes.object,
+    PropTypes.string
+  ]),
 };
 
 export default PageContainer;
