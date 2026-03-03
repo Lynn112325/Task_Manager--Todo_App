@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { useTaskScheduleData } from "./useTaskScheduleData";
 import { useTaskScheduleFilters } from "./useTaskScheduleFilters";
 
@@ -15,7 +15,12 @@ export function useTaskSchedules(queryOptions = {}, enabled) {
         taskSchedules: fetchedData,
         isLoading: isFetching,
         error,
-        refresh
+        refresh,
+
+        saveAction,
+        toggleStatusAction,
+        deleteAction,
+        isUpdating,
     } = useTaskScheduleData({ targetId, enabled });
 
     // Use fetched data if available, otherwise fall back to initialData or empty array
@@ -23,25 +28,6 @@ export function useTaskSchedules(queryOptions = {}, enabled) {
 
     // Filter Logic: Filter data based on internal state
     const filterTools = useTaskScheduleFilters(sourceData);
-
-    // State to track if a mutation (e.g., status change) is in progress
-    const [isMutating, setIsMutating] = useState(false);
-
-    // Actions: Toggle schedule status (Active/Paused)
-    const handleToggleStatus = useCallback(async (id, currentStatus) => {
-        setIsMutating(true);
-        try {
-            // [TODO] Call actual API here
-            // await api.toggleTaskScheduleStatus(id, !currentStatus);
-
-            // Refresh data after successful mutation
-            await refresh();
-        } catch (err) {
-            console.error("Toggle failed:", err);
-        } finally {
-            setIsMutating(false);
-        }
-    }, [refresh]);
 
     // Use useMemo to avoid unnecessary re-renders of consuming components
     const returnValue = useMemo(() => ({
@@ -51,23 +37,28 @@ export function useTaskSchedules(queryOptions = {}, enabled) {
 
         // Status: Loading and mutation states
         isLoading: isFetching,
-        isMutating,
         error,
+        isUpdating,
 
         // Filter Tools: Contains filter state and setters
         ...filterTools,
 
         // Actions: Methods to interact with data
         refresh,
-        handleToggleStatus
+        saveAction,
+        toggleStatusAction,
+        deleteAction,
+        isUpdating,
     }), [
         filterTools,
         sourceData,
         isFetching,
-        isMutating,
+        isUpdating,
         error,
         refresh,
-        handleToggleStatus
+        saveAction,
+        toggleStatusAction,
+        deleteAction,
     ]);
 
     return returnValue;
