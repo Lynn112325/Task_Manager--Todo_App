@@ -52,13 +52,11 @@ export function TaskScheduleFormDialog({
         if (open && schedule) {
             if (isEditMode) {
                 const { taskTemplate, recurringPlan } = schedule;
-                const rawStatus = recurringPlan?.displayStatus || 'ACTIVE';
-                const editableStatus = rawStatus === 'PAUSED' ? 'PAUSED' : 'ACTIVE';
                 setFormData({
                     title: taskTemplate?.title || '',
                     description: taskTemplate?.description || '',
                     priority: taskTemplate?.priority || 1,
-                    status: editableStatus,
+                    status: recurringPlan?.status,
                     recurrenceType: recurringPlan?.recurrenceType || 'NONE',
                     recurrenceInterval: recurringPlan?.recurrenceInterval || 1,
                     recurrenceDays: recurringPlan?.recurrenceDays || [],
@@ -111,7 +109,7 @@ export function TaskScheduleFormDialog({
                 title: taskTemplate?.title || '',
                 description: taskTemplate?.description || '',
                 priority: taskTemplate?.priority || 1,
-                status: recurringPlan?.displayStatus || 'ACTIVE',
+                status: recurringPlan?.status || 'ACTIVE',
                 recurrenceType: recurringPlan?.recurrenceType || 'NONE',
                 recurrenceInterval: recurringPlan?.recurrenceInterval || 1,
                 recurrenceDays: recurringPlan?.recurrenceDays || [],
@@ -144,7 +142,7 @@ export function TaskScheduleFormDialog({
                 priority: formData.priority
             },
             recurringPlan: {
-                displayStatus: formData.recurrenceType === 'NONE' ? 'ACTIVE' : formData.status,
+                status: formData.recurrenceType === 'NONE' ? 'ACTIVE' : formData.status,
                 recurrenceType: formData.recurrenceType,
                 recurrenceInterval: formData.recurrenceInterval,
                 recurrenceDays: formData.recurrenceDays,
@@ -396,7 +394,7 @@ TaskScheduleFormDialog.propTypes = {
             priority: PropTypes.number,
         }),
         recurringPlan: PropTypes.shape({
-            displayStatus: PropTypes.string,
+            status: PropTypes.string,
             recurrenceType: PropTypes.string,
             recurrenceInterval: PropTypes.number,
             recurrenceDays: PropTypes.array,

@@ -26,7 +26,7 @@ import { PLAN_STATUS_CONFIG } from '../utils/planStatus';
 
 const ICON_SIZE = 16;
 
-export default function TaskBlueprintCard({ data, onEdit, onDelete, onToggleActive }) {
+export default function TaskBlueprintCard({ data, onEdit, handleToggle }) {
     const { taskTemplate, recurringPlan } = data || {};
 
     const [anchorEl, setAnchorEl] = useState(null);
@@ -41,8 +41,8 @@ export default function TaskBlueprintCard({ data, onEdit, onDelete, onToggleActi
     const handleAction = (action) => {
         handleMenuClose();
         if (action === 'edit' && onEdit) onEdit(data);
-        if (action === 'delete' && onDelete) onDelete(data);
-        if (action === 'toggle' && onToggleActive) onToggleActive(data);
+        // if (action === 'delete' && onDelete) onDelete(data);
+        if (action === 'toggle' && handleToggle) handleToggle(data);
     };
 
     // "ONGOING", "PAUSED", "UPCOMING", "COMPLETED"

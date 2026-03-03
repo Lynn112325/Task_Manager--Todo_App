@@ -222,7 +222,7 @@ export default function TaskBlueprintList({ taskSchedules: initialData, targetId
                         data={schedule}
                         onEdit={handleEditClick}
                         // handleDelete={() => { }}
-                        handleToggle={toggleStatusAction}
+                        handleToggle={(schedule) => toggleStatusAction(schedule)}
                     />
                 ))}
 
