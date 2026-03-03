@@ -22,6 +22,7 @@ import com.taskmanager.taskapp.enums.RecurrenceType;
 import com.taskmanager.taskapp.enums.Weekday;
 import com.taskmanager.taskapp.security.MyUserDetailsService;
 import com.taskmanager.taskapp.target.TargetRepository;
+import com.taskmanager.taskapp.task.TaskRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,6 +36,7 @@ public class RecurringPlanService {
         private final TargetRepository targetRepository;
         private final MyUserDetailsService myUserDetailsService;
         private final Clock clock;
+        private final TaskRepository taskRepository;
 
         // transform RecurringPlan to RecurringPlanDto
         public RecurringPlanDto toDto(RecurringPlan r) {
@@ -107,6 +109,11 @@ public class RecurringPlanService {
                                 .toList();
         }
 
+        /**
+         * Calculates the next due date based on recurrence rules.
+         * Returns null if the plan is finished, paused, or a task already exists for
+         * the next date.
+         */
         public LocalDateTime calculateNextDueDate(RecurringPlan plan, LocalDateTime lastDueDate) {
 
                 // 1. Basic Validation: Skip if plan is paused or has no recurrence
@@ -114,8 +121,8 @@ public class RecurringPlanService {
                         return null;
                 }
 
+                // Determine the theoretical anchor point: Plan start date or today
                 LocalDate today = LocalDate.now(clock);
-                // Define "today" as the start of the current day for date-based comparisons
                 LocalDateTime todayStart = today.atStartOfDay();
 
                 // Determine the theoretical anchor: Use the plan's start date, or default to
@@ -217,6 +224,12 @@ public class RecurringPlanService {
                         if (nextDate.isAfter(plan.getRecurrenceEnd())) {
                                 return null;
                         }
+                }
+
+                if (taskRepository.existsByRecurringPlanAndDueDate(plan, nextDate)) {
+                        log.info("Task already exists for plan {} at {}, skipping generation.", plan.getId(),
+                                        nextDate);
+                        return null;
                 }
 
                 return nextDate;

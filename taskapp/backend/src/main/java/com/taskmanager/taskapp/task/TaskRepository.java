@@ -12,6 +12,7 @@ import org.springframework.stereotype.Repository;
 
 import com.taskmanager.taskapp.enums.TaskStatus;
 import com.taskmanager.taskapp.task.dto.TaskDto;
+import com.taskmanager.taskapp.taskschedule.recurringplan.RecurringPlan;
 import com.taskmanager.taskapp.taskschedule.tasktemplate.TaskTemplate;
 
 @Repository
@@ -31,6 +32,8 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
                     (getCanceled() != null ? getCanceled() : 0L);
         }
     }
+
+    boolean existsByRecurringPlanAndDueDate(RecurringPlan plan, LocalDateTime dueDate);
 
     @Query("SELECT t.id FROM Task t WHERE t.user.id = :userId AND t.id IN :ids AND t.status = 'ACTIVE'")
     List<Long> findActiveIdsByUserIdAndIdIn(@Param("userId") Long userId, @Param("ids") List<Long> ids);

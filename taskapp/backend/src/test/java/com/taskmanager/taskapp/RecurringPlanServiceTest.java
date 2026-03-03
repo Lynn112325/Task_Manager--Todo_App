@@ -10,12 +10,17 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import org.mockito.Mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.taskmanager.taskapp.enums.PlanStatus;
@@ -23,6 +28,7 @@ import com.taskmanager.taskapp.enums.RecurrenceType;
 import com.taskmanager.taskapp.enums.Weekday;
 import com.taskmanager.taskapp.security.MyUserDetailsService;
 import com.taskmanager.taskapp.target.TargetRepository;
+import com.taskmanager.taskapp.task.TaskRepository;
 import com.taskmanager.taskapp.taskschedule.recurringplan.RecurringPlan;
 import com.taskmanager.taskapp.taskschedule.recurringplan.RecurringPlanRepository;
 import com.taskmanager.taskapp.taskschedule.recurringplan.RecurringPlanService;
@@ -39,9 +45,13 @@ class RecurringPlanServiceTest {
 
     private RecurringPlanService service;
 
+    @Mock
+    private TaskRepository taskRepository;
+
     // Test Date: 2026-02-13 (Friday)
     private final LocalDateTime DEFAULT_NOW = LocalDateTime.of(2026, 2, 13, 12, 0);
     private final ZoneId ZONE = ZoneId.systemDefault();
+    private static final LocalDateTime NOW = LocalDateTime.of(2026, 3, 3, 10, 0); // Tuesday
 
     @BeforeEach
     void setUp() {
@@ -51,7 +61,8 @@ class RecurringPlanServiceTest {
                 recurringPlanRepository,
                 targetRepository,
                 myUserDetailsService,
-                fixedClock);
+                fixedClock,
+                taskRepository);
     }
 
     /**
@@ -198,6 +209,73 @@ class RecurringPlanServiceTest {
         assertEquals(DEFAULT_NOW.toLocalDate(), nextDate.toLocalDate());
     }
 
+    @Test
+    @DisplayName("Scenario B: First execution should use startPoint as baseDate")
+    void testFirstExecution_UsesStartPoint() {
+        // Arrange
+        RecurringPlan plan = createDailyPlan(NOW, 1); // Starts today, interval 1
+
+        // Act: lastDueDate is NULL (First run)
+        LocalDateTime result = service.calculateNextDueDate(plan, null);
+
+        // Assert: For Daily, if allowBaseDate is true, it adds interval to baseDate
+        // baseDate = NOW, nextDate = NOW + 1 day = March 4
+        assertEquals(NOW.plusDays(1), result);
+    }
+
+    @Test
+    @DisplayName("Scenario A: Historical run should find the NEXT occurrence after lastDueDate")
+    void testHistoricalRun_CalculatesAfterLastDueDate() {
+        // Arrange
+        LocalDateTime lastRun = NOW.minusDays(1); // Ran yesterday
+        RecurringPlan plan = createDailyPlan(NOW.minusDays(5), 1); // Plan started 5 days ago
+
+        // Act
+        LocalDateTime result = service.calculateNextDueDate(plan, lastRun);
+
+        // Assert: baseDate = lastRun, allowBaseDate = false.
+        // nextDate = lastRun + 1 day = TODAY (March 3)
+        assertEquals(NOW, result);
+    }
+
+    @Test
+    @DisplayName("Scenario A: Start date moved forward should override old lastDueDate")
+    void testHistoricalRun_StartDateMovedForward() {
+        // Arrange
+        LocalDateTime oldLastRun = LocalDateTime.of(2026, 1, 1, 10, 0);
+        LocalDateTime newStartPoint = NOW.plusDays(10); // Start moved far into future
+
+        RecurringPlan plan = createDailyPlan(newStartPoint, 1);
+
+        // Act
+        LocalDateTime result = service.calculateNextDueDate(plan, oldLastRun);
+
+        // Assert: baseDate should be newStartPoint because oldLastRun is before
+        // startPoint
+        // nextDate = March 13 + 1 day = March 14
+        assertEquals(newStartPoint.plusDays(1), result);
+    }
+
+    @Test
+    @DisplayName("Duplication Check: Should return null if task already exists for calculated date")
+    void testDuplicateTaskCheck_ReturnsNull() {
+        // Arrange
+        LocalDateTime lastRun = NOW.minusDays(1);
+        RecurringPlan plan = createDailyPlan(NOW.minusDays(5), 1);
+        LocalDateTime expectedNextDate = NOW; // March 3
+
+        // Mock: The repository finds that a task already exists for March 3
+        when(taskRepository.existsByRecurringPlanAndDueDate(any(), eq(expectedNextDate)))
+                .thenReturn(true);
+
+        // Act
+        LocalDateTime result = service.calculateNextDueDate(plan, lastRun);
+
+        // Assert
+        assertNull(result, "Should return null because task already exists");
+        verify(taskRepository).existsByRecurringPlanAndDueDate(plan, expectedNextDate);
+    }
+
     // --- Helpers ---
 
     private RecurringPlan createWeeklyPlan(int interval, List<Weekday> days) {
@@ -210,12 +288,24 @@ class RecurringPlanServiceTest {
         return plan;
     }
 
+    // Helper to create a plan quickly
+    private RecurringPlan createDailyPlan(LocalDateTime start, int interval) {
+        RecurringPlan plan = new RecurringPlan();
+        plan.setId(1L);
+        plan.setRecurrenceType(RecurrenceType.DAILY);
+        plan.setRecurrenceInterval(interval);
+        plan.setRecurrenceStart(start);
+        plan.setStatus(PlanStatus.ACTIVE);
+        return plan;
+    }
+
     private void setClockTo(LocalDateTime specificTime) {
         Clock specificClock = Clock.fixed(specificTime.atZone(ZONE).toInstant(), ZONE);
         service = new RecurringPlanService(
                 recurringPlanRepository,
                 targetRepository,
                 myUserDetailsService,
-                specificClock);
+                specificClock,
+                taskRepository);
     }
 }
