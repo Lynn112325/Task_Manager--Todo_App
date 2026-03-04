@@ -126,14 +126,15 @@ export function TaskScheduleFormDialog({
     // Construct payload and submit form data
     const handleSubmit = (e) => {
         if (e) e.preventDefault();
-        const id = schedule.taskTemplate.id || null;
-        console.log("schedule id " + id);
+        const id = schedule?.taskTemplate?.id || null;
+
         if (formData.recurrenceType === 'WEEKLY' && (!formData.recurrenceDays || formData.recurrenceDays.length === 0)) {
             notifications.show("Please select at least one day for weekly recurrence.", {
                 severity: 'error'
             });
             return;
         }
+        const isNone = formData.recurrenceType === 'NONE';
         const payload = {
             taskTemplate: {
                 targetId: Number(targetId),
@@ -142,11 +143,11 @@ export function TaskScheduleFormDialog({
                 priority: formData.priority
             },
             recurringPlan: {
-                status: formData.recurrenceType === 'NONE' ? 'ACTIVE' : formData.status,
+                status: isNone ? 'ACTIVE' : formData.status,
                 recurrenceType: formData.recurrenceType,
-                recurrenceInterval: formData.recurrenceInterval,
-                recurrenceDays: formData.recurrenceDays,
-                isHabit: !!formData.isHabit,
+                recurrenceInterval: isNone ? null : formData.recurrenceInterval,
+                recurrenceDays: isNone ? null : formData.recurrenceDays,
+                isHabit: isNone ? false : !!formData.isHabit,
                 recurrenceStart: `${formData.recurrenceStart}T00:00:00`,
                 recurrenceEnd: formData.isPermanent ? null : `${formData.recurrenceEnd}T23:59:59`
             }
