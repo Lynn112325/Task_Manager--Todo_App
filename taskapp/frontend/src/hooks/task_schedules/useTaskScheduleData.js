@@ -58,7 +58,7 @@ export function useTaskScheduleData({ targetId, enabled = true } = {}) {
         },
         onSuccess: (data) => {
             refreshData();
-            notifications.show(data?.systemMessage || "Status updated", {
+            notifications.show(data?.systemMessage || "Status updated.", {
                 severity: 'success',
                 autoHideDuration: 3000,
             });
@@ -75,9 +75,9 @@ export function useTaskScheduleData({ targetId, enabled = true } = {}) {
             const response = await axios.post(API_URL, data);
             return response.data.data;
         },
-        onSuccess: () => {
+        onSuccess: (data) => {
             refreshData();
-            notifications.show("Schedule created successfully", {
+            notifications.show(data?.systemMessage || "Schedule created.", {
                 severity: 'success',
                 autoHideDuration: 3000,
             });
@@ -94,8 +94,8 @@ export function useTaskScheduleData({ targetId, enabled = true } = {}) {
             const response = await axios.put(`${API_URL}/${id}`, data);
             return response.data.data;
         },
-        onSuccess: () => {
-            notifications.show("Schedule updated successfully", {
+        onSuccess: (data) => {
+            notifications.show(data?.systemMessage || "Schedule updated.", {
                 severity: 'success',
                 autoHideDuration: 3000,
             });
