@@ -11,7 +11,7 @@ export const TargetHeaderContent = ({ target }) => {
     return (
         <Stack spacing={1} sx={{ m: 1 }}>
             <Stack direction="row" spacing={1.5} alignItems="center">
-                <Typography variant="h4" fontWeight="800" sx={{ letterSpacing: '-0.5px' }}>
+                <Typography variant="h4" fontWeight="800" sx={{ letterSpacing: '-0.5px', flexShrink: 0, }}>
                     {target.title}
                 </Typography>
                 <Chip

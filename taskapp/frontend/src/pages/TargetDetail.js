@@ -102,15 +102,25 @@ export default function TargetDetail() {
                         direction="row"
                         spacing={1}
                         justifyContent={{ xs: 'flex-start', md: 'flex-end' }}
-                        sx={{ m: 1 }}
+                        sx={{
+                            width: { xs: '100%', sm: '100%', md: 'auto' },
+                        }}
                     >
                         <Button
                             startIcon={<AddIcon />}
                             variant="contained"
                             size="small"
                             onClick={handleCreateClick}
+                            sx={{
+                                '& .MuiButton-startIcon': {
+                                    margin: { xs: 0, sm: '0 8px 0 -4px' }
+                                },
+                                minWidth: { xs: '40px', sm: 'auto' }
+                            }}
                         >
-                            Add Blueprint
+                            <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>
+                                Blueprint
+                            </Box>
                         </Button>
                         <Tooltip title="Edit">
                             <IconButton size="small">
