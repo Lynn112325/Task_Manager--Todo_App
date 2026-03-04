@@ -167,7 +167,7 @@ function DashboardSidebar({
       return newIds;
     });
 
-  }, [pathname, JSON.stringify(targetPages)]);
+  }, [pathname, targetPages.map(p => p.id).join(',')]);
 
   const handlePageItemClick = React.useCallback(
     (itemId, hasNestedNavigation) => {
