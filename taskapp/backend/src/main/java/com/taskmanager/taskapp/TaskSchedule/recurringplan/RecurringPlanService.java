@@ -19,6 +19,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.taskmanager.taskapp.enums.PlanStatus;
 import com.taskmanager.taskapp.enums.RecurrenceType;
+import com.taskmanager.taskapp.enums.TaskStatus;
 import com.taskmanager.taskapp.enums.Weekday;
 import com.taskmanager.taskapp.security.MyUserDetailsService;
 import com.taskmanager.taskapp.target.TargetRepository;
@@ -121,6 +122,14 @@ public class RecurringPlanService {
                         return null;
                 }
 
+                // 2. State-driven Guard: Prevent duplicate active tasks for the same template
+                // This ensures the user only deals with one instance of a recurring task at a
+                // time.
+                if (taskRepository.existsByTaskTemplateIdAndStatus(plan.getTaskTemplate().getId(), TaskStatus.ACTIVE)) {
+                        log.info("Plan {} already has an active task. Skipping next generation.", plan.getId());
+                        return null;
+                }
+
                 // Determine the theoretical anchor point: Plan start date or today
                 LocalDate today = LocalDate.now(clock);
                 LocalDateTime todayStart = today.atStartOfDay();
@@ -134,7 +143,7 @@ public class RecurringPlanService {
                 LocalDateTime baseDate;
                 boolean allowBaseDate;
 
-                // 1. Determine Calculation Origin
+                // 3. Determine Calculation Origin
                 if (plan.getNextRunAt() != null) {
                         /*
                          * * SCENARIO A: The plan has historical runs.
@@ -155,7 +164,7 @@ public class RecurringPlanService {
                         allowBaseDate = true;
                 }
 
-                // 2. Forward-Looking Guard (Catch-up / Resume Logic)
+                // 4. Forward-Looking Guard (Catch-up / Resume Logic)
                 /*
                  * * If the calculated baseDate is in the past (e.g., the plan was paused for a
                  * long time),
@@ -170,7 +179,7 @@ public class RecurringPlanService {
                 LocalDateTime nextDate = null;
                 long interval = plan.getRecurrenceInterval();
 
-                // 3. Calculate based on Recurrence Type
+                // 5. Calculate based on Recurrence Type
                 switch (plan.getRecurrenceType()) {
                         case DAILY -> {
                                 // Simply add the interval to the base date
@@ -218,7 +227,7 @@ public class RecurringPlanService {
                                         "Unsupported recurrence type: " + plan.getRecurrenceType());
                 }
 
-                // 4. End Date Validation
+                // 6. End Date Validation
                 if (nextDate != null && plan.getRecurrenceEnd() != null) {
                         // If the calculated date is past the plan's end date, the plan is finished
                         if (nextDate.isAfter(plan.getRecurrenceEnd())) {
@@ -226,8 +235,9 @@ public class RecurringPlanService {
                         }
                 }
 
-                if (taskRepository.existsByRecurringPlanAndDueDate(plan, nextDate)) {
-                        log.info("Task already exists for plan {} at {}, skipping generation.", plan.getId(),
+                if (taskRepository.existsByTaskTemplateIdAndDueDate(plan.getTaskTemplate().getId(), nextDate)) {
+                        log.info("Task already exists for plan {} at {}, skipping generation.",
+                                        plan.getTaskTemplate().getId(),
                                         nextDate);
                         return null;
                 }
