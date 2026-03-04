@@ -306,7 +306,7 @@ public class TaskService {
                     }
 
                     // 2. Generate Next Task
-                    Task newTask = generateNextRecurringTask(plan, task.getDueDate());
+                    Task newTask = generateNextRecurringTask(plan);
                     LocalDateTime nextRun = (newTask != null) ? newTask.getDueDate() : null;
 
                     // 3. Build Dynamic User Message
@@ -344,7 +344,7 @@ public class TaskService {
     }
 
     @Transactional()
-    public Task generateNextRecurringTask(RecurringPlan plan, LocalDateTime lastDueDate) {
+    public Task generateNextRecurringTask(RecurringPlan plan) {
 
         TaskTemplate template = plan.getTaskTemplate();
         if (template == null || plan.getStatus() != PlanStatus.ACTIVE
@@ -352,7 +352,7 @@ public class TaskService {
             return null;
         }
 
-        LocalDateTime nextDueDate = recurringPlanService.calculateNextDueDate(plan, lastDueDate);
+        LocalDateTime nextDueDate = recurringPlanService.calculateNextDueDate(plan);
 
         // create new Task
         Task newTask = new Task();
