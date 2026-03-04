@@ -265,7 +265,7 @@ class RecurringPlanServiceTest {
         LocalDateTime expectedNextDate = NOW; // March 3
 
         // Mock: The repository finds that a task already exists for March 3
-        when(taskRepository.existsByRecurringPlanAndDueDate(any(), eq(expectedNextDate)))
+        when(taskRepository.existsByTaskTemplateIdAndDueDate(any(), eq(expectedNextDate)))
                 .thenReturn(true);
 
         // Act
@@ -273,7 +273,7 @@ class RecurringPlanServiceTest {
 
         // Assert
         assertNull(result, "Should return null because task already exists");
-        verify(taskRepository).existsByRecurringPlanAndDueDate(plan, expectedNextDate);
+        verify(taskRepository).existsByTaskTemplateIdAndDueDate(plan.getId(), expectedNextDate);
     }
 
     // --- Helpers ---
