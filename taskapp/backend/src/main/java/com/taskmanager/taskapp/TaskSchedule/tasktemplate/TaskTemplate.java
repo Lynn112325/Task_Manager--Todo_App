@@ -56,6 +56,7 @@ public class TaskTemplate {
      */
     @OneToOne(mappedBy = "taskTemplate", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private RecurringPlan recurringPlan;
+    
 
     @OneToMany(mappedBy = "taskTemplate", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Task> tasks;

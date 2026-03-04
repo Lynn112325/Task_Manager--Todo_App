@@ -22,6 +22,7 @@ import com.taskmanager.taskapp.taskschedule.recurringplan.RecurringPlanRepositor
 import com.taskmanager.taskapp.taskschedule.recurringplan.RecurringPlanService;
 import com.taskmanager.taskapp.taskschedule.tasktemplate.TaskTemplate;
 import com.taskmanager.taskapp.taskschedule.tasktemplate.TaskTemplateDto;
+import com.taskmanager.taskapp.taskschedule.tasktemplate.TaskTemplateRepository;
 import com.taskmanager.taskapp.taskschedule.tasktemplate.TaskTemplateService;
 import com.taskmanager.taskapp.user.User;
 
@@ -40,6 +41,7 @@ public class TaskScheduleService {
     private final RecurringPlanService recurringPlanService;
     private final TaskTemplateService taskTemplateService;
     private final TaskScheduleRepository taskScheduleRepository;
+    private final TaskTemplateRepository taskTemplateRepository;
     private final RecurringPlanRepository recurringPlanRepository;
     private final TargetRepository targetRepository;
     private final TaskService taskService;
@@ -154,6 +156,8 @@ public class TaskScheduleService {
         Target target = targetRepository.findById(targetId)
                 .orElseThrow(() -> new EntityNotFoundException("Target not found with id: " + targetId));
         template.setTarget(target);
+        template.setRecurringPlan(plan);
+        TaskTemplate savedTemplate = taskTemplateRepository.save(template);
 
         // Map plan fields
         var planDto = dto.recurringPlan();
@@ -167,27 +171,22 @@ public class TaskScheduleService {
         if (planDto.status() != null) {
             plan.setStatus(planDto.status());
         }
-
-        if (plan.getTaskTemplate() == null) {
-            plan.setTaskTemplate(template);
-        }
-
-        RecurringPlan savedPlan = recurringPlanRepository.save(plan);
+        plan.setTaskTemplate(savedTemplate);
 
         // Define header based on whether it's a new record or an update
         String header = (existingId == null) ? "Schedule created." : "Schedule updated.";
         String message;
 
         // 1. If it's a one-time task (No recurrence)
-        if (savedPlan.getRecurrenceType() == RecurrenceType.NONE) {
+        if (plan.getRecurrenceType() == RecurrenceType.NONE) {
             message = header;
-            return Map.of("id", savedPlan.getId(), "systemMessage", message);
+            return Map.of("id", plan.getId(), "systemMessage", message);
         }
         // 2. If the plan is ACTIVE
-        else if (savedPlan.getStatus() == PlanStatus.ACTIVE) {
+        else if (plan.getStatus() == PlanStatus.ACTIVE) {
             // Generate task only if it's a new plan or transitioning from PAUSED
             if (oldStatus == null || oldStatus != PlanStatus.ACTIVE) {
-                Task newTask = taskService.generateNextRecurringTask(savedPlan);
+                Task newTask = taskService.generateNextRecurringTask(plan);
                 // Returns a message with the formatted date (e.g., "Schedule created. Next
                 // session scheduled for...")
                 message = getSuccessMessage(header, newTask);
@@ -207,7 +206,7 @@ public class TaskScheduleService {
             }
         }
 
-        return Map.of("id", savedPlan.getId(), "systemMessage", message);
+        return Map.of("id", savedTemplate.getId(), "systemMessage", message);
     }
 
     /**

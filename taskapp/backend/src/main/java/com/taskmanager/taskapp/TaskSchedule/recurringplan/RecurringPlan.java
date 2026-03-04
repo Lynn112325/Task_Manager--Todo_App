@@ -11,16 +11,16 @@ import com.taskmanager.taskapp.enums.RecurrenceType;
 import com.taskmanager.taskapp.enums.Weekday;
 import com.taskmanager.taskapp.taskschedule.tasktemplate.TaskTemplate;
 
+import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.MapsId;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -37,10 +37,10 @@ import lombok.NoArgsConstructor;
 public class RecurringPlan {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @OneToOne(fetch = FetchType.LAZY)
+    @MapsId
     @JoinColumn(name = "task_template_id")
     private TaskTemplate taskTemplate;
 
@@ -58,6 +58,7 @@ public class RecurringPlan {
 
     @ElementCollection
     @Enumerated(EnumType.STRING)
+    @CollectionTable(name = "recurring_plan_recurrence_days", joinColumns = @JoinColumn(name = "recurring_plan_id"))
     private List<Weekday> recurrenceDays;
 
     private LocalDateTime recurrenceStart;
