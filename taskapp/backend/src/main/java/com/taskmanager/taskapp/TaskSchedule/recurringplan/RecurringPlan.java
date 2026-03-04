@@ -82,4 +82,15 @@ public class RecurringPlan {
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 
+    public boolean shouldGenerateTask(PlanStatus oldStatus, RecurrenceType oldType) {
+        if (this.status != PlanStatus.ACTIVE)
+            return false;
+        if (this.recurrenceType == RecurrenceType.NONE)
+            return false;
+
+        boolean isActivating = (oldStatus == null || oldStatus != PlanStatus.ACTIVE);
+        boolean isUpgradingToRecurring = (oldType == RecurrenceType.NONE && this.recurrenceType != RecurrenceType.NONE);
+
+        return isActivating || isUpgradingToRecurring;
+    }
 }

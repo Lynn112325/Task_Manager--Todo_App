@@ -130,17 +130,20 @@ public class TaskScheduleService {
         RecurringPlan plan;
         TaskTemplate template;
         PlanStatus oldStatus;
+        RecurrenceType oldType;
 
         if (existingId != null) {
             plan = recurringPlanRepository.findById(existingId)
                     .orElseThrow(() -> new EntityNotFoundException("Schedule not found with id: " + existingId));
             template = plan.getTaskTemplate();
             oldStatus = plan.getStatus();
+            oldType = plan.getRecurrenceType();
         } else {
             plan = new RecurringPlan();
             template = new TaskTemplate();
             template.setUser(user);
             oldStatus = null;
+            oldType = null;
         }
 
         // Map template fields
@@ -173,40 +176,29 @@ public class TaskScheduleService {
         }
         plan.setTaskTemplate(savedTemplate);
 
-        // Define header based on whether it's a new record or an update
-        String header = (existingId == null) ? "Schedule created." : "Schedule updated.";
-        String message;
-
-        // 1. If it's a one-time task (No recurrence)
-        if (plan.getRecurrenceType() == RecurrenceType.NONE) {
-            message = header;
-            return Map.of("id", plan.getId(), "systemMessage", message);
-        }
-        // 2. If the plan is ACTIVE
-        else if (plan.getStatus() == PlanStatus.ACTIVE) {
-            // Generate task only if it's a new plan or transitioning from PAUSED
-            if (oldStatus == null || oldStatus != PlanStatus.ACTIVE) {
-                Task newTask = taskService.generateNextRecurringTask(plan);
-                // Returns a message with the formatted date (e.g., "Schedule created. Next
-                // session scheduled for...")
-                message = getSuccessMessage(header, newTask);
-            } else {
-                // Just a normal update for an already active plan
-                message = header;
-            }
-        }
-        // 3. If the plan is PAUSED or other non-active status
-        else {
-            if (existingId != null) {
-                // CASE: User paused an existing schedule
-                message = header + " Recurrence paused. Existing tasks remain in your list.";
-            } else {
-                // CASE: User created a new schedule but set it to PAUSED immediately
-                message = header + " Recurrence is currently disabled.";
-            }
-        }
+        String message = determineSystemMessage(plan, oldStatus, oldType, existingId == null);
 
         return Map.of("id", savedTemplate.getId(), "systemMessage", message);
+    }
+
+    private String determineSystemMessage(RecurringPlan plan, PlanStatus oldStatus, RecurrenceType oldType,
+            boolean isNew) {
+        String header = isNew ? "Schedule created." : "Schedule updated.";
+
+        if (plan.getRecurrenceType() == RecurrenceType.NONE) {
+            return header;
+        }
+
+        if (plan.shouldGenerateTask(oldStatus, oldType)) {
+            Task newTask = taskService.generateNextRecurringTask(plan);
+            return getSuccessMessage(header, newTask);
+        }
+
+        if (plan.getStatus() == PlanStatus.PAUSED) {
+            return header + (isNew ? " Recurrence is currently disabled." : " Recurrence paused.");
+        }
+
+        return header;
     }
 
     /**
