@@ -13,22 +13,28 @@ import useNotifications from "../../hooks/useNotifications/useNotifications";
 import { formatFrequency } from '../../utils/planFormatters';
 
 /**
- * A dialog form component for creating or editing task schedules (blueprints).
- * Handles task details, recurrence patterns, and habit tracking settings.
+ * TaskScheduleFormDialog Component
+ * * A specialized dialog for creating and managing "Task Blueprints" (recurring schedules).
+ * It supports title/description editing, priority levels, and complex recurrence logic 
+ * including daily, weekly, and monthly patterns.
  *
- * @component
  * @param {Object} props
- * @param {boolean} props.open - Whether the dialog is currently visible.
- * @param {Function} props.onClose - Callback function to close the dialog.
- * @param {Function} props.onSave - Callback function invoked when saving the form data.
- * @param {boolean} [props.isProcessing=false] - Indicates if a save operation is in progress (disables button).
- * @param {string|number} [props.targetId] - The ID of the target object the task is linked to (e.g., project ID).
- * @param {Object} [props.schedule] - The existing schedule data to edit. If null, form acts as "Create".
+ * @param {boolean} props.open - Controls the visibility of the dialog.
+ * @param {Function} props.onClose - Function to trigger when the dialog is dismissed.
+ * @param {Object} [props.schedule] - Existing schedule data for edit mode; if null, the dialog operates in "Create" mode.
+ * @param {Function} props.onSave - Callback function invoked with (id, payload) on form submission.
+ * @param {boolean} [props.isProcessing=false] - Loading state for the submission button.
+ * @param {string|number} [props.targetId] - The ID of the target (project/goal) this task belongs to.
+ * @param {boolean} [props.skipInitialGeneration=false] - Flag to prevent the backend from creating the first task instance immediately.
  */
 export function TaskScheduleFormDialog({
     open, onClose, schedule, onSave, isProcessing, targetId: initialTargetId, skipInitialGeneration = false
 }) {
 
+    /**
+     * Fetch available targets based on the task template type.
+     * This allows users to re-assign the blueprint to a different project/goal.
+     */
     const { targets, isLoading: targetsLoading } = useTarget(
         schedule?.taskTemplate?.type || null
     );
@@ -36,7 +42,9 @@ export function TaskScheduleFormDialog({
     const isEditMode = Boolean(schedule?.taskTemplate?.id);
     const notifications = useNotifications();
 
-    // Initial state for a new task blueprint
+    /** * Default values for a new task blueprint.
+     * Initialized with current date and 'ACTIVE' status.
+     */
     const defaultFormState = {
         targetId: initialTargetId || '',
         title: '',
@@ -47,14 +55,17 @@ export function TaskScheduleFormDialog({
         recurrenceInterval: 1,
         recurrenceDays: [],
         isHabit: false,
-        recurrenceStart: new Date().toISOString().split('T')[0], // YYYY-MM-DD
+        recurrenceStart: new Date().toISOString().split('T')[0], // Standard YYYY-MM-DD format
         recurrenceEnd: '',
         isPermanent: true
     };
 
     const [formData, setFormData] = useState(defaultFormState);
 
-    // Load schedule data when dialog opens in edit mode
+    /**
+     * Effect Hook: Synchronizes form state with the 'schedule' prop.
+     * Triggers when the dialog opens or the data source changes.
+     */
     useEffect(() => {
         if (open && schedule) {
             const { taskTemplate, recurringPlan } = schedule;
@@ -78,6 +89,7 @@ export function TaskScheduleFormDialog({
                 isPermanent: !recurringPlan?.recurrenceEnd
             });
         } else if (open && !schedule) {
+            // Reset to defaults for new blueprint creation
             setFormData({
                 ...defaultFormState,
                 targetId: initialTargetId || ''
@@ -86,7 +98,10 @@ export function TaskScheduleFormDialog({
 
     }, [open, schedule]);
 
-    // Handle form input changes and dependencies
+    /**
+     * Handles generic input updates.
+     * Includes business logic: Auto-enables Habit Tracking when a recurring type is selected.
+     */
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
         setFormData(prev => {
@@ -94,22 +109,28 @@ export function TaskScheduleFormDialog({
                 ...prev,
                 [name]: type === 'checkbox' ? checked : value
             };
+
+            // Validation: Prevent interval from going below 1
             if (name === 'recurrenceInterval' && value < 1 && value !== '') {
-                return;
+                return prev;
             }
-            // Dependency Logic: Auto-update habit tracking based on recurrence type
+
+            // Dependency Logic: Map habit tracking defaults to recurrence type
             if (name === 'recurrenceType') {
                 if (value === 'NONE') {
-                    nextState.isHabit = false; // Disable habits for one-off tasks
+                    nextState.isHabit = false;
                 } else {
-                    nextState.isHabit = true;  // Default enable habits for recurring tasks
+                    nextState.isHabit = true;
                 }
             }
             return nextState;
         });
     };
 
-    // Reset form to initial state or revert edits
+    /**
+     * Resets the form state.
+     * Reverts to the original 'schedule' values if in edit mode, otherwise clears the form.
+     */
     const handleReset = () => {
         if (isEditMode) {
             const { taskTemplate, recurringPlan } = schedule;
@@ -131,24 +152,32 @@ export function TaskScheduleFormDialog({
             setFormData({ ...defaultFormState, targetId: initialTargetId || '' });
         }
     };
+
+    // Debug log for checking internal task generation flags
     console.log(skipInitialGeneration);
 
-    // Construct payload and submit form data
+    /**
+     * Validates and submits the form data.
+     * Constructs a structured payload matching the backend DTO.
+     */
     const handleSubmit = (e) => {
         if (e) e.preventDefault();
         const id = schedule?.taskTemplate?.id || null;
 
+        // Validation: Target assignment is mandatory
         if (!formData.targetId) {
             notifications.show("Please select a target for this blueprint.", { severity: 'error' });
             return;
         }
 
+        // Validation: Weekly schedules must have at least one day selected
         if (formData.recurrenceType === 'WEEKLY' && (!formData.recurrenceDays || formData.recurrenceDays.length === 0)) {
             notifications.show("Please select at least one day for weekly recurrence.", {
                 severity: 'error'
             });
             return;
         }
+
         const isNone = formData.recurrenceType === 'NONE';
         const payload = {
             taskTemplate: {
@@ -174,7 +203,7 @@ export function TaskScheduleFormDialog({
     return (
         <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
             <form onSubmit={handleSubmit}>
-                {/* Dialog Header with dynamic title and status summary */}
+                {/* Header: Displays mode and current frequency summary */}
                 <DialogTitle sx={{ fontWeight: 'bold', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <Typography variant="h6" component="span" sx={{ fontWeight: 'bold' }}>
                         {isEditMode ? 'Edit Blueprint' : 'Create New Blueprint'}
@@ -195,6 +224,7 @@ export function TaskScheduleFormDialog({
 
                 <DialogContent dividers>
                     <Stack spacing={3} sx={{ mt: 1 }}>
+                        {/* Target Selection: Only visible if a fixed initialTargetId is not provided */}
                         {(!initialTargetId) && (
                             <FormControl fullWidth required>
                                 <InputLabel>Assign to Target</InputLabel>
@@ -250,6 +280,7 @@ export function TaskScheduleFormDialog({
                                 </Select>
                             </FormControl>
 
+                            {/* Plan Status: Only applicable for recurring tasks */}
                             {formData.recurrenceType !== 'NONE' && (
                                 <FormControl fullWidth required>
                                     <InputLabel id="status-label">Plan Status</InputLabel>
@@ -303,7 +334,7 @@ export function TaskScheduleFormDialog({
                             )}
                         </Stack>
 
-                        {/* Day Selection for Weekly Recurrence */}
+                        {/* Weekly Day Selection */}
                         {formData.recurrenceType === 'WEEKLY' && (
                             <FormControl fullWidth>
                                 <InputLabel>Repeat on Days</InputLabel>
@@ -323,7 +354,7 @@ export function TaskScheduleFormDialog({
                             </FormControl>
                         )}
 
-                        {/* Date Interval Configuration */}
+                        {/* Dates: Start Date (for all) and End Date (if not permanent) */}
                         {formData.recurrenceType !== 'NONE' && (
                             <Stack spacing={2}>
                                 <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
@@ -355,7 +386,7 @@ export function TaskScheduleFormDialog({
                                     )}
                                 </Stack>
 
-                                {/* Permanent Task Switch and Info */}
+                                {/* Permanent Switch: Disables the End Date requirement */}
                                 <Stack
                                     direction={{ xs: 'column', sm: 'row' }}
                                     alignItems={{ xs: 'flex-start', sm: 'center' }}
@@ -390,7 +421,7 @@ export function TaskScheduleFormDialog({
                             </Stack>
                         )}
 
-                        {/* Habit Tracking Configuration */}
+                        {/* Habit Tracking Toggle: Changes how the task is completed in the dashboard */}
                         {formData.recurrenceType !== 'NONE' && (
                             <FormControlLabel
                                 control={<Checkbox checked={formData.isHabit} onChange={handleChange} name="isHabit" />}
@@ -400,7 +431,6 @@ export function TaskScheduleFormDialog({
                     </Stack>
                 </DialogContent>
 
-                {/* Dialog Footer Actions */}
                 <DialogActions sx={{ px: 3, py: 2 }}>
                     <Button variant="outlined" color="inherit" onClick={handleReset} sx={{ mr: 'auto' }}>
                         <RefreshIcon />
@@ -417,7 +447,9 @@ export function TaskScheduleFormDialog({
     );
 }
 
-// PropType definitions for runtime validation
+/**
+ * PropType Validation
+ */
 TaskScheduleFormDialog.propTypes = {
     open: PropTypes.bool.isRequired,
     onClose: PropTypes.func.isRequired,
