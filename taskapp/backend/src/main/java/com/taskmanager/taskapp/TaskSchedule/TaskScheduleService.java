@@ -63,7 +63,7 @@ public class TaskScheduleService {
                 ? recurringPlanService.toDto(tt.getRecurringPlan())
                 : null;
 
-        return new TaskScheduleDto(ttDto, rpDto);
+        return new TaskScheduleDto(ttDto, rpDto, null);
     }
 
     private String getSuccessMessage(String header, Task newTask) {
@@ -131,6 +131,7 @@ public class TaskScheduleService {
         TaskTemplate template;
         PlanStatus oldStatus;
         RecurrenceType oldType;
+        Boolean skipInitialGeneration = dto.skipInitialGeneration();
 
         if (existingId != null) {
             plan = recurringPlanRepository.findById(existingId)
@@ -159,8 +160,6 @@ public class TaskScheduleService {
         Target target = targetRepository.findById(targetId)
                 .orElseThrow(() -> new EntityNotFoundException("Target not found with id: " + targetId));
         template.setTarget(target);
-        template.setRecurringPlan(plan);
-        TaskTemplate savedTemplate = taskTemplateRepository.save(template);
 
         // Map plan fields
         var planDto = dto.recurringPlan();
@@ -171,17 +170,25 @@ public class TaskScheduleService {
         plan.setRecurrenceEnd(planDto.recurrenceEnd());
         plan.setIsHabit(planDto.isHabit());
 
+        plan.setTaskTemplate(template);
+        template.setRecurringPlan(plan);
+        if (existingId == null) {
+            taskTemplateRepository.saveAndFlush(template);
+            plan.setId(template.getId());
+        }
+        RecurringPlan savedPlan = recurringPlanRepository.save(plan);
+
         if (planDto.status() != null) {
             plan.setStatus(planDto.status());
         }
-        plan.setTaskTemplate(savedTemplate);
 
-        String message = determineSystemMessage(plan, oldStatus, oldType, existingId == null);
+        String message = determineSystemMessage(plan, oldStatus, oldType, skipInitialGeneration, existingId == null);
 
-        return Map.of("id", savedTemplate.getId(), "systemMessage", message);
+        return Map.of("id", savedPlan.getId(), "systemMessage", message);
     }
 
     private String determineSystemMessage(RecurringPlan plan, PlanStatus oldStatus, RecurrenceType oldType,
+            Boolean skipInitialGeneration,
             boolean isNew) {
         String header = isNew ? "Schedule created." : "Schedule updated.";
 
@@ -189,7 +196,7 @@ public class TaskScheduleService {
             return header;
         }
 
-        if (plan.shouldGenerateTask(oldStatus, oldType)) {
+        if (plan.shouldGenerateTask(oldStatus, oldType, skipInitialGeneration)) {
             Task newTask = taskService.generateNextRecurringTask(plan);
             return getSuccessMessage(header, newTask);
         }
