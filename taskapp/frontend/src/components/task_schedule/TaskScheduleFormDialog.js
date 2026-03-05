@@ -8,6 +8,7 @@ import {
 import dayjs from 'dayjs';
 import PropTypes from 'prop-types';
 import { useEffect, useState } from 'react';
+import { useTarget } from "../../hooks/target/useTarget";
 import useNotifications from "../../hooks/useNotifications/useNotifications";
 import { formatFrequency } from '../../utils/planFormatters';
 
@@ -25,13 +26,19 @@ import { formatFrequency } from '../../utils/planFormatters';
  * @param {Object} [props.schedule] - The existing schedule data to edit. If null, form acts as "Create".
  */
 export function TaskScheduleFormDialog({
-    open, onClose, schedule, onSave, isProcessing, targetId
+    open, onClose, schedule, onSave, isProcessing, targetId: initialTargetId, skipInitialGeneration = false
 }) {
-    const isEditMode = Boolean(schedule);
+
+    const { targets, isLoading: targetsLoading } = useTarget(
+        schedule?.taskTemplate?.type || null
+    );
+
+    const isEditMode = Boolean(schedule?.taskTemplate?.id);
     const notifications = useNotifications();
 
     // Initial state for a new task blueprint
     const defaultFormState = {
+        targetId: initialTargetId || '',
         title: '',
         description: '',
         priority: 1,
@@ -50,30 +57,31 @@ export function TaskScheduleFormDialog({
     // Load schedule data when dialog opens in edit mode
     useEffect(() => {
         if (open && schedule) {
-            if (isEditMode) {
-                const { taskTemplate, recurringPlan } = schedule;
-                setFormData({
-                    title: taskTemplate?.title || '',
-                    description: taskTemplate?.description || '',
-                    priority: taskTemplate?.priority || 1,
-                    status: recurringPlan?.status,
-                    recurrenceType: recurringPlan?.recurrenceType || 'NONE',
-                    recurrenceInterval: recurringPlan?.recurrenceInterval || 1,
-                    recurrenceDays: recurringPlan?.recurrenceDays || [],
-                    isHabit: recurringPlan?.isHabit || false,
-                    recurrenceStart: recurringPlan?.recurrenceStart
-                        ? dayjs(recurringPlan.recurrenceStart).format('YYYY-MM-DD')
-                        : defaultFormState.recurrenceStart,
+            const { taskTemplate, recurringPlan } = schedule;
+            setFormData({
+                targetId: taskTemplate?.targetId || initialTargetId || '',
+                title: taskTemplate?.title || '',
+                description: taskTemplate?.description || '',
+                priority: taskTemplate?.priority || 1,
+                status: recurringPlan?.status || "ACTIVE",
+                recurrenceType: recurringPlan?.recurrenceType || 'NONE',
+                recurrenceInterval: recurringPlan?.recurrenceInterval || 1,
+                recurrenceDays: recurringPlan?.recurrenceDays || [],
+                isHabit: recurringPlan?.isHabit || false,
+                recurrenceStart: recurringPlan?.recurrenceStart
+                    ? dayjs(recurringPlan.recurrenceStart).format('YYYY-MM-DD')
+                    : defaultFormState.recurrenceStart,
 
-                    recurrenceEnd: recurringPlan?.recurrenceEnd
-                        ? dayjs(recurringPlan.recurrenceEnd).format('YYYY-MM-DD')
-                        : '',
-                    isPermanent: !recurringPlan?.recurrenceEnd
-                });
-            } else {
-                setFormData(defaultFormState);
-            }
-
+                recurrenceEnd: recurringPlan?.recurrenceEnd
+                    ? dayjs(recurringPlan.recurrenceEnd).format('YYYY-MM-DD')
+                    : '',
+                isPermanent: !recurringPlan?.recurrenceEnd
+            });
+        } else if (open && !schedule) {
+            setFormData({
+                ...defaultFormState,
+                targetId: initialTargetId || ''
+            });
         }
 
     }, [open, schedule]);
@@ -105,6 +113,7 @@ export function TaskScheduleFormDialog({
     const handleReset = () => {
         if (isEditMode) {
             const { taskTemplate, recurringPlan } = schedule;
+            setFormData(prev => ({ ...prev, targetId: schedule.taskTemplate.targetId }));
             setFormData({
                 title: taskTemplate?.title || '',
                 description: taskTemplate?.description || '',
@@ -119,14 +128,20 @@ export function TaskScheduleFormDialog({
                 isPermanent: !recurringPlan?.endDate
             });
         } else {
-            setFormData(defaultFormState);
+            setFormData({ ...defaultFormState, targetId: initialTargetId || '' });
         }
     };
+    console.log(skipInitialGeneration);
 
     // Construct payload and submit form data
     const handleSubmit = (e) => {
         if (e) e.preventDefault();
         const id = schedule?.taskTemplate?.id || null;
+
+        if (!formData.targetId) {
+            notifications.show("Please select a target for this blueprint.", { severity: 'error' });
+            return;
+        }
 
         if (formData.recurrenceType === 'WEEKLY' && (!formData.recurrenceDays || formData.recurrenceDays.length === 0)) {
             notifications.show("Please select at least one day for weekly recurrence.", {
@@ -137,7 +152,7 @@ export function TaskScheduleFormDialog({
         const isNone = formData.recurrenceType === 'NONE';
         const payload = {
             taskTemplate: {
-                targetId: Number(targetId),
+                targetId: Number(formData.targetId),
                 title: formData.title?.trim(),
                 description: formData.description?.trim(),
                 priority: formData.priority
@@ -150,7 +165,8 @@ export function TaskScheduleFormDialog({
                 isHabit: isNone ? false : !!formData.isHabit,
                 recurrenceStart: `${formData.recurrenceStart}T00:00:00`,
                 recurrenceEnd: formData.isPermanent ? null : `${formData.recurrenceEnd}T23:59:59`
-            }
+            },
+            skipInitialGeneration: skipInitialGeneration
         };
         onSave(id, payload);
     };
@@ -178,6 +194,28 @@ export function TaskScheduleFormDialog({
                 </DialogTitle>
 
                 <DialogContent dividers>
+                    <Stack spacing={3} sx={{ mt: 1 }}>
+                        {(!initialTargetId) && (
+                            <FormControl fullWidth required>
+                                <InputLabel>Assign to Target</InputLabel>
+                                <Select
+                                    name="targetId"
+                                    value={formData.targetId}
+                                    onChange={handleChange}
+                                    label="Assign to Target"
+                                >
+                                    {targetsLoading ? (
+                                        <MenuItem disabled>Loading targets...</MenuItem>
+                                    ) : (
+                                        targets?.map(t => (
+                                            <MenuItem key={t.id} value={t.id}>{t.title}</MenuItem>
+                                        ))
+                                    )}
+                                </Select>
+                            </FormControl>
+                        )}
+                    </Stack>
+                    <Divider />
                     <Stack spacing={3} sx={{ mt: 1 }}>
                         <Typography variant="subtitle2" color="primary">Basic Info</Typography>
 
@@ -385,7 +423,7 @@ TaskScheduleFormDialog.propTypes = {
     onClose: PropTypes.func.isRequired,
     onSave: PropTypes.func.isRequired,
     isProcessing: PropTypes.bool,
-    targetId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+    targetId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     schedule: PropTypes.shape({
         id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
         taskTemplate: PropTypes.shape({
