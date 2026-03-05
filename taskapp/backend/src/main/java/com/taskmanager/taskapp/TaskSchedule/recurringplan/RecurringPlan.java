@@ -41,7 +41,7 @@ public class RecurringPlan {
 
     @OneToOne(fetch = FetchType.LAZY)
     @MapsId
-    @JoinColumn(name = "task_template_id")
+    @JoinColumn(name = "id")
     private TaskTemplate taskTemplate;
 
     // 你可以為 recurring_plans 增加一個 is_workflow (bit) 欄位：
@@ -82,7 +82,9 @@ public class RecurringPlan {
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 
-    public boolean shouldGenerateTask(PlanStatus oldStatus, RecurrenceType oldType) {
+    public boolean shouldGenerateTask(PlanStatus oldStatus, RecurrenceType oldType, Boolean skipInitialGeneration) {
+        if (skipInitialGeneration == true)
+            return false;
         if (this.status != PlanStatus.ACTIVE)
             return false;
         if (this.recurrenceType == RecurrenceType.NONE)
