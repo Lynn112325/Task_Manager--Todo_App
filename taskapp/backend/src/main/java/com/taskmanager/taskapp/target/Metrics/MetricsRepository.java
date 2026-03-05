@@ -33,7 +33,7 @@ public interface MetricsRepository extends JpaRepository<Task, Long> {
         @Query(value = """
                         SELECT COUNT(rp.id)
                         FROM recurring_plans rp
-                        JOIN task_templates tt ON rp.task_template_id = tt.id
+                        JOIN task_templates tt ON rp.id = tt.id
                         WHERE tt.user_id = :userId
                         AND rp.status = 'ACTIVE'
                         AND (:targetId IS NULL OR tt.target_id = :targetId)
