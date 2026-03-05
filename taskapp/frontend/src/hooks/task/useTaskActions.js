@@ -180,7 +180,8 @@ export function useTaskActions() {
         // cancelTaskAction,
         createTaskAction,
         editTaskAction,
-        refreshAction
+        refreshAction,
+        updateTaskMutation
     };
 }
 
