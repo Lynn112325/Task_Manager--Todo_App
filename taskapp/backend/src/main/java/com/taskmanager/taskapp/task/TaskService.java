@@ -26,9 +26,11 @@ import com.taskmanager.taskapp.taskschedule.recurringplan.RecurringPlan;
 import com.taskmanager.taskapp.taskschedule.recurringplan.RecurringPlanRepository;
 import com.taskmanager.taskapp.taskschedule.recurringplan.RecurringPlanService;
 import com.taskmanager.taskapp.taskschedule.tasktemplate.TaskTemplate;
+import com.taskmanager.taskapp.taskschedule.tasktemplate.TaskTemplateRepository;
 import com.taskmanager.taskapp.user.User;
 import com.taskmanager.taskapp.user.UserRepository;
 
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -41,6 +43,7 @@ public class TaskService {
     private final RecurringPlanService recurringPlanService;
     private final RecurringPlanRepository recurringPlanRepository;
     private final HabitLogRepository habitLogRepository;
+    private final TaskTemplateRepository taskTemplateRepository;
 
     // transform Task to TaskDto
     private TaskDto toDto(Task task) {
@@ -68,6 +71,13 @@ public class TaskService {
         Optional.ofNullable(updates.type()).ifPresent(existingTask::setType);
         Optional.ofNullable(updates.startDate()).ifPresent(existingTask::setStartDate);
         Optional.ofNullable(updates.dueDate()).ifPresent(existingTask::setDueDate);
+        if (updates.templateId() != null) {
+            TaskTemplate template = taskTemplateRepository.findById(updates.templateId())
+                    .orElseThrow(
+                            () -> new EntityNotFoundException("Template not found with id: " + updates.templateId()));
+
+            existingTask.setTaskTemplate(template);
+        }
         return existingTask;
     }
 
