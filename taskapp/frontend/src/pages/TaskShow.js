@@ -20,8 +20,11 @@ import { useLocation } from "react-router-dom";
 import HabitStatsCard from "../components/HabitStatsCard.js";
 import PageContainer from "../components/PageContainer";
 import RecurringPlanCard from "../components/RecurringPlanCard.js";
+import { TaskScheduleFormDialog } from '../components/task_schedule/TaskScheduleFormDialog';
 import TaskCard from '../components/TaskCard.js';
 import { useTaskDetail } from "../hooks/task/useTaskDetail.js";
+import { useTasks } from "../hooks/task/useTasks.js";
+import { useTaskSchedules } from '../hooks/task_schedules/useTaskSchedules';
 
 const STATUS_CONFIG = {
   ACTIVE: {
@@ -46,21 +49,71 @@ export default function TaskShow() {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const { updateTaskMutation } = useTasks();
+
   const {
     detail: taskData,
     isLoading,
-    isError,
-    error
+    error,
+    refresh
   } = useTaskDetail(taskId);
-
 
   const task = taskData?.task;
   const recurringPlan = taskData?.recurringPlan;
   const habitStats = taskData?.habitStats;
   const targetTitle = taskData?.target?.title;
+  const targetId = taskData?.target?.id;
+  const taskTemplate = taskData?.taskTemplate;
+  const skipInitialGeneration = (task?.status == "ACTIVE");
   const config = task?.status
     ? (STATUS_CONFIG[task.status] || STATUS_CONFIG.ACTIVE)
     : STATUS_CONFIG.ACTIVE;
+
+  const schedule = React.useMemo(() => {
+    if (isLoading || !taskData) return null;
+
+    return {
+      taskTemplate: {
+        title: taskTemplate?.title || task?.title || '',
+        type: task?.type,
+        description: taskTemplate?.description || task?.description || '',
+        priority: taskTemplate?.priority || task?.priority || 1,
+      },
+      recurringPlan: null
+    };
+  }, [isLoading, taskData, taskTemplate, task]);
+
+  const {
+    // DB Action
+    saveAction,
+    isUpdating
+  } = useTaskSchedules({ targetId }, false);
+
+  // Dialog State
+  const [createDialogOpen, setCreateDialogOpen] = React.useState(false);
+
+  const handleCreateClick = () => {
+    setCreateDialogOpen(true);
+  };
+
+  const handleSave = async (id, data) => {
+    // create plan
+    const success = await saveAction(id, data);
+    if (success) {
+      setCreateDialogOpen(false);
+      const newTemplateId = success.id;
+      try {
+        await updateTaskMutation.mutateAsync({
+          id: task.id,
+          data: { ...task, templateId: newTemplateId }
+        });
+        console.log('updateTaskMutation');
+        refresh();
+      } catch (err) {
+        console.error("Silent update failed:", err);
+      }
+    }
+  };
 
   const handleTaskEdit = React.useCallback(() => {
     if (!taskData?.task) return;
@@ -87,7 +140,7 @@ export default function TaskShow() {
   }, [navigate, fromPath]);
 
   const renderShow = React.useMemo(() => {
-    if (!taskData && isLoading) {
+    if (!taskData && isLoading && targetId && task.status) {
       return (
         <Box
           sx={{
@@ -187,22 +240,33 @@ export default function TaskShow() {
       actions={
         <Stack direction="row" alignItems="center" spacing={1}>
 
-          {/* if no template id, show this btn (unimplemented) */}
-          <Tooltip
-            title="Reuse this task to quickly create repeated or scheduled tasks"
-          >
-            <Button startIcon={<RepeatIcon />}
-              variant="contained"
-            // onClick={handleTemplateAdd}
+          {!isLoading && !taskData?.recurringPlan ? (
+            <Tooltip
+              title="Reuse this task to quickly create repeated or scheduled tasks"
             >
-              Save as Template
-            </Button>
-          </Tooltip>
+              <Button startIcon={<RepeatIcon />}
+                variant="contained"
+                onClick={handleCreateClick}
+              >
+                Save as Blueprint
+              </Button>
+            </Tooltip>
+          ) : null}
 
         </ Stack>
       }
     >
       <Box sx={{ display: "flex", flex: 1, width: "100%" }}>{renderShow}</Box>
+      {/* The Hidden Dialog */}
+      <TaskScheduleFormDialog
+        open={createDialogOpen}
+        onClose={() => setCreateDialogOpen(false)}
+        schedule={schedule}
+        onSave={(id, payload) => handleSave(id, payload)}
+        isUpdating={isUpdating}
+        targetId={targetId}
+        skipInitialGeneration={skipInitialGeneration}
+      />
     </PageContainer>
   );
 
