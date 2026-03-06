@@ -16,8 +16,7 @@ import com.taskmanager.taskapp.enums.HabitLogStatus;
 import com.taskmanager.taskapp.enums.PlanStatus;
 import com.taskmanager.taskapp.enums.RecurrenceType;
 import com.taskmanager.taskapp.enums.TaskStatus;
-import com.taskmanager.taskapp.habitlog.HabitLog;
-import com.taskmanager.taskapp.habitlog.HabitLogRepository;
+import com.taskmanager.taskapp.habitlog.HabitLogService;
 import com.taskmanager.taskapp.security.MyUserDetailsService;
 import com.taskmanager.taskapp.task.TaskRepository.DailyTaskStats;
 import com.taskmanager.taskapp.task.dto.TaskDto;
@@ -44,7 +43,8 @@ public class TaskService {
     private final MyUserDetailsService myUserDetailsService;
     private final RecurringPlanService recurringPlanService;
     private final RecurringPlanRepository recurringPlanRepository;
-    private final HabitLogRepository habitLogRepository;
+    // private final HabitLogRepository habitLogRepository;
+    private final HabitLogService habitLogService;
     private final TaskTemplateRepository taskTemplateRepository;
 
     // transform Task to TaskDto
@@ -175,8 +175,9 @@ public class TaskService {
         // message when no status change, just update other fields
         TaskProcessResult taskProcessResult = new TaskProcessResult("Task updated successfully.");
 
-        // 1. Handle Undo Logic first (if transitioning FROM Completed)
-        if (oldStatus == TaskStatus.COMPLETED && newStatus != TaskStatus.COMPLETED) {
+        // 1. Handle Undo Logic first (if transitioning FROM Completed or CANCELED)
+        if ((oldStatus == TaskStatus.COMPLETED || oldStatus == TaskStatus.CANCELED)
+                && newStatus != TaskStatus.COMPLETED) {
             // This cleans up the future task, habit log created by the completion and
             // roll back the Plan's schedule
             taskProcessResult = handleTaskUndoCompletion(existingTask);
@@ -229,8 +230,8 @@ public class TaskService {
         return recurringPlanRepository.findByTemplateId(task.getTaskTemplate().getId())
                 .map(plan -> {
 
-                    // 1. Delete the Habit Log
-                    habitLogRepository.deleteByTaskId(task.getId());
+                    // 1. Delete the Habit Log if have
+                    habitLogService.removeHabitLog(task);
 
                     // 2. Find and delete the "Future Task"
                     // We search for the task generated for the next cycle.
@@ -323,9 +324,7 @@ public class TaskService {
         return recurringPlanRepository.findByTemplateId(task.getTaskTemplate().getId())
                 .map(plan -> {
                     // 1. Save habit log if applicable
-                    if (plan.getIsHabit()) {
-                        saveHabitLog(task, status, logDate);
-                    }
+                    habitLogService.upsertHabitLog(task, status, logDate);
 
                     // 2. Generate Next Task
                     Task newTask = generateNextRecurringTask(plan);
@@ -338,31 +337,19 @@ public class TaskService {
                         case MISSED -> String.format("Missed Task '%s' will not send back messages.", task.getTitle());
                     };
 
-                    String finalMessage;
+                    String footer;
                     if (nextRun != null) {
                         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd(EEE)", Locale.ENGLISH);
                         String dateStr = nextRun.format(formatter).toUpperCase();
-                        finalMessage = String.format("%s Next session scheduled for %s.", header, dateStr);
+                        footer = String.format(" Next session scheduled for %s.", dateStr);
                     } else {
-                        finalMessage = header + " Task completed.";
+                        footer = (status == HabitLogStatus.DONE) ? " Task completed." : "";
                     }
+
+                    String finalMessage = header + footer;
                     return new TaskProcessResult(finalMessage, newTask, task);
                 })
                 .orElse(null);
-    }
-
-    /**
-     * Utility method to save a habit log record.
-     */
-    private void saveHabitLog(Task task, HabitLogStatus status, LocalDate date) {
-        HabitLog log = new HabitLog();
-        log.setUser(task.getUser());
-        log.setTask(task);
-        log.setTaskTemplate(task.getTaskTemplate());
-        log.setLogDate(date);
-        log.setStatus(status);
-        log.setCreatedAt(LocalDateTime.now());
-        habitLogRepository.save(log);
     }
 
     @Transactional()
