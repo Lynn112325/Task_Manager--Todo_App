@@ -213,8 +213,8 @@ public class RecurringPlanService {
                                 long cycles = monthsDiff / interval;
                                 nextDate = anchor.plusMonths(cycles * interval);
 
-                                // Boundary Protection: Ensure nextDate is after today AND after the baseDate
-                                if (nextDate.toLocalDate().isBefore(today) || !nextDate.isAfter(baseDate)) {
+                                // Boundary Protection: Ensure nextDate is after today
+                                if (nextDate.toLocalDate().isBefore(today)) {
                                         nextDate = nextDate.plusMonths(interval);
                                 }
                         }
