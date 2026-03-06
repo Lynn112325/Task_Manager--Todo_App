@@ -104,25 +104,46 @@ export function TaskScheduleFormDialog({
      */
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
+
         setFormData(prev => {
             let nextState = {
                 ...prev,
                 [name]: type === 'checkbox' ? checked : value
             };
 
-            // Validation: Prevent interval from going below 1
-            if (name === 'recurrenceInterval' && value < 1 && value !== '') {
-                return prev;
+            const getLimit = (t) => {
+                if (t === 'DAILY') return 90;
+                if (t === 'WEEKLY' || t === 'MONTHLY') return 12;
+                return 1;
+            };
+
+            if (name === 'recurrenceInterval') {
+                if (value === '') return { ...prev, [name]: '' };
+                const numValue = parseInt(value, 10);
+                const max = getLimit(prev.recurrenceType);
+
+                if (isNaN(numValue)) return prev;
+
+                let correctedValue = numValue;
+                if (numValue < 1) correctedValue = 1;
+                if (numValue > max) correctedValue = max;
+
+                nextState.recurrenceInterval = correctedValue;
             }
 
-            // Dependency Logic: Map habit tracking defaults to recurrence type
             if (name === 'recurrenceType') {
                 if (value === 'NONE') {
                     nextState.isHabit = false;
                 } else {
                     nextState.isHabit = true;
+
+                    const newMax = getLimit(value);
+                    if (prev.recurrenceInterval > newMax) {
+                        nextState.recurrenceInterval = newMax;
+                    }
                 }
             }
+
             return nextState;
         });
     };
@@ -132,10 +153,10 @@ export function TaskScheduleFormDialog({
      * Reverts to the original 'schedule' values if in edit mode, otherwise clears the form.
      */
     const handleReset = () => {
-        if (isEditMode) {
+        if (schedule) {
             const { taskTemplate, recurringPlan } = schedule;
-            setFormData(prev => ({ ...prev, targetId: schedule.taskTemplate.targetId }));
             setFormData({
+                targetId: schedule.taskTemplate.targetId,
                 title: taskTemplate?.title || '',
                 description: taskTemplate?.description || '',
                 priority: taskTemplate?.priority || 1,
@@ -152,9 +173,6 @@ export function TaskScheduleFormDialog({
             setFormData({ ...defaultFormState, targetId: initialTargetId || '' });
         }
     };
-
-    // Debug log for checking internal task generation flags
-    console.log(skipInitialGeneration);
 
     /**
      * Validates and submits the form data.
