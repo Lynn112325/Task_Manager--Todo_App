@@ -35,45 +35,54 @@ public class HabitLogService {
     }
 
     /**
-     * 持久化或更新習慣日誌。
-     * 使用 'Upsert' 邏輯確保任務與日誌的 1:1 關係，並封裝習慣判斷邏輯。
+     * Persists or updates a habit log entry.
+     * Implements 'Upsert' logic to maintain a 1:1 relationship between tasks and
+     * logs,
+     * while encapsulating habit validation.
      */
     public void upsertHabitLog(Task task, HabitLogStatus status, LocalDate logDate) {
-        // 1. 衛句 (Guard Clause)：封裝習慣判斷邏輯
+        // 1. Guard Clause: Encapsulate habit validation logic
         if (!isHabitTask(task)) {
             return;
         }
 
-        // 2. 獲取或初始化 HabitLog
+        // 2. Retrieve existing HabitLog or initialize a new one
         HabitLog habitLog = habitLogRepository.findByTaskId(task.getId())
                 .orElseGet(() -> createBaseHabitLog(task));
 
-        // 3. 更新變動屬性
+        // 3. Update mutable attributes
         habitLog.setLogDate(logDate);
         habitLog.setStatus(status);
 
-        // 4. 保存並強制同步，防止後續查詢觸發 TransientObjectException
+        // 4. Save and force synchronization to prevent TransientObjectException in
+        // subsequent queries
         habitLogRepository.saveAndFlush(habitLog);
     }
 
     /**
-     * 安全刪除習慣日誌。
-     * 處理雙向關聯解除，確保 Persistence Context 狀態一致。
+     * Safely deletes a habit log entry.
+     * Handles bidirectional relationship detachment to ensure Persistence Context
+     * consistency.
      */
     public void removeHabitLog(Task task) {
-        // 優先透過物件引用刪除，能更好地維護 Hibernate 一級緩存
+        // Prioritize deletion via object reference to better maintain the Hibernate L1
+        // cache
         HabitLog logToRemove = (task.getHabitLog() != null)
                 ? task.getHabitLog()
                 : habitLogRepository.findByTaskId(task.getId()).orElse(null);
 
         if (logToRemove != null) {
-            task.setHabitLog(null); // 重要：解除雙向關聯
+            // Important: Detach bidirectional relationship before deletion
+            task.setHabitLog(null);
             habitLogRepository.delete(logToRemove);
-            habitLogRepository.flush(); // 立即同步資料庫，避免後續 Select 觸發 Flush 衝突
+
+            // Synchronize database immediately to avoid flush conflicts during subsequent
+            // SELECTs
+            habitLogRepository.flush();
         }
     }
 
-    // --- 內部輔助方法 (Helper Methods) ---
+    // --- Private Helper Methods ---
 
     private boolean isHabitTask(Task task) {
         return task.getTaskTemplate() != null &&
