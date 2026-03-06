@@ -16,6 +16,8 @@ public interface HabitLogRepository extends JpaRepository<HabitLog, Long> {
 
     List<HabitLog> findByUserId(Long userId);
 
+    Optional<HabitLog> findByTaskId(@Param("taskId") Long taskId);
+
     @Query("""
                 SELECT new com.taskmanager.taskapp.habitlog.HabitLogStatsDto(
                     SUM(CASE WHEN hl.status = 'DONE' THEN 1 ELSE 0 END),

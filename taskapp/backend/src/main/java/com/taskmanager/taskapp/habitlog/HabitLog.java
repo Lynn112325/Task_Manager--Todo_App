@@ -22,14 +22,13 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "habit_logs", uniqueConstraints = @UniqueConstraint(columnNames = { "task_id" }))
+@Table(name = "habit_logs")
 @Data
 @Builder
 @NoArgsConstructor
@@ -45,7 +44,7 @@ public class HabitLog {
     private User user;
 
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "task_id", nullable = false)
+    @JoinColumn(name = "task_id", nullable = false, unique = true)
     private Task task;
 
     @ManyToOne(fetch = FetchType.LAZY)
