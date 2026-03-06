@@ -183,7 +183,11 @@ public class RecurringPlanService {
                 switch (plan.getRecurrenceType()) {
                         case DAILY -> {
                                 // Simply add the interval to the base date
-                                nextDate = baseDate.plusDays(interval);
+                                if (allowBaseDate) {
+                                        nextDate = baseDate;
+                                } else {
+                                        nextDate = baseDate.plusDays(interval);
+                                }
 
                                 // Catch-up logic: If the date is in the past, skip cycles until it reaches
                                 // today/future
