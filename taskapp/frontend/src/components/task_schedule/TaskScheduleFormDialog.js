@@ -165,8 +165,8 @@ export function TaskScheduleFormDialog({
                 recurrenceInterval: recurringPlan?.recurrenceInterval || 1,
                 recurrenceDays: recurringPlan?.recurrenceDays || [],
                 isHabit: recurringPlan?.isHabit || false,
-                recurrenceStart: recurringPlan?.recurrenceStart || defaultFormState.recurrenceStart,
-                recurrenceEnd: recurringPlan?.recurrenceEnd || '',
+                recurrenceStart: dayjs(recurringPlan?.recurrenceStart).format('YYYY-MM-DD') || defaultFormState.recurrenceStart,
+                recurrenceEnd: dayjs(recurringPlan.recurrenceEnd).format('YYYY-MM-DD') || '',
                 isPermanent: !recurringPlan?.endDate
             });
         } else {
@@ -379,7 +379,7 @@ export function TaskScheduleFormDialog({
                                     <TextField
                                         type="date"
                                         label="Start Date"
-                                        name="startDate"
+                                        name="recurrenceStart"
                                         fullWidth
                                         value={formData.recurrenceStart}
                                         onChange={handleChange}
@@ -395,7 +395,7 @@ export function TaskScheduleFormDialog({
                                         <TextField
                                             type="date"
                                             label="End Date"
-                                            name="endDate"
+                                            name="recurrenceEnd"
                                             fullWidth
                                             value={formData.recurrenceEnd}
                                             onChange={handleChange}
