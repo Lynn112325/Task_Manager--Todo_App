@@ -32,9 +32,11 @@ import com.taskmanager.taskapp.user.UserRepository;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class TaskService {
 
     private final TaskRepository taskRepository;
@@ -234,10 +236,15 @@ public class TaskService {
                     // We search for the task that was generate for the next cycle.
                     // Its dueDate should match what the Plan currently thinks is the "Next Run".
                     var futureTaskOpt = taskRepository.findFirstByTaskTemplateAndStatusAndDueDateOrderByCreatedAtDesc(
-                            task.getTaskTemplate(), TaskStatus.ACTIVE, plan.getNextRunAt());
+                            task.getTaskTemplate(), TaskStatus.ACTIVE, plan.getNextRunAt())
+                            .filter(ft -> !ft.getId().equals(task.getId()));
 
-                    futureTaskOpt.ifPresent(taskRepository::delete);
-                    boolean futureTaskDeleted = futureTaskOpt.isPresent();
+                    boolean futureTaskDeleted = false;
+                    if (futureTaskOpt.isPresent()) {
+                        taskRepository.delete(futureTaskOpt.get());
+                        taskRepository.flush();
+                        futureTaskDeleted = true;
+                    }
 
                     // 3. Roll back the Plan's schedule
                     // The plan should now point back to the current task's due date
@@ -363,7 +370,9 @@ public class TaskService {
         }
 
         LocalDateTime nextDueDate = recurringPlanService.calculateNextDueDate(plan);
-
+        if (nextDueDate == null) {
+            return null;
+        }
         // create new Task
         Task newTask = new Task();
         newTask.setTitle(template.getTitle());
