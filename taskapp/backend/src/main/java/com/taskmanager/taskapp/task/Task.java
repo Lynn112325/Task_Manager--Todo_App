@@ -7,6 +7,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import com.taskmanager.taskapp.enums.TaskStatus;
 import com.taskmanager.taskapp.enums.Type;
+import com.taskmanager.taskapp.habitlog.HabitLog;
 import com.taskmanager.taskapp.taskschedule.tasktemplate.TaskTemplate;
 import com.taskmanager.taskapp.user.User;
 
@@ -21,6 +22,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -47,6 +49,9 @@ public class Task {
     @JoinColumn(name = "task_template_id")
     private TaskTemplate taskTemplate;
 
+    @OneToOne(mappedBy = "task", fetch = FetchType.LAZY, optional = true)
+    private HabitLog habitLog;
+
     @Column(nullable = false, length = 255)
     private String title;
 
@@ -70,7 +75,7 @@ public class Task {
 
     @Builder.Default
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false)
+    @Column(name = "status", nullable = false, length = 20)
     private TaskStatus status = TaskStatus.ACTIVE;
 
     @CreationTimestamp
