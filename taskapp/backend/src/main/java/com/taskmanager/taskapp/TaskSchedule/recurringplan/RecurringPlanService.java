@@ -145,14 +145,13 @@ public class RecurringPlanService {
 
                 // 3. Determine Calculation Origin
                 if (plan.getNextRunAt() != null) {
-                        /*
-                         * * SCENARIO A: The plan has historical runs.
-                         * We use the later of lastDueDate or startPoint to prevent issues if the
-                         * start date was moved forward into the future.
-                         * We set allowBaseDate = false because we usually want the occurrence *after*
-                         * the last one.
-                         */
+                        // SCENARIO A: Plan has existing runs.
+                        // Use the later of 'nextRunAt' or 'startPoint' to handle cases where the
+                        // plan's start date was shifted into the future.
                         baseDate = plan.getNextRunAt().isBefore(startPoint) ? startPoint : plan.getNextRunAt();
+
+                        // Since we are progressing from an existing run, always calculate the next
+                        // occurrence.
                         allowBaseDate = false;
                 } else {
                         /*
@@ -210,15 +209,27 @@ public class RecurringPlanService {
                         }
 
                         case MONTHLY -> {
-                                // Use the original plan start as an "anchor" to keep the day of the month
-                                // consistent
                                 LocalDateTime anchor = plan.getRecurrenceStart();
-                                long monthsDiff = ChronoUnit.MONTHS.between(anchor.toLocalDate(), today);
-                                long cycles = monthsDiff / interval;
-                                nextDate = anchor.plusMonths(cycles * interval);
+                                long monthsBetween = ChronoUnit.MONTHS.between(anchor.toLocalDate(), today);
 
-                                // Boundary Protection: Ensure nextDate is after today
-                                if (nextDate.toLocalDate().isBefore(today)) {
+                                // Calculate total elapsed cycles (rounded down)
+                                long cyclesElapsed = monthsBetween / interval;
+
+                                // Determine theoretical date of the current cycle
+                                // Keeps original day-of-month anchor (e.g., Jan 31 -> Feb 28)
+                                LocalDateTime currentPeriodDate = anchor.plusMonths(cyclesElapsed * interval);
+
+                                // Select candidate date based on execution state
+                                if (allowBaseDate) {
+                                        // Initial run or catch-up: allow current cycle if valid
+                                        nextDate = currentPeriodDate;
+                                } else {
+                                        // Progressing run: skip to the next cycle
+                                        nextDate = currentPeriodDate.plusMonths(interval);
+                                }
+
+                                // Forward-looking catch-up: ensure nextDate meets baseDate requirements
+                                while (nextDate.isBefore(baseDate)) {
                                         nextDate = nextDate.plusMonths(interval);
                                 }
                         }
