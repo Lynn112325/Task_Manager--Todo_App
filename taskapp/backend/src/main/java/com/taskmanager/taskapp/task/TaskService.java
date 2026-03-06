@@ -233,8 +233,9 @@ public class TaskService {
                     habitLogRepository.deleteByTaskId(task.getId());
 
                     // 2. Find and delete the "Future Task"
-                    // We search for the task that was generate for the next cycle.
-                    // Its dueDate should match what the Plan currently thinks is the "Next Run".
+                    // We search for the task generated for the next cycle.
+                    // We apply a filter to ensure we don't accidentally delete the CURRENT task
+                    // if the plan's NextRunAt happens to match the current task's dueDate.
                     var futureTaskOpt = taskRepository.findFirstByTaskTemplateAndStatusAndDueDateOrderByCreatedAtDesc(
                             task.getTaskTemplate(), TaskStatus.ACTIVE, plan.getNextRunAt())
                             .filter(ft -> !ft.getId().equals(task.getId()));
@@ -242,6 +243,10 @@ public class TaskService {
                     boolean futureTaskDeleted = false;
                     if (futureTaskOpt.isPresent()) {
                         taskRepository.delete(futureTaskOpt.get());
+                        // Flush is critical here to synchronize the deletion with the database
+                        // immediately,
+                        // preventing "ObjectDeletedException" if subsequent logic attempts to re-merge
+                        // this entity.
                         taskRepository.flush();
                         futureTaskDeleted = true;
                     }
@@ -370,6 +375,9 @@ public class TaskService {
         }
 
         LocalDateTime nextDueDate = recurringPlanService.calculateNextDueDate(plan);
+        // Null check is mandatory: if the plan has reached its end date or
+        // an active task already exists, stop generation to prevent orphan tasks with
+        // null due dates.
         if (nextDueDate == null) {
             return null;
         }
