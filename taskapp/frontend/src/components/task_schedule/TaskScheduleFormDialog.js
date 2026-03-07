@@ -241,29 +241,31 @@ export function TaskScheduleFormDialog({
                 </DialogTitle>
 
                 <DialogContent dividers>
-                    <Stack spacing={3} sx={{ mt: 1 }}>
-                        {/* Target Selection: Only visible if a fixed initialTargetId is not provided */}
-                        {(!initialTargetId) && (
-                            <FormControl fullWidth required>
-                                <InputLabel>Assign to Target</InputLabel>
-                                <Select
-                                    name="targetId"
-                                    value={formData.targetId}
-                                    onChange={handleChange}
-                                    label="Assign to Target"
-                                >
-                                    {targetsLoading ? (
-                                        <MenuItem disabled>Loading targets...</MenuItem>
-                                    ) : (
-                                        targets?.map(t => (
-                                            <MenuItem key={t.id} value={t.id}>{t.title}</MenuItem>
-                                        ))
-                                    )}
-                                </Select>
-                            </FormControl>
-                        )}
-                    </Stack>
-                    <Divider />
+                    {/* Target Selection: Only visible if a fixed initialTargetId is not provided */}
+                    {(!initialTargetId) && (
+                        <>
+                            <Stack spacing={3} sx={{ mt: 1 }}>
+                                <FormControl fullWidth required>
+                                    <InputLabel>Assign to Target</InputLabel>
+                                    <Select
+                                        name="targetId"
+                                        value={formData.targetId}
+                                        onChange={handleChange}
+                                        label="Assign to Target"
+                                    >
+                                        {targetsLoading ? (
+                                            <MenuItem disabled>Loading targets...</MenuItem>
+                                        ) : (
+                                            targets?.map(t => (
+                                                <MenuItem key={t.id} value={t.id}>{t.title}</MenuItem>
+                                            ))
+                                        )}
+                                    </Select>
+                                </FormControl>
+                            </Stack>
+                            <Divider />
+                        </>
+                    )}
                     <Stack spacing={3} sx={{ mt: 1 }}>
                         <Typography variant="subtitle2" color="primary">Basic Info</Typography>
 
