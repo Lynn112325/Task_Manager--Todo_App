@@ -97,7 +97,7 @@ public class MetricsService {
                 activeBlueprints,
                 progressPercentage,
                 xp,
-                generateInsight(completionRate, progressPercentage));
+                generateInsight(totalExpected, completed, activeBlueprints, completionRate, progressPercentage));
     }
 
     /**
@@ -350,19 +350,45 @@ public class MetricsService {
     }
 
     /**
-     * Generates a dynamic motivational message based on performance vs. time
-     * elapsed.
+     * Generates a dynamic motivational message based on performance, time elapsed,
+     * and active goals.
      */
-    private String generateInsight(double rate, double progress) {
-        // High performance: Completion rate significantly exceeds time progress
-        if (rate >= progress + 0.1)
+    private String generateInsight(int totalExpected, int completed, int activeBlueprints, double rate,
+            double progress) {
+
+        // 1. No active goals or plans found
+        if (activeBlueprints == 0 && totalExpected == 0) {
+            return "You don't have any active plans right now. Time to set some new goals! 🎯";
+        }
+
+        // 2. Goal already achieved or exceeded for the current period
+        if (totalExpected > 0 && completed >= totalExpected) {
+            return "Target smashed! Outstanding work for this period! 🌟";
+        }
+
+        // 3. Early period start (e.g., Monday or 1st of the month, < 20% elapsed) with
+        // no tasks done
+        if (progress <= 0.2 && completed == 0) {
+            return "A fresh start! Let's get the ball rolling. 🌱";
+        }
+
+        // 4. Ahead of schedule (completion rate is > 10% higher than time elapsed)
+        if (rate >= progress + 0.1) {
             return "You're smashing it! Ahead of schedule. 🔥";
+        }
 
-        // Underperformance: Completion rate is significantly behind time progress
-        if (rate < progress - 0.2)
-            return "A bit behind. You can catch up! 💪";
+        // 5. Falling behind (completion rate is > 20% lower than time elapsed)
+        if (rate < progress - 0.2) {
+            // Case A: Near the end of the period (e.g., Weekend or end of month, > 80%
+            // elapsed)
+            if (progress > 0.8) {
+                return "Time is running out! Let's make a final push! ⏳";
+            }
+            // Case B: Middle of the period, still time to recover
+            return "A bit behind, but you still have time to catch up! 💪";
+        }
 
-        // Neutral/Steady performance
-        return "Steady as she goes. Keep the momentum!";
+        // 6. Default state: Stable progress
+        return "Steady as she goes. Keep the momentum! 🏃";
     }
 }
