@@ -172,7 +172,7 @@ export default function TargetDetail() {
                                         </Typography>
                                     </Box>
                                     <Typography variant="caption" color="text.secondary">
-                                        {metrics?.weeklyCompleted || 0} of {metrics?.weeklyTotalExpected || 0} tasks completed this week
+                                        {metrics?.totalCompleted || 0} of {metrics?.totalExpected || 0} tasks completed this week
                                         {metrics?.extraTasksCompleted > 0 && ` (+${metrics.extraTasksCompleted} extra!)`}
                                     </Typography>
                                 </>
