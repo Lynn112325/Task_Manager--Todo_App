@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 
 import com.taskmanager.taskapp.enums.RecurrenceType;
 import com.taskmanager.taskapp.enums.Weekday;
+import com.taskmanager.taskapp.task.Task;
 import com.taskmanager.taskapp.taskschedule.recurringplan.RecurringPlan;
 
 import lombok.RequiredArgsConstructor;
@@ -266,41 +267,76 @@ public class MetricsService {
     }
 
     /**
-     * Recursively checks previous periods to determine the current consecutive
-     * success streak.
-     * * @param currentStart The start date of the current active period.
-     * 
-     * @return The number of consecutive previous periods where the goal was met.
+     * Calculates the current success streak by iterating backward through past
+     * periods.
+     * A streak increases as long as the goal was met in each consecutive period.
+     * * @return The number of consecutive periods where the goal was achieved.
      */
     private int calculateCurrentStreak(Long userId, Long targetId, TimeGrain grain, LocalDateTime currentStart) {
+        int maxLookback = (grain == TimeGrain.WEEKLY) ? 52 : 12;
+        LocalDateTime historicalStart = (grain == TimeGrain.WEEKLY)
+                ? currentStart.minusWeeks(maxLookback)
+                : currentStart.minusMonths(maxLookback);
+
+        // 1. 一次撈出過去一年所有的 Tasks 並按「週期起始日」分組
+        List<Task> allTasks = metricsRepository.findAllCompletedTasksInPeriod(userId, targetId, historicalStart,
+                currentStart);
+        Map<LocalDateTime, Long> completedCountMap = allTasks.stream()
+                .collect(Collectors.groupingBy(
+                        t -> truncateToPeriodStart(t.getDueDate(), grain),
+                        Collectors.counting()));
+
+        // 2. 一次撈出過去一年所有的 RecurringPlans
+        List<RecurringPlan> allPlans = metricsRepository.findActivePlansInPeriod(userId, targetId, historicalStart,
+                currentStart);
+
         int streak = 0;
         LocalDateTime checkStart = currentStart;
 
-        // Limit lookback depth to prevent performance degradation (e.g., 52 weeks or 12
-        // months)
-        int maxLookback = (grain == TimeGrain.WEEKLY) ? 52 : 12;
-
         for (int i = 0; i < maxLookback; i++) {
-            // Move back exactly one period (one week or one month)
-            LocalDateTime prevEnd = checkStart.minusNanos(1);
-            if (grain == TimeGrain.WEEKLY) {
+            // 往前移動週期
+            if (grain == TimeGrain.WEEKLY)
                 checkStart = checkStart.minusWeeks(1);
-            } else {
+            else
                 checkStart = checkStart.minusMonths(1);
+
+            LocalDateTime periodEnd = (grain == TimeGrain.WEEKLY) ? checkStart.plusWeeks(1).minusNanos(1)
+                    : checkStart.plusMonths(1).minusNanos(1);
+
+            // 計算該週期的預期值 (過濾出在該區間內活躍的 Plans)
+            final LocalDateTime finalCheckStart = checkStart;
+            List<RecurringPlan> activeInPeriod = allPlans.stream()
+                    .filter(p -> !p.getRecurrenceStart().isAfter(periodEnd) &&
+                            (p.getRecurrenceEnd() == null || !p.getRecurrenceEnd().isBefore(finalCheckStart)))
+                    .toList();
+
+            int expected = calculateExpectedTaskCount(activeInPeriod, checkStart, periodEnd);
+            int completed = completedCountMap.getOrDefault(checkStart, 0L).intValue();
+
+            // 判斷邏輯
+            if (expected == 0) {
+                // 如果 Streak > 0 且沒有任務，通常 App 會選擇「跳過」不計入也不中斷
+                if (streak > 0)
+                    continue;
+                else
+                    break;
             }
 
-            // Verify if the goal was achieved in this specific historical period
-            Integer result = metricsRepository.isGoalMetInPeriod(userId, targetId, checkStart, prevEnd);
-            boolean met = result != null && result == 1;
-
-            if (met) {
+            if (completed >= expected) {
                 streak++;
             } else {
-                // Streak is broken as soon as a single period goal is not met
                 break;
             }
         }
         return streak;
+    }
+
+    // 輔助方法：確保日期對齊到週一或月初，作為 Map 的 Key
+    private LocalDateTime truncateToPeriodStart(LocalDateTime date, TimeGrain grain) {
+        if (grain == TimeGrain.WEEKLY) {
+            return date.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)).with(LocalTime.MIN);
+        }
+        return date.with(TemporalAdjusters.firstDayOfMonth()).with(LocalTime.MIN);
     }
 
     /**

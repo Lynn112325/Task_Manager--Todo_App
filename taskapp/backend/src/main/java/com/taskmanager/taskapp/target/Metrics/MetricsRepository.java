@@ -41,47 +41,45 @@ public interface MetricsRepository extends JpaRepository<Task, Long> {
                         """, nativeQuery = true)
         int countActiveBlueprints(@Param("userId") Long userId, @Param("targetId") Long targetId);
 
-        @Query(value = """
+        @Query("""
                         SELECT SUM(t.priority)
-                        FROM tasks t
-                        LEFT JOIN task_templates tt ON t.task_template_id = tt.id
-                        WHERE t.user_id = :userId
+                        FROM Task t
+                        LEFT JOIN t.taskTemplate tt
+                        WHERE t.user.id = :userId
                         AND t.status = 'COMPLETED'
-                        AND (:targetId IS NULL OR tt.target_id = :targetId)
-                        AND t.due_date BETWEEN :start AND :end
-                        """, nativeQuery = true)
+                        AND (:targetId IS NULL OR tt.target.id = :targetId)
+                        AND t.dueDate BETWEEN :start AND :end
+                        """)
         Optional<Integer> sumExperiencePoints(
                         @Param("userId") Long userId,
                         @Param("targetId") Long targetId,
                         @Param("start") LocalDateTime start,
                         @Param("end") LocalDateTime end);
 
-        // consider create a Snapshot table
-        @Query(value = """
-                        SELECT
-                                CASE WHEN COUNT(*) > 0 AND COUNT(CASE WHEN status = 'COMPLETED' THEN 1 END) >= COUNT(*)
-                                THEN TRUE ELSE FALSE END
-                        FROM tasks t
-                        LEFT JOIN task_templates tt ON t.task_template_id = tt.id
-                        WHERE t.user_id = :userId
-                        AND (:targetId IS NULL OR tt.target_id = :targetId)
-                        AND t.due_date BETWEEN :start AND :end
-                        """, nativeQuery = true)
-        Integer isGoalMetInPeriod(
+        @Query("""
+                        SELECT t FROM Task t
+                        LEFT JOIN t.taskTemplate tt
+                        WHERE t.user.id = :userId
+                        AND (:targetId IS NULL OR tt.target.id = :targetId)
+                        AND t.status = 'COMPLETED'
+                        AND t.dueDate BETWEEN :start AND :end
+                        ORDER BY t.dueDate DESC
+                        """)
+        List<Task> findAllCompletedTasksInPeriod(
                         @Param("userId") Long userId,
                         @Param("targetId") Long targetId,
                         @Param("start") LocalDateTime start,
                         @Param("end") LocalDateTime end);
 
-        @Query(value = """
-                        SELECT rp.* FROM recurring_plans rp
-                        JOIN task_templates tt ON rp.id = tt.id
-                        WHERE tt.user_id = :userId
+        @Query("""
+                        SELECT rp FROM RecurringPlan rp
+                        JOIN rp.taskTemplate tt
+                        WHERE tt.user.id = :userId
                         AND rp.status = 'ACTIVE'
-                        AND (:targetId IS NULL OR tt.target_id = :targetId)
-                        AND (rp.recurrence_end IS NULL OR rp.recurrence_end >= :start)
-                        AND rp.recurrence_start <= :end
-                        """, nativeQuery = true)
+                        AND (:targetId IS NULL OR tt.target.id = :targetId)
+                        AND (rp.recurrenceEnd IS NULL OR rp.recurrenceEnd >= :start)
+                        AND rp.recurrenceStart <= :end
+                        """)
         List<RecurringPlan> findActivePlansInPeriod(
                         @Param("userId") Long userId,
                         @Param("targetId") Long targetId,
