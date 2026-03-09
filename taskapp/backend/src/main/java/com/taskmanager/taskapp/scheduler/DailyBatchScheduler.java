@@ -150,12 +150,13 @@ public class DailyBatchScheduler {
                         .map(result -> {
                             boolean isRecurring = result.newTask() != null;
                             Task task = result.oldTask();
+                            Task newTask = result.newTask();
 
                             return new MissedTaskDetail(
                                     task.getId(),
                                     task.getTitle(),
                                     isRecurring,
-                                    isRecurring ? task.getDueDate().toLocalDate().toString() : null,
+                                    isRecurring ? newTask.getDueDate().toLocalDate().toString() : null,
                                     "/tasks/" + task.getId());
                         })
                         .toList();
