@@ -52,8 +52,8 @@ public class TaskScheduleService {
     /**
      * Converts a TaskTemplate entity and its associated RecurringPlan into a
      * combined DTO.
-     * * @param tt The TaskTemplate entity to convert.
      * 
+     * @param tt The TaskTemplate entity to convert.
      * @return A combined TaskScheduleDto containing both template and plan details.
      */
     public TaskScheduleDto toCombinedDto(TaskTemplate tt) {
@@ -78,8 +78,8 @@ public class TaskScheduleService {
      * Updates the status of an existing recurring plan.
      * If the status changes from non-ACTIVE to ACTIVE, it triggers immediate task
      * generation.
-     * * @param user The authenticated user performing the update.
      * 
+     * @param user      The authenticated user performing the update.
      * @param id        The ID of the RecurringPlan.
      * @param newStatus The string representation of the new PlanStatus.
      * @return A map containing the updated ID, status, and a system message.
@@ -96,6 +96,7 @@ public class TaskScheduleService {
             throw new AccessDeniedException("You do not have permission to update this schedule");
         }
 
+        RecurrenceType oldType = plan.getRecurrenceType();
         PlanStatus oldStatus = plan.getStatus();
         PlanStatus targetStatus = PlanStatus.valueOf(newStatus);
 
@@ -104,22 +105,25 @@ public class TaskScheduleService {
 
         // Logic: Trigger task generation only when activating a previously inactive
         // plan
-        String message = "Status updated.";
+        String feedback = "Status updated.";
         if (oldStatus != PlanStatus.ACTIVE && targetStatus == PlanStatus.ACTIVE) {
-            Task newTask = taskService.generateNextRecurringTask(plan);
-            message = getSuccessMessage("Status updated.", newTask);
+            Task updatedTask = null;
+            if (plan.shouldGenerateTask(oldStatus, oldType, false)) {
+                updatedTask = taskService.generateNextRecurringTask(plan);
+            }
+            feedback = getPlanUpdateMessage(plan, false, updatedTask);
         }
 
         return Map.of(
                 "id", plan.getId(),
                 "status", newStatus,
-                "systemMessage", message);
+                "systemMessage", feedback);
     }
 
     /**
      * Saves or updates a Task Schedule (Template + Recurring Plan).
-     * * @param user The user who owns the schedule.
      * 
+     * @param user       The user who owns the schedule.
      * @param dto        The data transfer object containing schedule details.
      * @param existingId The ID of the plan if updating; null if creating a new one.
      * @return A success message and the saved plan ID.
@@ -181,24 +185,24 @@ public class TaskScheduleService {
         if (planDto.status() != null) {
             plan.setStatus(planDto.status());
         }
+        Task newTask = null;
+        if (plan.shouldGenerateTask(oldStatus, oldType, skipInitialGeneration)) {
+            newTask = taskService.generateNextRecurringTask(plan);
+        }
+        String feedback = getPlanUpdateMessage(plan, existingId == null, newTask);
 
-        String message = determineSystemMessage(plan, oldStatus, oldType, skipInitialGeneration, existingId == null);
-
-        return Map.of("id", savedPlan.getId(), "systemMessage", message);
+        return Map.of("id", savedPlan.getId(), "systemMessage", feedback);
     }
 
-    private String determineSystemMessage(RecurringPlan plan, PlanStatus oldStatus, RecurrenceType oldType,
-            Boolean skipInitialGeneration,
-            boolean isNew) {
+    private String getPlanUpdateMessage(RecurringPlan plan, boolean isNew, Task generatedTask) {
         String header = isNew ? "Schedule created." : "Schedule updated.";
+
+        if (generatedTask != null) {
+            return getSuccessMessage(header, generatedTask);
+        }
 
         if (plan.getRecurrenceType() == RecurrenceType.NONE) {
             return header;
-        }
-
-        if (plan.shouldGenerateTask(oldStatus, oldType, skipInitialGeneration)) {
-            Task newTask = taskService.generateNextRecurringTask(plan);
-            return getSuccessMessage(header, newTask);
         }
 
         if (plan.getStatus() == PlanStatus.PAUSED) {

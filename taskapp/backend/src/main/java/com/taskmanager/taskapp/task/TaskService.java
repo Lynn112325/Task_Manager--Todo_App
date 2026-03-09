@@ -283,7 +283,7 @@ public class TaskService {
         // Only tasks associated with a template (recurring) are automatically canceled
         // to make way for the next generated instance.
         if (task.getTaskTemplate() != null) {
-            task.setStatus(TaskStatus.CANCELED);
+            task.setStatus(TaskStatus.MISSED);
             task.setUpdatedAt(LocalDateTime.now());
             taskRepository.save(task);
         }
