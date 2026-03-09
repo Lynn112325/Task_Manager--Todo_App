@@ -62,6 +62,7 @@ public class Task {
     @Column(name = "is_manual", nullable = false)
     private boolean isManual = true;
 
+    @CreationTimestamp
     private LocalDateTime startDate;
     private LocalDateTime dueDate;
 
