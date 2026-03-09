@@ -7,6 +7,7 @@ import java.time.LocalTime;
 import java.time.format.TextStyle;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -16,6 +17,7 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 
 import com.taskmanager.taskapp.enums.RecurrenceType;
+import com.taskmanager.taskapp.enums.TaskStatus;
 import com.taskmanager.taskapp.enums.Weekday;
 import com.taskmanager.taskapp.task.Task;
 import com.taskmanager.taskapp.taskschedule.recurringplan.RecurringPlan;
@@ -267,80 +269,79 @@ public class MetricsService {
     }
 
     /**
-     * Calculates the current success streak by iterating backward through past
-     * periods.
-     * A streak increases as long as the goal was met in each consecutive period.
-     * * @return The number of consecutive periods where the goal was achieved.
+     * Calculates the current success streak by looking back through historical task
+     * data.
+     * The logic treats 'CANCELED' tasks as excused, reducing the required threshold
+     * for that period without breaking the streak.
+     * * @return The number of consecutive periods where the completion goal was
+     * met.
      */
     private int calculateCurrentStreak(Long userId, Long targetId, TimeGrain grain, LocalDateTime currentStart) {
-        // Determine lookback limit: 1 year (52 weeks or 12 months)
+        // Look back limit: 1 year (52 weeks or 12 months)
         int maxLookback = (grain == TimeGrain.WEEKLY) ? 52 : 12;
         LocalDateTime historicalStart = (grain == TimeGrain.WEEKLY)
                 ? currentStart.minusWeeks(maxLookback)
                 : currentStart.minusMonths(maxLookback);
 
-        // 1. Fetch all completed tasks for the past year and group them by period start
-        // date
-        List<Task> allTasks = metricsRepository.findAllCompletedTasksInPeriod(userId, targetId, historicalStart,
+        // 1. Fetch all system-generated tasks (excluding manual/extra tasks) for
+        // history
+        List<Task> allTasks = metricsRepository.findAllGeneratedTasksInPeriod(userId, targetId, historicalStart,
                 currentStart);
-        Map<LocalDateTime, Long> completedCountMap = allTasks.stream()
+
+        // Group tasks by period start date and their current status
+        Map<LocalDateTime, Map<TaskStatus, Long>> stats = allTasks.stream()
                 .collect(Collectors.groupingBy(
                         t -> truncateToPeriodStart(t.getDueDate(), grain),
-                        Collectors.counting()));
-
-        // 2. Fetch all active recurring plans within the historical window
-        List<RecurringPlan> allPlans = metricsRepository.findActivePlansInPeriod(userId, targetId, historicalStart,
-                currentStart);
+                        Collectors.groupingBy(Task::getStatus, Collectors.counting())));
 
         int streak = 0;
         LocalDateTime checkStart = currentStart;
 
-        //
-
         for (int i = 0; i < maxLookback; i++) {
-            // Step backward: move to the previous period
+            // Move the cursor back by one period
             if (grain == TimeGrain.WEEKLY)
                 checkStart = checkStart.minusWeeks(1);
             else
                 checkStart = checkStart.minusMonths(1);
 
-            LocalDateTime periodEnd = (grain == TimeGrain.WEEKLY)
-                    ? checkStart.plusWeeks(1).minusNanos(1)
-                    : checkStart.plusMonths(1).minusNanos(1);
+            Map<TaskStatus, Long> periodStats = stats.getOrDefault(checkStart, Collections.emptyMap());
 
-            // Filter plans that were active during this specific historical period
-            final LocalDateTime finalCheckStart = checkStart;
-            List<RecurringPlan> activeInPeriod = allPlans.stream()
-                    .filter(p -> !p.getRecurrenceStart().isAfter(periodEnd) &&
-                            (p.getRecurrenceEnd() == null || !p.getRecurrenceEnd().isBefore(finalCheckStart)))
-                    .toList();
+            // Core Logic:
+            // Total expected tasks for this period is the sum of all generated tasks
+            // (COMPLETED + CANCELED + MISSED)
+            long totalGenerated = periodStats.values().stream().mapToLong(Long::longValue).sum();
+            long completed = periodStats.getOrDefault(TaskStatus.COMPLETED, 0L);
+            long canceled = periodStats.getOrDefault(TaskStatus.CANCELED, 0L);
 
-            // Calculate expected vs actual for the period
-            int expected = calculateExpectedTaskCount(activeInPeriod, checkStart, periodEnd);
-            int completed = completedCountMap.getOrDefault(checkStart, 0L).intValue();
+            // Adjusted goal: Subtract canceled (excused) tasks from the total expectation
+            long adjustedExpected = Math.max(0, totalGenerated - canceled);
 
-            // Logic: How to handle the streak
-            if (expected == 0) {
-                // If there were no tasks, skip this period without breaking the streak
+            // Streak Freeze Logic:
+            if (adjustedExpected == 0) {
+                // If all plans were paused (no tasks) or all tasks were canceled (e.g.,
+                // illness),
+                // skip this period without increasing or breaking the streak.
                 if (streak > 0)
                     continue;
-                // If we haven't started a streak yet, stop looking
                 else
                     break;
             }
 
-            if (completed >= expected) {
+            // Success Check:
+            if (completed >= adjustedExpected) {
                 streak++; // Goal met, increment streak
             } else {
-                break; // Goal missed, streak ends here
+                break; // Goal missed, end the streak lookback
             }
         }
         return streak;
     }
 
     /**
-     * Aligns a date to the start of its period (Monday for weeks, 1st for months).
-     * Used as a consistent key for the completedCountMap.
+     * Normalizes a date to the beginning of its time grain (Monday for weeks, 1st
+     * for months).
+     * This ensures Map keys are consistent regardless of the specific time of the
+     * due date.
      */
     private LocalDateTime truncateToPeriodStart(LocalDateTime date, TimeGrain grain) {
         if (grain == TimeGrain.WEEKLY) {

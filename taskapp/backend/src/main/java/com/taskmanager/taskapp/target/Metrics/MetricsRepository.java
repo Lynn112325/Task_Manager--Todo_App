@@ -89,9 +89,25 @@ public interface MetricsRepository extends JpaRepository<Task, Long> {
         @Query(value = """
                         SELECT COUNT(*) FROM tasks t
                         WHERE t.task_template_id = :templateId
+                        AND t.isManual = false
                         AND t.due_date BETWEEN :start AND :end
                         """, nativeQuery = true)
         int countManualTasksInPeriod(@Param("templateId") Long templateId,
                         @Param("start") LocalDateTime start,
                         @Param("end") LocalDateTime end);
+
+        @Query("""
+                        SELECT t FROM Task t
+                        LEFT JOIN t.taskTemplate tt
+                        WHERE t.user.id = :userId
+                        AND t.isManual = false
+                        AND (:targetId IS NULL OR tt.target.id = :targetId)
+                        AND t.dueDate BETWEEN :start AND :end
+                        """)
+        List<Task> findAllGeneratedTasksInPeriod(
+                        @Param("userId") Long userId,
+                        @Param("targetId") Long targetId,
+                        @Param("start") LocalDateTime start,
+                        @Param("end") LocalDateTime end);
+
 }
