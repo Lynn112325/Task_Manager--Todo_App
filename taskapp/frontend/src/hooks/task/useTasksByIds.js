@@ -1,14 +1,14 @@
 import { useQuery } from '@tanstack/react-query';
 import axios from '../../axiosConfig';
 
-export function useActiveTaskCheck(ids) {
+export function useTasksByIds(ids) {
     return useQuery({
-        queryKey: ['activeTaskCheck', ids],
+        queryKey: ['getTasksByIds', ids],
         queryFn: async () => {
-            const { data } = await axios.get(`/api/tasks/active-check`, {
+            const { data } = await axios.get(`/api/tasks/search`, {
                 params: { ids: ids.join(',') }
             });
-            return data?.data || [];
+            return data || [];
         },
         enabled: !!ids && ids.length > 0,
         staleTime: 0,
