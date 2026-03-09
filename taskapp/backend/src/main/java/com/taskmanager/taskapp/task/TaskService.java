@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
@@ -83,12 +84,10 @@ public class TaskService {
         return existingTask;
     }
 
-    @Transactional(readOnly = true)
-    public List<Long> findActiveIdsIn(User user, List<Long> ids) {
-        if (ids == null || ids.isEmpty()) {
-            return List.of();
-        }
-        return taskRepository.findActiveIdsByUserIdAndIdIn(user.getId(), ids);
+    // Get all current active tasks (Upcoming)
+    public List<TaskDto> getActiveTasks() {
+        Long userId = myUserDetailsService.getCurrentUserId();
+        return taskRepository.findActiveTasks(userId);
     }
 
     // Get active tasks where due date is before today
@@ -100,10 +99,10 @@ public class TaskService {
         return taskRepository.findOverdueTasks(userId, startOfToday);
     }
 
-    // Get all current active tasks (Upcoming)
-    public List<TaskDto> getActiveTasks() {
-        Long userId = myUserDetailsService.getCurrentUserId();
-        return taskRepository.findActiveTasks(userId);
+    public List<TaskDto> findTasksByIds(Long userId, List<Long> ids) {
+        if (ids == null || ids.isEmpty())
+            return Collections.emptyList();
+        return taskRepository.findTaskDtosByIds(userId, ids);
     }
 
     // Get all tasks for a specific month (e.g., "2023-10")

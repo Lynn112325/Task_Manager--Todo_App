@@ -130,11 +130,11 @@ public class TaskController extends BaseController {
         return ok(taskService.getDailyStats(userDetails.getUser(), date));
     }
 
-    @GetMapping("/active-check")
-    public ResponseEntity<CommonResponse<?>> checkActiveTasks(@AuthenticationPrincipal MyUserDetails userDetails,
+    @GetMapping("/search")
+    public ResponseEntity<List<TaskDto>> getTasksByIds(
+            @AuthenticationPrincipal MyUserDetails userDetails,
             @RequestParam List<Long> ids) {
-        List<Long> stillActiveIds = taskService.findActiveIdsIn(userDetails.getUser(), ids);
-        return ok(stillActiveIds);
+        return ResponseEntity.ok(taskService.findTasksByIds(userDetails.getUser().getId(), ids));
     }
 
 }

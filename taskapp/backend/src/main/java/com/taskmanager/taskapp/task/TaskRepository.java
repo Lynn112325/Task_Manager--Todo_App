@@ -36,8 +36,17 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
 
     boolean existsByTaskTemplateIdAndStatus(Long taskTemplateId, TaskStatus status);
 
-    @Query("SELECT t.id FROM Task t WHERE t.user.id = :userId AND t.id IN :ids AND t.status = 'ACTIVE'")
-    List<Long> findActiveIdsByUserIdAndIdIn(@Param("userId") Long userId, @Param("ids") List<Long> ids);
+    @Query("""
+                SELECT new com.taskmanager.taskapp.task.dto.TaskDto(
+                    t.id, t.title, t.description, t.status, t.priority, t.type,
+                    t.createdAt, t.updatedAt, t.startDate, t.dueDate, tt.id, null
+                )
+                FROM Task t
+                LEFT JOIN t.taskTemplate tt
+                WHERE t.user.id = :userId AND t.status = 'ACTIVE'
+                ORDER BY t.priority DESC, t.dueDate ASC
+            """)
+    List<TaskDto> findActiveTasks(@Param("userId") Long userId);
 
     /**
      * Fetch daily statistics.
@@ -77,16 +86,15 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     Optional<TaskDto> findTaskDtoById(@Param("taskId") Long taskId, @Param("userId") Long userId);
 
     @Query("""
-                SELECT new com.taskmanager.taskapp.task.dto.TaskDto(
-                    t.id, t.title, t.description, t.status, t.priority, t.type,
-                    t.createdAt, t.updatedAt, t.startDate, t.dueDate, tt.id, null
-                )
-                FROM Task t
-                LEFT JOIN t.taskTemplate tt
-                WHERE t.user.id = :userId AND t.status = 'ACTIVE'
-                ORDER BY t.priority DESC, t.dueDate ASC
+            SELECT new com.taskmanager.taskapp.task.dto.TaskDto(
+                t.id, t.title, t.description, t.status, t.priority, t.type,
+                t.createdAt, t.updatedAt, t.startDate, t.dueDate, tt.id, null
+            )
+            FROM Task t
+            LEFT JOIN t.taskTemplate tt
+            WHERE t.id IN :ids AND t.user.id = :userId
             """)
-    List<TaskDto> findActiveTasks(@Param("userId") Long userId);
+    List<TaskDto> findTaskDtosByIds(@Param("userId") Long userId, @Param("ids") List<Long> ids);
 
     @Query("""
                 SELECT new com.taskmanager.taskapp.task.dto.TaskDto(
