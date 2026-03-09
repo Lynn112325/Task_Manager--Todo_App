@@ -15,51 +15,73 @@ import {
 } from '@mui/material';
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useActiveTaskCheck } from '../../hooks/task/useActiveTaskCheck';
+import { useTasksByIds } from '../../hooks/task/useTasksByIds';
+import { formatDateCustom } from "../../utils/planFormatters";
 
 const DailyBriefingCard = ({ notification, statsSummary }) => {
     const navigate = useNavigate();
     const location = useLocation();
 
+    // Extract IDs from the notification payload to fetch full details from the API
     const missedTaskIds = React.useMemo(() => {
         return notification?.payload?.missedTasks?.map(t => t.id) || [];
     }, [notification]);
 
-    const { data: ActiveIds = [], isLoading: isLoadingActiveCheck } = useActiveTaskCheck(missedTaskIds);
+    // Fetch full task objects using the list of IDs
+    const { data: tasks = [], isLoading } = useTasksByIds(missedTaskIds);
 
+    // Helper to determine if a task is finished (not in 'ACTIVE' state)
+    const getIsResolved = (task) => {
+        return task.status !== 'ACTIVE';
+    };
+
+    // Synchronize API task details with notification metadata (e.g., nextRunDate)
+    // Uses a Map for O(N) lookup efficiency instead of O(N^2)
+    const combinedTasks = React.useMemo(() => {
+        const sourceData = notification?.payload?.missedTasks || [];
+        const sourceMap = new Map(sourceData.map(item => [item.id, item]));
+
+        return tasks.map(task => {
+            const extraInfo = sourceMap.get(task.id);
+            return {
+                ...task,
+                isRecurring: extraInfo?.isRecurring ?? task.isRecurring,
+                nextRunDate: extraInfo?.nextRunDate ?? task.nextRunDate,
+                taskLink: extraInfo?.taskLink ?? task.taskLink,
+                isResolved: getIsResolved(task) // Pre-calculate resolution status for UI
+            };
+        });
+    }, [tasks, notification]);
+
+    // Sort tasks: Moves unresolved (ACTIVE) tasks to the top, resolved tasks to the bottom
+    const sortedTasks = React.useMemo(() => {
+        return [...combinedTasks].sort((a, b) => a.isResolved - b.isResolved);
+    }, [combinedTasks]);
+
+    // Extract today's stats for display, providing default values (0) if data is missing
     const stats = React.useMemo(() => ({
         active: statsSummary?.today?.active ?? 0,
         completed: statsSummary?.today?.completed ?? 0,
         canceled: statsSummary?.today?.canceled ?? 0,
     }), [statsSummary?.today]);
 
-    const sortedMissedTasks = React.useMemo(() => {
-        if (!notification?.payload?.missedTasks) return [];
+    // Calculate summary for yesterday based on current task list and historical stats
+    const yesterdayStats = React.useMemo(() => {
+        const activeMissedCount = tasks.filter(t => t.status === 'ACTIVE').length;
 
-        return [...notification.payload.missedTasks].sort((a, b) => {
-            const aIsResolved = !a.isRecurring && ActiveIds && !ActiveIds.includes(a.id);
-            const bIsResolved = !b.isRecurring && ActiveIds && !ActiveIds.includes(b.id);
+        return {
+            completed: statsSummary?.yesterday?.completed ?? 0,
+            canceled: statsSummary?.yesterday?.canceled ?? 0,
+            missed: activeMissedCount,
+            total: statsSummary?.yesterday?.total ?? 0,
+        };
+    }, [statsSummary?.yesterday, tasks]);
 
-            if (aIsResolved === bIsResolved) return 0;
-            return aIsResolved ? 1 : -1;
-        });
-    }, [notification?.payload?.missedTasks, ActiveIds]);
-
-    const recurringMissedCount = notification?.payload?.missedTasks?.filter(
-        task => task.isRecurring === true || task.taskTemplateId != null
-    ).length || 0;
-
-    const yesterdayStats = React.useMemo(() => ({
-        completed: statsSummary?.yesterday?.completed ?? 0,
-        canceled: statsSummary?.yesterday?.canceled ?? 0,
-        missed: ActiveIds.length + recurringMissedCount,
-        total: statsSummary?.yesterday?.total ?? 0,
-    }), [statsSummary?.yesterday, ActiveIds]);
+    // Guard clause: Prevent rendering if critical notification data is absent
     if (!notification || !notification.payload) return null;
 
-
     const { title, redirectUrl } = notification;
-    const { date, dayOfWeek, missedTasks } = notification.payload;
+    const { date, dayOfWeek } = notification.payload;
 
     return (
         <Card
@@ -83,38 +105,21 @@ const DailyBriefingCard = ({ notification, statsSummary }) => {
                     </Typography>
                 </Box>
 
-                {/* --- 今日狀態 (Today) --- */}
+                {/* --- Today's Overview --- */}
                 <Box mb={2}>
                     <Typography variant="subtitle2" fontWeight="600" color="text.primary">
                         Today's Overview
                     </Typography>
-
                     <Box display="flex" justifyContent="space-between" alignItems="center" mt={0.5}>
-                        <Typography
-                            variant="caption"
-                            sx={{
-                                color: 'text.secondary',
-                                fontWeight: 300,
-                                letterSpacing: '0.02rem',
-                                textTransform: 'lowercase'
-                            }}
-                        >
+                        <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 300, textTransform: 'lowercase' }}>
                             ongoing: {stats.active} • completed: {stats.completed} • canceled: {stats.canceled}
                         </Typography>
-
                         {redirectUrl && (
                             <MuiLink
                                 component="button"
                                 underline="hover"
                                 onClick={() => navigate(redirectUrl)}
-                                sx={{
-                                    color: 'text.disabled',
-                                    fontSize: '0.7rem',
-                                    fontWeight: 300,
-                                    letterSpacing: '0.05rem',
-                                    textTransform: 'lowercase',
-                                    '&:hover': { color: 'primary.main', opacity: 0.8 }
-                                }}
+                                sx={{ color: 'text.disabled', fontSize: '0.7rem', textTransform: 'lowercase' }}
                             >
                                 view tasks →
                             </MuiLink>
@@ -123,144 +128,96 @@ const DailyBriefingCard = ({ notification, statsSummary }) => {
                 </Box>
 
                 <Divider sx={{ my: 2, borderStyle: 'dashed' }} />
+
+                {/* --- Yesterday's Recap --- */}
                 <Typography variant="subtitle2" fontWeight="600" color="text.primary">
                     Yesterday's Recap
                 </Typography>
-                <Typography
-                    variant="caption"
-                    sx={{
-                        color: 'text.secondary',
-                        fontWeight: 300,
-                        letterSpacing: '0.02rem',
-                        textTransform: 'lowercase',
-                        display: 'block',
-                        mb: 1.5
-                    }}>
+                <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 1.5, textTransform: 'lowercase' }}>
                     completed: {yesterdayStats.completed} • canceled: {yesterdayStats.canceled} • missed: {yesterdayStats.missed}
                 </Typography>
 
-                {sortedMissedTasks.length > 0 ? (
-                    <>
+                {sortedTasks.length > 0 ? (
+                    <Box sx={{
+                        maxHeight: 180,
+                        overflowY: 'auto',
+                        pr: 1,
+                        '&::-webkit-scrollbar': { width: '4px' },
+                        '&::-webkit-scrollbar-thumb': { background: '#e0e0e0', borderRadius: '4px' }
+                    }}>
+                        <List dense disablePadding>
+                            {sortedTasks.map((task) => {
+                                const isRecurring = !!task.isRecurring;
 
-                        <Box sx={{
-                            maxHeight: 180,
-                            overflowY: 'auto',
-                            pr: 1,
-                            '&::-webkit-scrollbar': { width: '4px' },
-                            '&::-webkit-scrollbar-track': { background: 'transparent' },
-                            '&::-webkit-scrollbar-thumb': { background: '#e0e0e0', borderRadius: '4px' },
-                            '&::-webkit-scrollbar-thumb:hover': { background: '#bdbdbd' }
-                        }}>
-                            <List dense disablePadding>
-                                {sortedMissedTasks.map((task) => {
-                                    // if it's not recurring and not in ActiveIds, it means it's resolved (completed or canceled)
-                                    const isResolved = !task.isRecurring && ActiveIds && !ActiveIds.includes(task.id);
+                                return (
+                                    <ListItem
+                                        key={task.id}
+                                        disableGutters
+                                        sx={{
+                                            py: 0.5, px: 1, borderRadius: 1,
+                                            opacity: task.isResolved ? 0.6 : 1,
+                                            display: 'flex', // Ensure flex layout
+                                            alignItems: 'center', // Vertical center
+                                            '&:hover': { bgcolor: 'action.hover' }
+                                        }}
+                                        secondaryAction={
+                                            <MuiLink
+                                                component="button"
+                                                underline="none"
+                                                disabled={task.isResolved}
+                                                onClick={() => navigate(`/tasks/${task.id}`, {
+                                                    state: { from: location.pathname, fromTitle: "Briefing" }
+                                                })}
+                                                sx={{ color: task.isResolved ? 'text.disabled' : 'text.secondary', fontSize: '0.65rem' }}
+                                            >
+                                                detail
+                                            </MuiLink>
+                                        }
+                                    >
+                                        <ListItemIcon sx={{ minWidth: 24, display: 'flex', alignItems: 'center' }}>
+                                            {isRecurring ? (
+                                                <EventRepeatIcon sx={{ fontSize: 16, color: 'text.disabled' }} />
+                                            ) : task.isResolved ? (
+                                                <CheckCircleOutlineIcon sx={{ fontSize: 16, color: 'success.main' }} />
+                                            ) : (
+                                                <AssignmentLateIcon sx={{ fontSize: 16, color: 'error.light' }} />
+                                            )}
+                                        </ListItemIcon>
 
-                                    return (
-                                        <ListItem
-                                            key={task.id}
-                                            disableGutters
-                                            sx={{
-                                                py: 0.5,
-                                                px: 1,
-                                                borderRadius: 1,
-                                                opacity: isResolved ? 0.6 : 1,
-                                                transition: 'opacity 0.3s ease',
-                                                '&:hover': { bgcolor: 'action.hover', '& .detail-btn': { opacity: 0.8 } }
-                                            }}
-                                            secondaryAction={
-                                                <Box textAlign="right" mr={1}>
-                                                    <MuiLink
-                                                        className="detail-btn"
-                                                        component="button"
-                                                        underline="none"
-                                                        disabled={isResolved}
-                                                        onClick={() => navigate(task.taskLink, { state: { from: location.pathname, fromTitle: "Dashboard" } })}
-                                                        sx={{
-                                                            color: isResolved ? 'text.disabled' : 'text.secondary',
-                                                            fontSize: '0.65rem',
-                                                            fontWeight: 300,
-                                                            letterSpacing: '0.05rem',
-                                                            textTransform: 'lowercase',
-                                                            opacity: 0.6,
-                                                            '&:hover': { color: isResolved ? 'text.disabled' : 'primary.main', opacity: 0.8 }
-                                                        }}
-                                                    >
-                                                        detail
-                                                    </MuiLink>
-                                                </Box>
-                                            }
-                                        >
-                                            <ListItemIcon sx={{ minWidth: 28, mt: 0.5, alignSelf: 'flex-start' }}>
-                                                {task.isRecurring ? (
-                                                    <EventRepeatIcon sx={{ fontSize: 16, color: 'text.disabled' }} />
-                                                ) : isResolved ? (
-                                                    <CheckCircleOutlineIcon sx={{ fontSize: 16, color: 'success.main' }} />
-                                                ) : (
-                                                    <AssignmentLateIcon sx={{ fontSize: 16, color: 'error.light', opacity: 0.8 }} />
-                                                )}
-                                            </ListItemIcon>
-
-                                            <ListItemText
-                                                primary={task.title}
-                                                secondary={
-                                                    task.isRecurring
-                                                        ? `next run: ${task.nextRunDate}`
-                                                        : isResolved
-                                                            ? 'resolved'
-                                                            : 'action required'
-                                                }
-                                                primaryTypographyProps={{
-                                                    variant: 'body2',
-                                                    color: 'text.primary',
-                                                    sx: {
-                                                        fontWeight: 500,
-                                                        lineHeight: 1.2,
-                                                        textDecoration: isResolved ? 'line-through' : 'none',
-                                                    }
+                                        <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1, flexGrow: 1, minWidth: 0 }}>
+                                            <Typography
+                                                variant="body2"
+                                                noWrap
+                                                sx={{
+                                                    fontWeight: 500,
+                                                    textDecoration: task.isResolved ? 'line-through' : 'none',
+                                                    fontSize: '0.875rem'
                                                 }}
-                                                secondaryTypographyProps={{
-                                                    variant: 'caption',
-                                                    sx: {
+                                            >
+                                                {task.title}
+                                            </Typography>
+
+                                            {task.nextRunDate && (
+                                                <Typography
+                                                    variant="caption"
+                                                    sx={{
                                                         fontSize: '0.65rem',
-                                                        color: task.isRecurring || isResolved ? 'text.disabled' : 'error.main',
-                                                        opacity: task.isRecurring ? 0.7 : 0.6,
-                                                        textTransform: 'lowercase',
-                                                        mt: 0.2
-                                                    }
-                                                }}
-                                                sx={{ pr: 3, my: 0 }}
-                                            />
-                                        </ListItem>
-                                    );
-                                })}
-                            </List>
-                        </Box>
-                    </>
-                ) : (
-                    <Box
-                        display="flex"
-                        flexDirection="column"
-                        alignItems="center"
-                        justifyContent="center"
-                        sx={{
-                            py: 4,
-                            width: '100%',
-                            bgcolor: 'background.paper',
-                        }}
-                    >
-                        <Typography
-                            variant="body1"
-                            color="text.disabled"
-                            sx={{
-                                fontStyle: 'italic',
-                                textAlign: 'center',
-                                letterSpacing: '0.02rem'
-                            }}
-                        >
-                            All caught up for yesterday. Great job! 🌟
-                        </Typography>
+                                                        whiteSpace: 'nowrap'
+                                                    }}
+                                                >
+                                                    next run: {formatDateCustom(task.nextRunDate)}
+                                                </Typography>
+                                            )}
+                                        </Box>
+                                    </ListItem>
+                                );
+                            })}
+                        </List>
                     </Box>
+                ) : (
+                    <Typography variant="body2" color="text.disabled" sx={{ py: 2, textAlign: 'center', fontStyle: 'italic' }}>
+                        All caught up for yesterday. Great job! 🌟
+                    </Typography>
                 )}
             </CardContent>
         </Card>
