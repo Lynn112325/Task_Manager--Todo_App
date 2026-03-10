@@ -89,7 +89,7 @@ public interface MetricsRepository extends JpaRepository<Task, Long> {
         @Query(value = """
                         SELECT COUNT(*) FROM tasks t
                         WHERE t.task_template_id = :templateId
-                        AND t.isManual = false
+                        AND t.is_manual = false
                         AND t.due_date BETWEEN :start AND :end
                         """, nativeQuery = true)
         int countManualTasksInPeriod(@Param("templateId") Long templateId,
