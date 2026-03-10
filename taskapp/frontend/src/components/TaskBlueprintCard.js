@@ -23,12 +23,13 @@ import { useMemo, useState } from 'react';
 import PriorityChip from '../components/Task/PriorityChip';
 import { formatFrequency, getPlanPeriodLabel } from '../utils/planFormatters';
 import { PLAN_STATUS_CONFIG } from '../utils/planStatus';
+import ManualTaskGenerationDialog from './task_schedule/ManualTaskGenerationDialog';
 
 const ICON_SIZE = 16;
 
 export default function TaskBlueprintCard({ data, onEdit, handleToggle }) {
     const { taskTemplate, recurringPlan } = data || {};
-
+    const [isManualDialogOpen, setIsManualDialogOpen] = useState(false);
     const [anchorEl, setAnchorEl] = useState(null);
     const open = Boolean(anchorEl);
 
@@ -43,6 +44,11 @@ export default function TaskBlueprintCard({ data, onEdit, handleToggle }) {
         if (action === 'edit' && onEdit) onEdit(data);
         // if (action === 'delete' && onDelete) onDelete(data);
         if (action === 'toggle' && handleToggle) handleToggle(data);
+        // if (action === 'trigger') setIsManualDialogOpen(true);
+    };
+
+    const handleGenerateManualTask = async (taskData) => {
+
     };
 
     // "ONGOING", "PAUSED", "UPCOMING", "COMPLETED"
@@ -151,7 +157,7 @@ export default function TaskBlueprintCard({ data, onEdit, handleToggle }) {
                         <EditIcon sx={{ fontSize: '0.9rem' }} />
                     </ListItemIcon>
                     <ListItemText
-                        primary="Edit"
+                        primary="Edit" s
                         slotProps={{ primary: { sx: { fontSize: '0.75rem', mt: 0.5 } } }}
                     />
                 </MenuItem>
@@ -184,6 +190,13 @@ export default function TaskBlueprintCard({ data, onEdit, handleToggle }) {
                         />
                     </MenuItem>
                 )}
+                {/* The Hidden Dialog */}
+                <ManualTaskGenerationDialog
+                    open={isManualDialogOpen}
+                    onClose={() => setIsManualDialogOpen(false)}
+                    // schedule={schedule}
+                    onGenerate={handleGenerateManualTask}
+                />
 
                 {/* <Divider sx={{ my: 0.5 }} /> */}
 
