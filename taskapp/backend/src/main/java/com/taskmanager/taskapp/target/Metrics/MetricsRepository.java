@@ -110,4 +110,19 @@ public interface MetricsRepository extends JpaRepository<Task, Long> {
                         @Param("start") LocalDateTime start,
                         @Param("end") LocalDateTime end);
 
+        @Query("""
+                        SELECT COUNT(t) > 0 FROM Task t
+                        LEFT JOIN t.taskTemplate tt
+                        WHERE t.user.id = :userId
+                        AND (:targetId IS NULL OR tt.target.id = :targetId)
+                        AND t.isManual = false
+                        AND t.status = 'MISSED'
+                        AND t.dueDate < :now
+                        AND t.dueDate >= :start
+                        """)
+        boolean hasMissedTasksInPeriod(
+                        @Param("userId") Long userId,
+                        @Param("targetId") Long targetId,
+                        @Param("start") LocalDateTime start,
+                        @Param("now") LocalDateTime now);
 }

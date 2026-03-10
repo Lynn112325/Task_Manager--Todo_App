@@ -84,11 +84,15 @@ public class MetricsService {
         double progressPercentage = calculateProgress(grain, now);
 
         // 4. Calculate Streaks
-        // Calculate the streak from previous periods and add 1 if the current period's
-        // goal is met
         int pastStreak = calculateCurrentStreak(userId, targetId, grain, start);
-        int currentStreak = goalMet ? pastStreak + 1 : pastStreak;
 
+        int currentStreak;
+        if (goalMet) {
+            currentStreak = pastStreak + 1;
+        } else {
+            boolean hasMissed = metricsRepository.hasMissedTasksInPeriod(userId, targetId, start, now);
+            currentStreak = hasMissed ? 0 : pastStreak;
+        }
         return new MetricsDto(
                 totalExpected,
                 completed,
